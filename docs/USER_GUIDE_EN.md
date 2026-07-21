@@ -11,6 +11,15 @@
 - A user-writable extraction folder; DX Manager stores config, logs, and
   screenshots beside the executable
 
+DX Manager intentionally targets .NET Framework 4.6.2 as its minimum runtime
+to support Windows 7 SP1 and offline or closed-network PCs. Windows 7 SP1 does
+not include 4.6.2 by default. If it is missing, download the runtime from the
+[official Microsoft .NET Framework 4.6.2 page](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net462).
+For an offline PC, download the offline installer on another computer and
+transfer it before setup. If .NET Framework 4.7.2 or 4.8 is already installed,
+do not downgrade it or install 4.6.2 separately; later .NET Framework 4.x
+versions satisfy this requirement.
+
 ### Phone
 
 - A Samsung Galaxy device with One UI 7.0 or later that supports Samsung DeX

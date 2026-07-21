@@ -95,6 +95,14 @@ real Samsung DeX use. The project prioritizes:
 - Android Developer options and USB debugging enabled
 - A data-capable USB cable for initial authorization
 
+DX Manager intentionally targets .NET Framework 4.6.2 to preserve compatibility
+with Windows 7 SP1 and offline or closed-network PCs. Windows 7 SP1 does not
+include 4.6.2 by default, so it may need to be installed separately from the
+[official Microsoft download page](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net462).
+If .NET Framework 4.7.2 or 4.8 is already installed, no downgrade or separate
+4.6.2 installation is required; the same DX Manager build runs on the newer
+installed 4.x runtime.
+
 Wireless ADB additionally requires the PC and phone to communicate on the
 same local network. Guest Wi-Fi, AP isolation, VLAN rules, or corporate
 network policies may block the connection.
@@ -274,6 +282,14 @@ DX Manager의 모든 기능은 Samsung DeX를 실제로 사용하면서 겪은 �
 - Samsung DeX를 지원하는 Samsung 기기
 - Android 개발자 옵션 및 USB 디버깅 활성화
 - 최초 인증을 위한 데이터 통신 지원 USB 케이블
+
+DX Manager는 Windows 7 SP1 및 오프라인·폐쇄망 PC와의 호환성을 유지하기
+위해 의도적으로 .NET Framework 4.6.2를 대상으로 빌드합니다. Windows 7
+SP1에는 4.6.2가 기본 포함되지 않으므로 [Microsoft 공식 다운로드
+페이지](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net462)에서
+별도로 설치해야 할 수 있습니다. 4.7.2 또는 4.8이 이미 설치된 PC에서는
+4.6.2로 낮추거나 추가 설치할 필요 없이, 설치된 최신 4.x 런타임으로 같은
+DX Manager 빌드가 실행됩니다.
 
 무선 ADB를 사용하려면 PC와 휴대폰이 같은 로컬 네트워크에서 서로 통신할
 수 있어야 합니다. 게스트 Wi-Fi, AP 격리, VLAN 규칙 또는 회사 네트워크

@@ -214,6 +214,17 @@ DX Manager supports 64-bit Windows 7 SP1 with .NET Framework 4.6.2 or later.
 required by the bundled legacy ADB and the Samsung USB driver may also be
 needed.
 
+.NET Framework 4.6.2 is not included with Windows 7 SP1 by default. It is the
+intentional minimum target used to preserve compatibility with Windows 7 SP1
+and offline or closed-network PCs. If it is missing, obtain the runtime from
+the [official Microsoft download page](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net462).
+The page also provides an offline installer that can be downloaded on another
+computer and transferred to the target PC.
+
+.NET Framework 4.x releases are in-place updates. If 4.7.2 or 4.8 is already
+installed, do not downgrade it or attempt to install 4.6.2 beside it. The same
+DX Manager build runs using the newer installed 4.x runtime.
+
 `DXManager.exe` depends on the following adjacent files and will not work
 correctly when copied by itself:
 

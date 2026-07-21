@@ -10,6 +10,15 @@
 - 압축을 해제할 수 있는 충분한 저장 공간
 - 실행 파일 옆에 설정·로그·스크린샷을 저장할 수 있는 쓰기 가능한 폴더
 
+DX Manager는 Windows 7 SP1 및 오프라인·폐쇄망 PC를 지원하기 위한 최소
+런타임으로 의도적으로 .NET Framework 4.6.2를 사용합니다. Windows 7 SP1에는
+4.6.2가 기본 포함되지 않습니다. 설치되어 있지 않다면 [Microsoft 공식 .NET
+Framework 4.6.2 페이지](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net462)에서
+런타임을 받으십시오. 인터넷이 연결되지 않은 PC는 다른 컴퓨터에서 오프라인
+설치 파일을 받은 뒤 옮겨서 설치할 수 있습니다. 4.7.2 또는 4.8이 이미 설치된
+경우에는 4.6.2로 낮추거나 따로 설치할 필요가 없으며, 더 최신인 .NET
+Framework 4.x가 이 요구 사항을 충족합니다.
+
 ### 휴대폰
 
 - Samsung DeX를 지원하고 One UI 7.0 이상이 설치된 Samsung Galaxy 기기

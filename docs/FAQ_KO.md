@@ -204,6 +204,17 @@ DX Manager는 64비트 Windows 7 SP1과 .NET Framework 4.6.2 이상을
 레거시 ADB 실행에 필요한 Universal CRT 업데이트와 Samsung USB 드라이버가
 필요할 수 있습니다.
 
+.NET Framework 4.6.2는 Windows 7 SP1에 기본 포함된 구성 요소가 아닙니다.
+Windows 7 SP1 및 오프라인·폐쇄망 PC와의 호환성을 유지하기 위해 선택한 최소
+대상 버전입니다. 설치되어 있지 않다면 [Microsoft 공식 다운로드
+페이지](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net462)에서
+런타임을 받으십시오. 같은 페이지의 오프라인 설치 파일을 다른 컴퓨터에서
+받아 대상 PC로 옮겨 설치할 수도 있습니다.
+
+.NET Framework 4.x는 제자리 업데이트 방식입니다. 4.7.2 또는 4.8이 이미
+설치되어 있다면 4.6.2로 낮추거나 함께 설치하려고 할 필요가 없습니다. 같은
+DX Manager 빌드가 설치된 최신 4.x 런타임에서 실행됩니다.
+
 `DXManager.exe`는 다음 파일을 함께 사용하므로 실행 파일만 따로 복사하면
 정상적으로 동작하지 않습니다.
 

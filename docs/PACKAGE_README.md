@@ -17,6 +17,12 @@ Windows 7 and 8.1 may require Universal CRT updates for the bundled legacy
 ADB. Wireless ADB also requires the PC and phone to communicate on the same
 local network.
 
+Windows 7 SP1 does not include .NET Framework 4.6.2 by default. Install it from
+the [official Microsoft download page](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net462)
+if necessary; an offline installer is available there. If .NET Framework 4.7.2
+or 4.8 is already installed, no downgrade or separate 4.6.2 installation is
+required.
+
 ### Quick start
 
 1. Extract the entire ZIP to a user-writable folder.
@@ -77,6 +83,13 @@ Windows용 포터블 프로그램입니다.
 Windows 7과 8.1에서는 동봉된 레거시 ADB를 위해 Universal CRT 업데이트가
 필요할 수 있습니다. 무선 ADB는 PC와 휴대폰이 같은 로컬 네트워크에서 직접
 통신할 수 있어야 합니다.
+
+Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. 필요한
+경우 [Microsoft 공식 다운로드
+페이지](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net462)에서
+설치하십시오. 같은 페이지에서 오프라인 설치 파일도 받을 수 있습니다.
+4.7.2 또는 4.8이 이미 설치되어 있다면 4.6.2로 낮추거나 추가 설치할 필요가
+없습니다.
 
 ### 빠른 시작
 

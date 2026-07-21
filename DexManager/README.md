@@ -74,6 +74,13 @@ All ADB commands are executed with the selected absolute path.
 - 32-bit Windows is not supported
 - Bundled scrcpy baseline: 4.0
 
+The .NET Framework 4.6.2 target is intentional: it preserves compatibility
+with 64-bit Windows 7 SP1 and offline or closed-network PCs. Windows 7 SP1 does
+not include 4.6.2 by default, so the runtime may need to be installed
+separately. Because .NET Framework 4.x uses in-place updates, systems with
+4.7.2 or 4.8 already installed run the same build on the newer runtime and do
+not require a downgrade.
+
 64-bit Windows 7 compatibility should be checked on real hardware before each public
 release.
 
