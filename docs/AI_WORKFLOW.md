@@ -13,6 +13,9 @@
 - 요청 범위의 최소 변경을 한다.
 - .NET Framework 4.6.2와 64비트 Windows 7 호환성을 유지한다.
 - ADB는 `AdbService`와 선택한 절대 경로로 실행한다.
+- 관리형 파일 전송의 `DXMAdbProxy.exe`는 DeX·단일창 Scrcpy 프로세스에만
+  지정한다. DX Manager 자체 ADB, 무선, wake-up과 화면 상태 경로에는
+  사용하지 않으며 Download 단일 파일 push 이외의 명령을 가로채지 않는다.
 - Scrcpy 시작 직렬화 규칙을 지킨다.
 - display ID가 모호하면 추측하지 않는다.
 - 런타임 설정, 로그와 캡처를 Git에 추가하거나 덮어쓰지 않는다.
@@ -30,6 +33,9 @@
 변경에 따라 설정 보존, USB/무선 target serial, DeX/단일창 동시 실행,
 화면 OFF/stay-awake 복구를 확인한다. 다중 기기 변경은 최초 기기 고정,
 같은 기기의 USB/무선 전환, 다른 기기 무시와 원래 기기 재연결을 확인한다.
+파일 전송 변경은 Windows 7/11에서 한글·Unicode 단일/복수 파일, 이름 충돌,
+취소, Scrcpy 창 종료와 설정 OFF 뒤 새 창의 순정 동작을 확인한다. ADB 버전은
+공통 `1.0.41` 줄이 아니라 실제 `Version ...` 값이 표시되는지 확인한다.
 실기 확인을 못 했으면 명시한다.
 
 공개용 포터블 폴더와 ZIP은 저장소 루트에서 다음 명령으로 만든다.
@@ -42,6 +48,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package-Release.ps
 `dist\DX Manager`와 버전이 포함된 x64 ZIP으로 구분한다.
 스크립트는 DX Manager 실행 여부를 확인하고 번들 Release ADB 서버를 정리한
 뒤 Debug/Release의 로그와 스크린샷 테스트 파일을 비운다.
+v1.1.0 패키지는 Scrcpy 4.1 런타임과
+`tools\adb-proxy\DXMAdbProxy.exe`를 반드시 포함해야 한다.
 
 ## Git과 문서
 

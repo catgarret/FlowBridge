@@ -76,6 +76,10 @@ namespace DexManager.Utils
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetWindowRect(IntPtr windowHandle, out NativeRect rect);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool ClientToScreen(IntPtr windowHandle, ref NativePoint point);
 
         [DllImport("user32.dll")]

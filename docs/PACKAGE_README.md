@@ -1,7 +1,7 @@
 # DX Manager
 
 Portable Windows package for managing a Samsung DeX virtual display and up to
-three independent scrcpy app windows.
+three independent scrcpy app windows. This release bundles scrcpy 4.1.
 
 ## English
 
@@ -12,6 +12,10 @@ three independent scrcpy app windows.
 - A Samsung device that supports Samsung DeX
 - Android Developer options and USB debugging enabled
 - A data-capable USB cable for the initial authorization
+
+The currently verified phone baseline is Android 16 with One UI 8.x on a
+DeX-capable Galaxy device. One UI 7.x and earlier have not been confirmed to
+work reliably and may show a black DeX window.
 
 Windows 7 and 8.1 may require Universal CRT updates for the bundled legacy
 ADB. Wireless ADB also requires the PC and phone to communicate on the same
@@ -44,6 +48,20 @@ language, and documentation files together.
 - Ignore direct Shift+Space input: Off
 - Scroll Lock Enter/Shift+Enter switching: Off
 - Stay awake while a managed window is running: On
+- DX Manager Unicode-compatible file transfer: On
+
+### Drag-and-drop file transfer
+
+Drop one or more files onto a DeX or single-app window to copy them to the
+phone's `Download` folder. The default DX Manager transfer uses a Windows
+7/11-compatible path that preserves Korean and other Unicode file names. Its
+status window shows the current file, progress,
+completed/failed/waiting counts, and a cancel action. Existing names are kept;
+a new file is saved as `name (1).ext`, `name (2).ext`, and so on.
+
+To use scrcpy's original behavior instead, turn off **Use DX Manager file
+transfer (Unicode-compatible)** under **Settings > Paths / ADB > Programs and
+storage paths**. The change applies to newly opened DeX and single-app windows.
 
 ### Default shortcuts
 
@@ -70,7 +88,7 @@ Project page: https://github.com/maze-mei/DX-Manager
 ## 한국어
 
 Samsung DeX 가상 디스플레이와 앱별 scrcpy 단일창을 최대 3개까지 관리하는
-Windows용 포터블 프로그램입니다.
+Windows용 포터블 프로그램입니다. 이 릴리스는 scrcpy 4.1을 포함합니다.
 
 ### 요구 사항
 
@@ -79,6 +97,10 @@ Windows용 포터블 프로그램입니다.
 - Samsung DeX를 지원하는 삼성 기기
 - Android 개발자 옵션과 USB 디버깅 활성화
 - 최초 인증을 위한 데이터 전송 가능 USB 케이블
+
+현재 정상 동작을 확인한 휴대폰 기준은 Android 16 / One UI 8.x의 DeX 지원
+Galaxy 기기입니다. One UI 7.x 이하에서는 원활한 동작을 확인하지 못했으며
+DeX 창이 검게 표시될 수 있습니다.
 
 Windows 7과 8.1에서는 동봉된 레거시 ADB를 위해 Universal CRT 업데이트가
 필요할 수 있습니다. 무선 ADB는 PC와 휴대폰이 같은 로컬 네트워크에서 직접
@@ -112,6 +134,19 @@ Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. �
 - 직접 Shift+Space 입력 무시: 꺼짐
 - Scroll Lock Enter/Shift+Enter 전환: 꺼짐
 - 관리 창 실행 중 잠자기 방지: 켜짐
+- DX Manager 한글·Unicode 호환 파일 전송: 켜짐
+
+### 드래그 앤 드롭 파일 전송
+
+DeX 또는 단일창에 파일을 놓으면 휴대폰의 `Download` 폴더로 복사합니다.
+기본 DX Manager 전송은 Windows 7/11 호환 경로로 한글을 포함한 Unicode
+파일명을 보존합니다. 상태창에서 현재 파일, 진행률,
+완료·실패·대기 수를 확인하고 전송을 취소할 수 있습니다. 같은 이름이 있으면
+기존 파일을 유지하고 `이름 (1).확장자`, `이름 (2).확장자` 순서로 저장합니다.
+
+scrcpy 순정 방식을 사용하려면 **설정 > 경로 / ADB > 프로그램 및 저장 경로**의
+**DX Manager 파일 전송 사용 (한글/Unicode 호환)**을 끄십시오. 변경은 새로
+여는 DeX와 단일창부터 적용됩니다.
 
 ### 기본 단축키
 

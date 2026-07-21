@@ -1,5 +1,5 @@
 {
-  "SchemaVersion": 18,
+  "SchemaVersion": 19,
   "Paths": {
     "AdbPath": "",
     "AdbSelectionMode": 0,
@@ -51,7 +51,8 @@
     "ResetVirtualDisplayOnStop": true,
     "DisableStayAwakeOnStop": true,
     "AutoStartDexOnDeviceConnected": false,
-    "ShowConnectedDeviceInfo": true
+    "ShowConnectedDeviceInfo": true,
+    "ManagedFileTransferEnabled": true
   },
   "KeyMappings": {
     "CaptureHotkey": "F8",

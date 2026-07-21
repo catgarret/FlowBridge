@@ -24,6 +24,7 @@ namespace DexManager.Services
         private readonly int _processTimeoutMs;
         private readonly AdbService _adbService;
         private readonly ScrcpyLaunchCoordinator _launchCoordinator;
+        private readonly FileTransferCoordinator _fileTransferCoordinator;
         private readonly LogService _logService;
         private readonly ScrcpyRuntimeInfo _runtimeInfo;
         private bool _unsupportedFlexDisplayLogged;
@@ -39,6 +40,8 @@ namespace DexManager.Services
             new Dictionary<int, int>();
         private readonly Dictionary<int, IntPtr> _windowHandles =
             new Dictionary<int, IntPtr>();
+        private readonly Dictionary<int, string> _fileTransferSessionIds =
+            new Dictionary<int, string>();
         private readonly HashSet<int> _stoppingSlots = new HashSet<int>();
         private int _shutdownRequested;
         private int _disposed;
@@ -49,6 +52,7 @@ namespace DexManager.Services
             AdbService adbService,
             ScrcpyLaunchCoordinator launchCoordinator,
             ScrcpyRuntimeInfo runtimeInfo,
+            FileTransferCoordinator fileTransferCoordinator,
             LogService logService)
         {
             if (string.IsNullOrWhiteSpace(scrcpyPath))
@@ -65,6 +69,8 @@ namespace DexManager.Services
                 throw new ArgumentNullException("launchCoordinator");
             _runtimeInfo = runtimeInfo ??
                 throw new ArgumentNullException("runtimeInfo");
+            _fileTransferCoordinator = fileTransferCoordinator ??
+                throw new ArgumentNullException("fileTransferCoordinator");
             _logService = logService ??
                 throw new ArgumentNullException("logService");
         }
@@ -347,6 +353,7 @@ namespace DexManager.Services
 
                 CleanupStaleSlot(slot);
                 Process process = null;
+                string transferSessionId = null;
                 try
                 {
                     lock (_syncRoot)
@@ -373,7 +380,14 @@ namespace DexManager.Services
                             slot,
                             settings,
                             serial);
-                        process = CreateProcess(arguments);
+                        transferSessionId =
+                            _fileTransferCoordinator.BeginSession(
+                                serial,
+                                "Single Window " + slot.ToString(
+                                    CultureInfo.InvariantCulture));
+                        process = CreateProcess(
+                            arguments,
+                            transferSessionId);
                         process.EnableRaisingEvents = true;
                         process.Exited += Process_Exited;
                         process.OutputDataReceived +=
@@ -386,6 +400,7 @@ namespace DexManager.Services
                         _targetSerials[slot] = serial;
                         _displayIds.Remove(slot);
                         _windowHandles.Remove(slot);
+                        _fileTransferSessionIds[slot] = transferSessionId;
                         _stoppingSlots.Remove(slot);
 
                         _logService.Info(LocalizationService.Format(
@@ -395,6 +410,9 @@ namespace DexManager.Services
                     }
 
                     process.Start();
+                    _fileTransferCoordinator.BindProcess(
+                        transferSessionId,
+                        process.Id);
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
                     WaitForMainWindow(process, slot);
@@ -403,6 +421,8 @@ namespace DexManager.Services
                 catch
                 {
                     if (process != null) AbortStart(process, slot);
+                    else _fileTransferCoordinator.EndSession(
+                        transferSessionId);
                     throw;
                 }
             });
@@ -594,24 +614,27 @@ namespace DexManager.Services
             return string.Join(" ", arguments);
         }
 
-        private Process CreateProcess(string arguments)
+        private Process CreateProcess(
+            string arguments,
+            string transferSessionId)
         {
-            return new Process
+            var startInfo = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = _scrcpyPath,
-                    Arguments = arguments,
-                    WorkingDirectory = Path.GetDirectoryName(_scrcpyPath),
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Minimized,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    StandardOutputEncoding = _runtimeInfo.OutputEncoding,
-                    StandardErrorEncoding = _runtimeInfo.OutputEncoding
-                }
+                FileName = _scrcpyPath,
+                Arguments = arguments,
+                WorkingDirectory = Path.GetDirectoryName(_scrcpyPath),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Minimized,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = _runtimeInfo.OutputEncoding,
+                StandardErrorEncoding = _runtimeInfo.OutputEncoding
             };
+            _fileTransferCoordinator.ConfigureScrcpyProcess(
+                startInfo,
+                transferSessionId);
+            return new Process { StartInfo = startInfo };
         }
 
         private void Process_Exited(object sender, EventArgs e)
@@ -619,6 +642,7 @@ namespace DexManager.Services
             var process = sender as Process;
             var slot = 0;
             var ownedProcess = false;
+            string transferSessionId = null;
             lock (_syncRoot)
             {
                 foreach (var item in _processes)
@@ -635,12 +659,17 @@ namespace DexManager.Services
                     _targetSerials.Remove(slot);
                     _displayIds.Remove(slot);
                     _windowHandles.Remove(slot);
+                    _fileTransferSessionIds.TryGetValue(
+                        slot,
+                        out transferSessionId);
+                    _fileTransferSessionIds.Remove(slot);
                     ownedProcess = true;
                 }
             }
 
             if (ownedProcess)
             {
+                _fileTransferCoordinator.EndSession(transferSessionId);
                 _logService.Info(LocalizationService.Format(
                     "Log.SingleWindow.ProcessExited",
                     slot));
@@ -789,6 +818,7 @@ namespace DexManager.Services
                 var handle = process.MainWindowHandle;
                 if (handle != IntPtr.Zero)
                 {
+                    string transferSessionId = null;
                     lock (_syncRoot)
                     {
                         Process current;
@@ -797,8 +827,14 @@ namespace DexManager.Services
                             !_stoppingSlots.Contains(slot))
                         {
                             _windowHandles[slot] = handle;
+                            _fileTransferSessionIds.TryGetValue(
+                                slot,
+                                out transferSessionId);
                         }
                     }
+                    _fileTransferCoordinator.BindWindow(
+                        transferSessionId,
+                        handle);
                     _logService.Info(LocalizationService.Format(
                         "Log.SingleWindow.WindowReady",
                         slot,
@@ -857,6 +893,7 @@ namespace DexManager.Services
 
         private void CompleteExplicitStop(int slot, Process process)
         {
+            string transferSessionId = null;
             lock (_syncRoot)
             {
                 Process current;
@@ -869,15 +906,21 @@ namespace DexManager.Services
                     _targetSerials.Remove(slot);
                     _displayIds.Remove(slot);
                     _windowHandles.Remove(slot);
+                    _fileTransferSessionIds.TryGetValue(
+                        slot,
+                        out transferSessionId);
+                    _fileTransferSessionIds.Remove(slot);
                 }
                 _stoppingSlots.Remove(slot);
             }
+            _fileTransferCoordinator.EndSession(transferSessionId);
             QueueDrainAndDispose(process);
         }
 
         private void CleanupStaleSlot(int slot)
         {
             Process stale = null;
+            string transferSessionId = null;
             lock (_syncRoot)
             {
                 Process current;
@@ -892,9 +935,17 @@ namespace DexManager.Services
                     _targetSerials.Remove(slot);
                     _displayIds.Remove(slot);
                     _windowHandles.Remove(slot);
+                    _fileTransferSessionIds.TryGetValue(
+                        slot,
+                        out transferSessionId);
+                    _fileTransferSessionIds.Remove(slot);
                 }
             }
-            if (stale != null) QueueDrainAndDispose(stale);
+            if (stale != null)
+            {
+                _fileTransferCoordinator.EndSession(transferSessionId);
+                QueueDrainAndDispose(stale);
+            }
         }
 
         private void QueueDrainAndDispose(Process process)

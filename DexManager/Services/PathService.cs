@@ -228,8 +228,12 @@ namespace DexManager.Services
                 return new AdbPathCandidate(
                     path,
                     description,
-                    GetVersionText(result.StandardOutput),
-                    GetVersionNumber(result.StandardOutput));
+                    AdbVersionParser.GetDisplayVersion(
+                        result.StandardOutput,
+                        LocalizationService.Get(
+                            "Path.VersionUnavailable")),
+                    AdbVersionParser.GetVersionNumber(
+                        result.StandardOutput));
             }
             catch (Exception ex)
             {
@@ -253,28 +257,6 @@ namespace DexManager.Services
             _logService.Info(LocalizationService.Format(
                 "Log.Path.AdbVersion",
                 candidate.VersionText));
-        }
-
-        private static Version GetVersionNumber(string output)
-        {
-            var match = Regex.Match(
-                output ?? string.Empty,
-                @"^\s*Version\s+(\d+(?:\.\d+){1,3})",
-                RegexOptions.IgnoreCase | RegexOptions.Multiline);
-            Version version;
-            return match.Success && Version.TryParse(match.Groups[1].Value, out version)
-                ? version
-                : null;
-        }
-
-        private static string GetVersionText(string output)
-        {
-            var line = (output ?? string.Empty)
-                .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
-                .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
-            return string.IsNullOrWhiteSpace(line)
-                ? LocalizationService.Get("Path.VersionUnavailable")
-                : line.Trim();
         }
 
         private static string NormalizeDirectory(string directory)

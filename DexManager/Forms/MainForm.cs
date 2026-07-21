@@ -35,6 +35,7 @@ namespace DexManager.Forms
         private readonly AutoStartService _autoStartService;
         private readonly EnvironmentCheckService _environmentCheckService;
         private readonly KeyMappingService _keyMappingService;
+        private readonly FileTransferCoordinator _fileTransferCoordinator;
         private readonly bool _isAutoRun;
         private readonly TrayService _trayService;
         private readonly Label _adbStatusValue;
@@ -117,6 +118,7 @@ namespace DexManager.Forms
         private LogForm _logForm;
         private SettingsForm _settingsForm;
         private EnvironmentCheckForm _environmentCheckForm;
+        private FileTransferStatusForm _fileTransferStatusForm;
 
         public MainForm(
             SettingsService settingsService,
@@ -135,6 +137,7 @@ namespace DexManager.Forms
             AutoStartService autoStartService,
             EnvironmentCheckService environmentCheckService,
             KeyMappingService keyMappingService,
+            FileTransferCoordinator fileTransferCoordinator,
             bool isAutoRun)
         {
             _settingsService = settingsService;
@@ -153,6 +156,8 @@ namespace DexManager.Forms
             _autoStartService = autoStartService;
             _environmentCheckService = environmentCheckService;
             _keyMappingService = keyMappingService;
+            _fileTransferCoordinator = fileTransferCoordinator ??
+                throw new ArgumentNullException("fileTransferCoordinator");
             _isAutoRun = isAutoRun;
             _lastDeviceState = DeviceState.Disconnected();
             _selectedMode = 0;
@@ -391,6 +396,8 @@ namespace DexManager.Forms
                 SingleWindowService_RunningChanged;
             _captureCoordinator.ExitHotkeyPressed += CaptureCoordinator_ExitHotkeyPressed;
             _autoHideService.IdleHideRequested += AutoHideService_IdleHideRequested;
+            _fileTransferCoordinator.ProgressChanged +=
+                FileTransferCoordinator_ProgressChanged;
             _trayService = new TrayService(
                 ShowMainWindow,
                 async delegate { await StartDexAsync(); },
@@ -761,6 +768,8 @@ namespace DexManager.Forms
         private void DeviceMonitor_DeviceDisconnected(object sender, DeviceStateChangedEventArgs e)
         {
             if (_exitInProgress) return;
+            if (e != null && e.Previous != null)
+                _fileTransferCoordinator.CancelSerial(e.Previous.Serial);
             if (IsDeviceSwitch(e))
             {
                 ForgetDeviceConnectionTimestamp(e.Previous.Serial);
@@ -1445,6 +1454,25 @@ namespace DexManager.Forms
         private void CaptureCoordinator_ExitHotkeyPressed(object sender, EventArgs e) { RunOnUi(ExitApplication); }
         private void AutoHideService_IdleHideRequested(object sender, EventArgs e) { RunOnUi(HideApplicationForIdle); }
 
+        private void FileTransferCoordinator_ProgressChanged(
+            object sender,
+            FileTransferProgressEventArgs e)
+        {
+            if (e == null || e.Progress == null) return;
+            RunOnUi(delegate
+            {
+                if (_exitInProgress || IsDisposed) return;
+                if (_fileTransferStatusForm == null ||
+                    _fileTransferStatusForm.IsDisposed)
+                {
+                    _fileTransferStatusForm = new FileTransferStatusForm(
+                        _fileTransferCoordinator,
+                        _settings.Theme);
+                }
+                _fileTransferStatusForm.UpdateProgress(e.Progress);
+            });
+        }
+
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             _deviceMonitor.StateChanged -= DeviceMonitor_StateChanged;
@@ -1457,11 +1485,14 @@ namespace DexManager.Forms
                 CaptureCoordinator_ExitHotkeyPressed;
             _autoHideService.IdleHideRequested -=
                 AutoHideService_IdleHideRequested;
+            _fileTransferCoordinator.ProgressChanged -=
+                FileTransferCoordinator_ProgressChanged;
             _phoneScreenWakeTimer.Tick -= PhoneScreenWakeTimer_Tick;
 
             _orchestrator.RequestShutdown();
             _singleWindowService.RequestShutdown();
             _screenOffService.RequestShutdown();
+            _fileTransferCoordinator.RequestShutdown();
             var cleanupStillRunning = _exitCleanupTask != null &&
                 !_exitCleanupTask.IsCompleted;
             if (!cleanupStillRunning)
@@ -1470,6 +1501,10 @@ namespace DexManager.Forms
             TryCleanup("automatic hide", _autoHideService.Dispose);
             TryCleanup("key mapping", _keyMappingService.Dispose);
             TryCleanup("phone screen timer", _phoneScreenWakeTimer.Dispose);
+            if (_fileTransferStatusForm != null)
+                TryCleanup(
+                    "file transfer window",
+                    _fileTransferStatusForm.Dispose);
             if (!cleanupStillRunning)
             {
                 TryCleanup("screen-off service", _screenOffService.Dispose);
@@ -1477,6 +1512,9 @@ namespace DexManager.Forms
                     "single-window service",
                     _singleWindowService.Dispose);
                 TryCleanup("scrcpy service", _scrcpyService.Dispose);
+                TryCleanup(
+                    "file transfer service",
+                    _fileTransferCoordinator.Dispose);
                 TryCleanup("DeX finalization", delegate
                 {
                     _orchestrator.ShutdownAsync()
@@ -1510,6 +1548,7 @@ namespace DexManager.Forms
             _orchestrator.RequestShutdown();
             _singleWindowService.RequestShutdown();
             _screenOffService.RequestShutdown();
+            _fileTransferCoordinator.RequestShutdown();
             TryCleanup("capture coordinator", _captureCoordinator.Stop);
             TryCleanup("key mapping", _keyMappingService.Stop);
             BeginPhoneScreenWakeSuppression();
@@ -3372,6 +3411,7 @@ namespace DexManager.Forms
             _orchestrator.RequestShutdown();
             _singleWindowService.RequestShutdown();
             _screenOffService.RequestShutdown();
+            _fileTransferCoordinator.RequestShutdown();
             var wakeSerials = CaptureWakeSerials();
             TryCleanup("capture coordinator", _captureCoordinator.Stop);
             TryCleanup("key mapping", _keyMappingService.Stop);

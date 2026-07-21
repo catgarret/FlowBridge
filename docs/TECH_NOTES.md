@@ -15,6 +15,7 @@
 - `ScreenOffService`: 남은 세션의 화면 OFF 재적용
 - `KeyMappingService`: Scrcpy 활성 상태 키 보정
 - `CaptureCoordinator`: F8 캡처
+- `FileTransferCoordinator`: scrcpy 파일 드롭 IPC, 전역 FIFO 전송과 상태 관리
 
 ## ADB
 
@@ -25,7 +26,13 @@
 3. Windows 10 이상이면 선택한 Scrcpy 폴더의 `adb.exe` 사용
 4. Scrcpy 폴더의 ADB가 없거나 실행되지 않으면 legacy ADB 사용
 
-프로세스 환경 변수 `ADB`도 같은 절대 경로로 설정한다.
+설정, 무선 연결, wake-up과 화면 상태를 포함한 DX Manager 자체 명령은 선택한
+실제 ADB의 절대 경로로 실행한다. 관리형 파일 전송을 켠 DeX·단일창 scrcpy
+프로세스만 `ADB` 환경 변수에 `tools\adb-proxy\DXMAdbProxy.exe`를 지정한다.
+
+`adb version`의 첫 줄인 `Android Debug Bridge version 1.0.41`은 여러
+platform-tools 버전이 공통으로 출력하는 프로토콜 문구다. 설정, 환경 점검과
+로그에는 정규식으로 다음 `Version ...` 줄을 파싱한 실제 빌드 값을 표시한다.
 
 일부 Windows 7 환경에서는 `adb start-server` 직후 ADB 프로세스가 반복
 종료되거나 USB transport를 정상적으로 잡지 못할 수 있다. DX Manager는
@@ -35,6 +42,34 @@
 현재는 ADB 상태와 기기 이름을 즉시 확인한 뒤, DeX/단일창 실제 시작 명령
 직전에 `ConnectedStartDelayMs`를 적용한다. 범위는 0~60초, 기본값은 1초다.
 화면 OFF 재적용용 Scrcpy에는 이 대기를 적용하지 않는다.
+
+## 관리형 파일 전송
+
+기본값은 켜짐이며 설정 스키마의 `Features.ManagedFileTransferEnabled`에
+저장한다. 설정 변경은 새로 시작하는 DeX·단일창 세션부터 적용한다. 끄거나
+도우미가 없으면 실제 ADB를 scrcpy에 전달해 순정 파일 드롭 동작으로
+되돌린다.
+
+`DXMAdbProxy.exe`는 세션별 임의 named pipe, 토큰, 세션 ID, target serial과
+실제 ADB 경로를 환경 변수로 받는다. 일반 ADB 명령은 인자와 표준 입출력을
+유지해 실제 ADB로 전달하며, 단일 파일을 `/sdcard/Download/`로 보내는
+`push`만 DX Manager에 요청한다. scrcpy-server push, shell과 APK 설치는
+가로채지 않는다.
+
+`FileTransferCoordinator`는 다음 순서를 사용한다.
+
+1. 요청 토큰, 세션과 고정된 기기 serial을 검증한다.
+2. 프로세스 제한시간과 분리된 전송 전용 프로세스로 전역 FIFO 큐를 처리한다.
+3. `/sdcard/Download/.dxm-GUID.part` ASCII 임시 이름에 `adb push -p`한다.
+4. 최종 Unicode 이름을 UTF-8/Base64로 전달한 `adb shell sh` 스크립트가
+   Android의 255바이트 파일명 제한과 같은 이름을 확인한다.
+5. 기존 이름과 충돌하면 255바이트 안에서 stem을 안전하게 줄이고 `(1)`,
+   `(2)`를 붙인 뒤 같은 파일 시스템 안에서 원자적으로 이름을 바꾼다.
+
+scrcpy는 놓은 파일을 한 개씩 요청하므로 전체 파일 수를 미리 알 수 없다.
+상태창은 현재 파일과 크기/진행률, 누적 완료·실패·대기 수만 표시한다. 사용자가
+취소하거나 원본 scrcpy 창이 종료되면 현재 실제 ADB push를 중단하고 임시
+파일을 정리하며, 같은 드롭에서 이어지는 요청도 짧은 취소 구간 동안 거부한다.
 
 ## 무선 ADB
 
@@ -96,14 +131,17 @@ DeX는 `overlay_display_devices`로 만든다. 생성 전후 `dumpsys display`
 - HID 키보드 `-K`
 - HID 마우스 `-M`
 - 화면 끄기 `-S --no-power-on`
-- Scrcpy 4.0 잠자기 방지 `--keep-active`
+- Scrcpy 4.0 이상 잠자기 방지 `--keep-active`
 - Scrcpy 3.3.4 잠자기 방지 `-w`
-- Scrcpy 4.0 단일창 동적 크기 `--flex-display`
+- Scrcpy 4.0 이상 단일창 동적 크기 `--flex-display`
 
 시작 시 `scrcpy --version`을 실행해 Scrcpy와 SDL 주 버전을 저장한다.
 Scrcpy 3.3.4에서는 지원하지 않는 `--keep-active`와 `--flex-display`를
-전달하지 않는다. Scrcpy 4.0/SDL3 출력은 UTF-8, 3.3.4/SDL2와 구형 ADB의
+전달하지 않는다. Scrcpy 4.x/SDL3 출력은 UTF-8, 3.3.4/SDL2와 구형 ADB의
 로컬 경로 출력은 Windows 기본 코드 페이지로 읽는다.
+
+기준 번들은 Scrcpy 4.1/SDL 3.4.12다. 4.0에서 확인된 오른쪽 Shift 전달
+문제를 위해 SDL3 기반 4.x 클라이언트에는 현재 호환 치환을 적용한다.
 
 한 창이 끝나도 다른 세션이 화면 OFF를 원하면 `ScreenOffService`가 보이지
 않는 Scrcpy를 다음 옵션으로 직렬 실행한다.
@@ -146,7 +184,7 @@ Scrcpy 프로세스가 종료되는 순간과 타이머가 겹쳐도 프로세�
 고정해 읽으며, 타이머 예외는 UI 스레드 밖으로 전파하지 않고 로그만 남긴다.
 
 - 설정: 실행 폴더의 `config\settings.json`
-- 현재 스키마: 18
+- 현재 스키마: 19
 - DPI 입력 범위는 120~640이며 120 미만은 입력 확정 시 편집 전 값으로 복원한다.
 - 사용자 지정 해상도는 프리셋과 별도로 보존하며 가로·세로 상한은 각각 4096
 - 성공적으로 자동 실행한 앱은 최근 20개까지 공통 목록으로 보존

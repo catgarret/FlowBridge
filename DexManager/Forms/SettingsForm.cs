@@ -50,6 +50,7 @@ namespace DexManager.Forms
         private ThemedSelectControl _wakeUpModeBox;
         private CheckBox _autoHideBox;
         private CheckBox _pushCaptureBox;
+        private CheckBox _managedFileTransferBox;
         private CheckBox _resetDisplayOnStopBox;
         private CheckBox _disableStayAwakeBox;
         private CheckBox _autoStartDexBox;
@@ -305,6 +306,15 @@ namespace DexManager.Forms
             _pushCaptureBox = AddCheck(
                 paths,
                 LocalizationService.Get("Settings.PushCapture"));
+            _managedFileTransferBox = AddCheck(
+                paths,
+                LocalizationService.Get(
+                    "Settings.ManagedFileTransfer"));
+            AddRow(
+                paths,
+                string.Empty,
+                CreateHint(LocalizationService.Get(
+                    "Settings.ManagedFileTransferHint")));
             _logFolderBox = AddPath(paths, LocalizationService.Get("Settings.LogFolder"), false);
             AddCard(page, LocalizationService.Get("Settings.GroupStorage"), paths);
             return page;
@@ -762,6 +772,8 @@ namespace DexManager.Forms
             _resetDisplayOnStopBox.Checked = true;
             _disableStayAwakeBox.Checked = _settings.Features.DisableStayAwakeOnStop;
             _pushCaptureBox.Checked = _settings.Features.PushCaptureToDevice;
+            _managedFileTransferBox.Checked =
+                _settings.Features.ManagedFileTransferEnabled;
 
             _deviceMonitorIntervalBox.Value = MillisecondsToSeconds(
                 _settings.Timing.DeviceMonitorIntervalMs,
@@ -971,6 +983,8 @@ namespace DexManager.Forms
             settings.Features.ResetVirtualDisplayOnStop = true;
             settings.Features.DisableStayAwakeOnStop = _disableStayAwakeBox.Checked;
             settings.Features.PushCaptureToDevice = _pushCaptureBox.Checked;
+            settings.Features.ManagedFileTransferEnabled =
+                _managedFileTransferBox.Checked;
 
             settings.Timing.DeviceMonitorIntervalMs =
                 SecondsToMilliseconds(_deviceMonitorIntervalBox);
@@ -1270,11 +1284,10 @@ namespace DexManager.Forms
                     return LocalizationService.Format(
                         "Settings.CheckFailed",
                         result.StandardError);
-                var lines = result.StandardOutput.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-                return lines.Length == 0
-                    ? LocalizationService.Get(
-                        "Settings.NoVersionOutput")
-                    : lines[0];
+                return AdbVersionParser.GetDisplayVersion(
+                    result.StandardOutput,
+                    LocalizationService.Get(
+                        "Settings.NoVersionOutput"));
             }
             catch (Exception ex)
             {

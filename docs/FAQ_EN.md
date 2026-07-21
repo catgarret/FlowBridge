@@ -145,14 +145,15 @@ continues to be missing, also check the Samsung USB driver and the phone's
 
 ## Q11. Why is right Shift corrected to left Shift?
 
-In the SDL3 environment used by scrcpy 4.0 for Windows, the physical right
-Shift key may be detected correctly by Windows but not delivered to Android.
-The same behavior was not observed with scrcpy 3.3.4/SDL2.
+The physical right Shift delivery problem was reproduced with scrcpy 4.0/SDL3
+for Windows: Windows detected the key, but Android did not receive it. The same
+behavior was not observed with scrcpy 3.3.4/SDL2.
 
-DX Manager converts right Shift to left Shift only while an SDL3-based scrcpy
-window is active. Normal Shift input remains available, but Android apps
-cannot distinguish the two Shift sides during that session. The correction is
-not applied to other Windows applications or SDL2-based scrcpy versions.
+For compatibility with SDL3-based scrcpy 4.x clients, DX Manager converts
+right Shift to left Shift only while such a scrcpy window is active. Normal
+Shift input remains available, but Android apps cannot distinguish the two
+Shift sides during that session. The correction is not applied to other
+Windows applications or SDL2-based scrcpy versions.
 
 ## Q12. What is the difference between device start delay and process timeout?
 
@@ -229,9 +230,54 @@ DX Manager build runs using the newer installed 4.x runtime.
 correctly when copied by itself:
 
 - ADB and scrcpy executables under `tools`
+- DX Manager's ADB file-transfer helper under `tools/adb-proxy`
 - scrcpy DLLs and `scrcpy-server`
 - Korean resources and configuration files
 - License and third-party notice files
 
 Keep the folder structure from the release ZIP and run the program from a
 writable location where it can save settings, logs, and screenshots.
+
+## Q17. How does drag-and-drop file transfer work, and can I disable it?
+
+Drop one or more files onto a running DeX or single-app scrcpy window. With the
+default DX Manager file transfer enabled, files are copied to the phone's
+`Download` folder through a Windows 7/11-compatible path that preserves Korean
+and other Unicode file names. A small status window displays
+the current file, progress, completed/failed/waiting counts, and a cancel
+button.
+
+Existing phone files are not overwritten. If the same name already exists,
+the new file is saved as `name (1).ext`, `name (2).ext`, and so on. Canceling a
+transfer also attempts to remove its temporary phone file.
+
+To use scrcpy's original file-drop behavior, turn off **Use DX Manager file
+transfer (Unicode-compatible)** under **Settings > Paths / ADB > Programs and
+storage paths**. The change applies to newly opened DeX and single-app windows;
+already open windows keep the mode with which they were started. In original
+scrcpy mode, non-ASCII file names may not be preserved on every Windows
+environment.
+
+## Q18. The DeX window is black on an older One UI version.
+
+The currently verified baseline is a DeX-capable Galaxy device running Android
+16 with One UI 8.x. One UI 7.x and earlier have not been confirmed to work
+reliably with the virtual-display method used by DX Manager and may open a
+black DeX window. This can depend on the device model, Samsung firmware, and
+whether the phone uses the older classic DeX implementation.
+
+Single-app mode may still work because it uses scrcpy's own virtual display,
+but input support can differ by firmware. If HID keyboard or HID mouse causes
+instability, test again with those options disabled. This does not establish
+support for that device or One UI release.
+
+## Q19. Why did ADB always show version 1.0.41, and what version is actually in use?
+
+`Android Debug Bridge version 1.0.41` is a common ADB protocol banner and is
+printed by many different platform-tools releases. It does not identify the
+actual executable build.
+
+DX Manager 1.1.0 reads the following `Version ...` line instead. The bundled
+scrcpy ADB reports `37.0.0-14910828`, while the Windows 7/8.1 legacy ADB reports
+`34.0.1-9979309`. A manually selected ADB displays its own corresponding
+`Version ...` value.

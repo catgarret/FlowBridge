@@ -8,7 +8,7 @@ namespace DexManager.Models
     [DataContract]
     public sealed class AppSettings
     {
-        public const int CurrentSchemaVersion = 18;
+        public const int CurrentSchemaVersion = 19;
 
         [DataMember(Order = 1)] public int SchemaVersion { get; set; }
         [DataMember(Order = 2)] public PathSettings Paths { get; set; }
@@ -89,7 +89,8 @@ namespace DexManager.Models
                     ResetVirtualDisplayOnStop = true,
                     DisableStayAwakeOnStop = true,
                     AutoStartDexOnDeviceConnected = false,
-                    ShowConnectedDeviceInfo = true
+                    ShowConnectedDeviceInfo = true,
+                    ManagedFileTransferEnabled = true
                 },
                 KeyMappings = new KeyMappingSettings
                 {
@@ -290,6 +291,12 @@ namespace DexManager.Models
                     defaults.Timing.VirtualDisplayDetectionTimeoutMs);
                 Timing.ConnectedStartDelayMs =
                     defaults.Timing.ConnectedStartDelayMs;
+                SchemaVersion = defaults.SchemaVersion;
+            }
+            if (oldSchemaVersion < 19)
+            {
+                Features.ManagedFileTransferEnabled =
+                    defaults.Features.ManagedFileTransferEnabled;
                 SchemaVersion = defaults.SchemaVersion;
             }
             VirtualDisplay.Width = NormalizeRange(
@@ -721,6 +728,7 @@ namespace DexManager.Models
         [DataMember(Order = 8)] public bool DisableStayAwakeOnStop { get; set; }
         [DataMember(Order = 9)] public bool AutoStartDexOnDeviceConnected { get; set; }
         [DataMember(Order = 10)] public bool ShowConnectedDeviceInfo { get; set; }
+        [DataMember(Order = 11)] public bool ManagedFileTransferEnabled { get; set; }
     }
 
     [DataContract]

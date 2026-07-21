@@ -31,7 +31,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package-Release.ps
 ```
 
 The script rebuilds Release and writes `dist/DX Manager` and
-`dist/DX-Manager-v1.0.0-win-x64.zip`. Use `-SkipBuild` only when the current
+`dist/DX-Manager-v1.1.0-win-x64.zip`. Use `-SkipBuild` only when the current
 Release output has already been verified. `ExecutionPolicy Bypass` applies
 only to this process and does not change the system policy.
 
@@ -41,6 +41,7 @@ package must include:
 - `DXManager.exe` and `DXManager.exe.config`
 - `tools/scrcpy` and all of its runtime files
 - `tools/adb`
+- `tools/adb-proxy/DXMAdbProxy.exe`
 - the `licenses` directory, including `THIRD_PARTY_NOTICES.md`
 - the HTML-free portable `README.md` generated from `docs/PACKAGE_README.md`
 - `LICENSE`, the user guides, FAQs, and guide images
@@ -67,12 +68,32 @@ DX Manager never relies on an `adb.exe` found through the system `PATH`.
 
 All ADB commands are executed with the selected absolute path.
 
+The ADB version shown in Settings, diagnostics, and logs is parsed from the
+`Version ...` line returned by `adb version`. The common
+`Android Debug Bridge version 1.0.41` line is a protocol banner and is not the
+platform-tools build number.
+
+## Managed File Transfer
+
+The `DexManager.AdbProxy` project builds `DXMAdbProxy.exe` into
+`tools/adb-proxy`. When managed file transfer is enabled, only newly started
+DeX and single-app scrcpy processes receive this helper through their `ADB`
+environment variable. DX Manager's own ADB commands, wireless setup, wake-up,
+and screen-state commands continue to use the selected real ADB directly.
+
+The helper forwards ordinary ADB commands unchanged. It intercepts only a
+single-file push to `/sdcard/Download/`, authenticates the request over a
+per-session named pipe, and lets DX Manager serialize the transfer. The file
+is pushed under an ASCII temporary name and renamed on the phone from a
+Base64-encoded Unicode name. Turning the setting off restores scrcpy's native
+file-drop behavior for newly opened windows.
+
 ## Compatibility
 
 - Target framework: .NET Framework 4.6.2
 - Intended Windows range: 64-bit Windows 7 SP1 through Windows 11
 - 32-bit Windows is not supported
-- Bundled scrcpy baseline: 4.0
+- Bundled scrcpy baseline: 4.1
 
 The .NET Framework 4.6.2 target is intentional: it preserves compatibility
 with 64-bit Windows 7 SP1 and offline or closed-network PCs. Windows 7 SP1 does

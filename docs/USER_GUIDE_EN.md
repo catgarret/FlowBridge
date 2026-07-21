@@ -22,10 +22,14 @@ versions satisfy this requirement.
 
 ### Phone
 
-- A Samsung Galaxy device with One UI 7.0 or later that supports Samsung DeX
+- A Samsung Galaxy device that supports Samsung DeX
 - Developer options enabled
 - USB debugging enabled
 - A data-capable USB cable
+
+The currently verified phone baseline is Android 16 with One UI 8.x. One UI
+7.x and earlier have not been confirmed to work reliably and may show a black
+DeX window. Samsung firmware and device-specific behavior may still differ.
 
 Approve the RSA debugging prompt shown on the phone during the first
 connection. You may select **Always allow from this computer** on a trusted
@@ -58,7 +62,7 @@ scrcpy starts.
 
 Do not copy `DXManager.exe` by itself. Keep the complete distribution,
 including the `tools` directory, scrcpy DLLs, `scrcpy-server`, and license
-files.
+files. Version 1.1.0 bundles scrcpy 4.1.
 
 ## 3. DeX Mode
 
@@ -141,7 +145,29 @@ the same time.
 For some games, disabling HID keyboard and HID mouse and using single-window
 mode may provide better input compatibility.
 
-## 5. USB Connection
+## 5. Drag-and-Drop File Transfer
+
+Drop one or more files onto a running DeX or single-app scrcpy window to copy
+them to the phone's `Download` folder. DX Manager file transfer is enabled by
+default. It uses a Windows 7/11-compatible path to preserve Korean and other
+Unicode file names that scrcpy's original Windows file-drop path may not
+preserve.
+
+A small, non-modal status window follows the scrcpy window and shows the
+current file, transferred size or progress, and completed, failed, and waiting
+counts. Select **Cancel** to stop the active transfer and discard its temporary
+phone file. If the phone already contains the same name, DX Manager saves the
+new file as `name (1).ext`, `name (2).ext`, and so on instead of overwriting
+the existing file.
+
+To use scrcpy's original file-drop behavior, open **Settings > Paths / ADB >
+Programs and storage paths** and turn off **Use DX Manager file transfer
+(Unicode-compatible)**. The setting is applied when a DeX or single-app window
+starts, so already open windows keep their current transfer mode. APK install
+drops and ADB commands unrelated to Download-file pushes continue to use
+scrcpy's normal behavior.
+
+## 6. USB Connection
 
 USB is the default connection mode.
 
@@ -159,7 +185,7 @@ If the device does not appear, check the cable, USB port, Samsung USB driver,
 and RSA authorization. Then run
 **Settings > Diagnostics > Run environment check**.
 
-## 6. Wireless Connection
+## 7. Wireless Connection
 
 ### Prepare Wireless ADB over USB
 
@@ -198,7 +224,7 @@ not stored in settings or written to the log.
 - If the first connection fails on 5GHz, check the router configuration or
   initialize the connection on 2.4GHz before retrying.
 
-## 7. Capture
+## 8. Capture
 
 The capture hotkey only works while a scrcpy window is active.
 
@@ -218,7 +244,7 @@ folder.
 The screenshot button on the DeX taskbar does not work on the virtual DeX
 display created by DX Manager. Use DX Manager's `F8` capture feature instead.
 
-## 8. Keyboard Correction
+## 9. Keyboard Correction
 
 Keyboard correction is only applied while a scrcpy window is active.
 
@@ -229,16 +255,17 @@ Keyboard correction is only applied while a scrcpy window is active.
   conversion is enabled.
 - Direct Shift+Space input can optionally be ignored (off by default).
 
-On Windows, scrcpy 4.0/SDL3 may fail to forward the physical right Shift
-key even though Windows detects it. DX Manager maps right Shift to left Shift
-only while an SDL3 scrcpy window is active. Normal Shift typing is preserved,
-but Android cannot distinguish the left and right Shift keys in that session.
+On Windows, the physical right Shift forwarding problem was reproduced with
+scrcpy 4.0/SDL3 even though Windows detected the key. For compatibility with
+SDL3-based scrcpy 4.x clients, DX Manager maps right Shift to left Shift only
+while such a scrcpy window is active. Normal Shift typing is preserved, but
+Android cannot distinguish the left and right Shift keys in that session.
 
 The default capture shortcut is `F8`, and the default exit shortcut is
 `Left Alt+F8`. To change one, select its field under **Settings > Keyboard**
 and press the desired key or key combination.
 
-## 9. Automatic Hiding and System Tray
+## 10. Automatic Hiding and System Tray
 
 When automatic hiding is enabled, DX Manager hides the running scrcpy windows
 and its own UI after the configured idle period, then remains in the system
@@ -251,7 +278,7 @@ the open command from the tray menu to restore them.
 The window close button hides DX Manager to the tray. Use the exit shortcut
 or the tray menu to terminate it completely.
 
-## 10. Logs and Diagnostics
+## 11. Logs and Diagnostics
 
 ### Session Log
 
@@ -265,6 +292,11 @@ The log may include:
 - DeX and single-window launch results
 - Display ID detection results
 - scrcpy output and errors
+
+ADB prints the common protocol banner `Android Debug Bridge version 1.0.41`
+for multiple platform-tools releases. DX Manager displays the actual build
+from the following `Version ...` line, such as `37.0.0-14910828` for the
+bundled scrcpy ADB or `34.0.1-9979309` for the bundled legacy ADB.
 
 ### Environment Check
 
@@ -283,7 +315,7 @@ values normally do not need to be changed.
 Before sharing a saved log, verify that it does not contain private network
 information or other sensitive data.
 
-## 11. Language, Theme, and Reset
+## 12. Language, Theme, and Reset
 
 <p align="center">
   <img src="images/en/guide-settings-basic-en.png" width="900" alt="DX Manager General settings page">
@@ -299,13 +331,13 @@ connections, and keyboard options.
 
 Settings are stored in `config/settings.json` next to the application.
 
-## 12. Frequently Asked Questions
+## 13. Frequently Asked Questions
 
 For common questions and troubleshooting steps, see the
 [Frequently Asked Questions](FAQ_EN.md). A [Korean version](FAQ_KO.md) is
 also available.
 
-## 13. Removal
+## 14. Removal
 
 DX Manager does not use an installer.
 

@@ -122,6 +122,18 @@ foreach ($item in $requiredOutput) {
         throw "Required Release output is missing: $path"
     }
 }
+$requiredFiles = @(
+    "tools\adb-proxy\DXMAdbProxy.exe",
+    "tools\scrcpy\scrcpy.exe",
+    "tools\scrcpy\scrcpy-server",
+    "tools\scrcpy\adb.exe"
+)
+foreach ($item in $requiredFiles) {
+    $path = Join-Path $releaseRoot $item
+    if (!(Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Required Release file is missing: $path"
+    }
+}
 
 if ([string]::IsNullOrWhiteSpace($Version)) {
     $assemblyInfo = Get-Content -LiteralPath (Join-Path $repoRoot "DexManager\Properties\AssemblyInfo.cs")
@@ -154,6 +166,11 @@ New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
 foreach ($item in $requiredOutput) {
     Copy-Item -LiteralPath (Join-Path $releaseRoot $item) -Destination $packageRoot -Recurse -Force
 }
+
+# Release builds create a PDB for the managed ADB helper under tools. Keep
+# debugging symbols out of the public portable package.
+Get-ChildItem -LiteralPath $packageRoot -Filter "*.pdb" -File -Recurse |
+    Remove-Item -Force
 $packageReadme = Join-Path $packageRoot "README.md"
 Copy-Item -LiteralPath (Join-Path $repoRoot "docs\PACKAGE_README.md") `
     -Destination $packageReadme
@@ -180,17 +197,25 @@ $packageMarkdownFiles = @($packageReadme) + @(
     Get-ChildItem -LiteralPath $packageDocs -Filter "*.md" -File |
         ForEach-Object { $_.FullName }
 )
-$utf8WithoutBom = New-Object Text.UTF8Encoding($false)
+# A BOM keeps the Korean sections readable in the Windows 7 version of
+# Notepad while remaining valid UTF-8 for Markdown viewers.
+$packageUtf8 = New-Object Text.UTF8Encoding($true)
 foreach ($markdownPath in $packageMarkdownFiles) {
     $markdown = [IO.File]::ReadAllText($markdownPath)
     $markdown = $markdown.Replace(
         "DexManager/licenses/THIRD_PARTY_NOTICES.md",
         "licenses/THIRD_PARTY_NOTICES.md")
-    [IO.File]::WriteAllText($markdownPath, $markdown, $utf8WithoutBom)
+    [IO.File]::WriteAllText($markdownPath, $markdown, $packageUtf8)
 }
 
 Get-ChildItem -LiteralPath $packageRoot -Filter ".gitkeep" -File -Recurse |
     Remove-Item -Force
+
+$unexpectedPdb = Get-ChildItem -LiteralPath $packageRoot -Filter "*.pdb" `
+    -File -Recurse | Select-Object -First 1
+if ($unexpectedPdb) {
+    throw "Debug symbols must not be included in the package: $($unexpectedPdb.FullName)"
+}
 
 Compress-Archive -LiteralPath $packageRoot -DestinationPath $zipPath -CompressionLevel Optimal
 

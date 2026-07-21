@@ -125,13 +125,13 @@
   <data name="Settings.Keyboard" xml:space="preserve"><value>Keyboard</value></data>
   <data name="Settings.Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
   <data name="Settings.About" xml:space="preserve"><value>About</value></data>
-  <data name="Settings.AboutVersion" xml:space="preserve"><value>DX Manager v1.0.0</value></data>
+  <data name="Settings.AboutVersion" xml:space="preserve"><value>DX Manager v1.1.0</value></data>
   <data name="Settings.AboutSummary" xml:space="preserve"><value>An independently developed utility for managing Android device displays and input.</value></data>
   <data name="Settings.AboutDeveloper" xml:space="preserve"><value>Developer: maze</value></data>
   <data name="Settings.AboutCopyright" xml:space="preserve"><value>Copyright © 2026 maze</value></data>
   <data name="Settings.AboutLicense" xml:space="preserve"><value>DX Manager source code is licensed under the MIT License.</value></data>
   <data name="Settings.OpenProjectFailed" xml:space="preserve"><value>Could not open the project page: {0}</value></data>
-  <data name="Settings.AboutScrcpy" xml:space="preserve"><value>This program includes and uses scrcpy 4.0, open-source software distributed by Genymobile and Romain Vimont under the Apache License 2.0.</value></data>
+  <data name="Settings.AboutScrcpy" xml:space="preserve"><value>This program includes and uses scrcpy 4.1, open-source software distributed by Genymobile and Romain Vimont under the Apache License 2.0.</value></data>
   <data name="Settings.AboutComponents" xml:space="preserve"><value>Bundled FFmpeg libraries are distributed under LGPL v2.1 or later, SDL3 under the zlib license, and libusb under LGPL v2.1 or later. See the third-party notices for details.</value></data>
   <data name="Settings.AboutSamsung" xml:space="preserve"><value>This program works with Samsung DeX features on compatible Samsung devices, but is not produced, sponsored, endorsed, or distributed by Samsung Electronics. Samsung and Samsung DeX are trademarks of their respective owner.</value></data>
   <data name="Settings.OpenNotices" xml:space="preserve"><value>View third-party notices</value></data>
@@ -486,6 +486,7 @@
   <data name="Wireless.HostInvalid" xml:space="preserve"><value>The wireless ADB address is invalid.</value></data>
   <data name="Environment.AdbFile" xml:space="preserve"><value>ADB file</value></data>
   <data name="Environment.ScrcpyFile" xml:space="preserve"><value>Scrcpy file</value></data>
+  <data name="Environment.FileTransferHelper" xml:space="preserve"><value>File transfer helper</value></data>
   <data name="Environment.WindowsVersion" xml:space="preserve"><value>Windows version</value></data>
   <data name="Environment.PathSystem" xml:space="preserve"><value>The ADB folder is registered in the system PATH.</value></data>
   <data name="Environment.PathProcess" xml:space="preserve"><value>ADB is only in the current process PATH. System registration is optional.</value></data>
@@ -545,4 +546,43 @@
   <data name="Settings.GroupInput" xml:space="preserve"><value>Input correction</value></data>
   <data name="Log.Scrcpy.FlexDisplayUnsupported" xml:space="preserve"><value>The selected scrcpy version does not support --flex-display; the option was skipped.</value></data>
   <data name="Log.KeyMapping.RightShiftCompatibility" xml:space="preserve"><value>Enabled the SDL3 right Shift compatibility mapping.</value></data>
+  <data name="Common.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Settings.ManagedFileTransfer" xml:space="preserve"><value>Use DX Manager file transfer (Unicode-compatible)</value></data>
+  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>Uses a Windows 7/11-compatible path to preserve Korean and other Unicode file names. Turn this off to use scrcpy's original file-drop behavior. Changes apply to newly opened DeX and single-app windows.</value></data>
+  <data name="FileTransfer.WindowTitle" xml:space="preserve"><value>DX Manager · File transfer</value></data>
+  <data name="FileTransfer.Preparing" xml:space="preserve"><value>Preparing file transfer</value></data>
+  <data name="FileTransfer.Counts" xml:space="preserve"><value>Completed: {0} · Failed: {1} · Waiting: {2}</value></data>
+  <data name="FileTransfer.Size" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="FileTransfer.Queued" xml:space="preserve"><value>Waiting to transfer</value></data>
+  <data name="FileTransfer.Transferring" xml:space="preserve"><value>Transferring to the phone</value></data>
+  <data name="FileTransfer.TransferringPercent" xml:space="preserve"><value>Transferring to the phone · {0}%</value></data>
+  <data name="FileTransfer.Finalizing" xml:space="preserve"><value>Finalizing the file name</value></data>
+  <data name="FileTransfer.Completed" xml:space="preserve"><value>Transfer complete</value></data>
+  <data name="FileTransfer.SavedAs" xml:space="preserve"><value>Saved as: {0}</value></data>
+  <data name="FileTransfer.Canceled" xml:space="preserve"><value>Transfer canceled</value></data>
+  <data name="FileTransfer.Failed" xml:space="preserve"><value>Transfer failed</value></data>
+  <data name="FileTransfer.CanceledByUser" xml:space="preserve"><value>The file transfer was canceled.</value></data>
+  <data name="FileTransfer.ShuttingDown" xml:space="preserve"><value>DX Manager is shutting down.</value></data>
+  <data name="FileTransfer.ProtocolMismatch" xml:space="preserve"><value>The file transfer helper version does not match DX Manager.</value></data>
+  <data name="FileTransfer.AuthenticationFailed" xml:space="preserve"><value>The file transfer request could not be authenticated.</value></data>
+  <data name="FileTransfer.SourceUnavailable" xml:space="preserve"><value>The source file is no longer available.</value></data>
+  <data name="FileTransfer.TargetRejected" xml:space="preserve"><value>The requested phone folder is not supported.</value></data>
+  <data name="FileTransfer.SessionEnded" xml:space="preserve"><value>The scrcpy session has already ended.</value></data>
+  <data name="FileTransfer.DeviceMismatch" xml:space="preserve"><value>The target device changed, so the transfer was stopped.</value></data>
+  <data name="FileTransfer.InvalidFileName" xml:space="preserve"><value>The file name is invalid.</value></data>
+  <data name="FileTransfer.FileNameTooLong" xml:space="preserve"><value>The UTF-8 file name exceeds Android's {0}-byte limit.</value></data>
+  <data name="FileTransfer.PushFailed" xml:space="preserve"><value>ADB could not copy the file to the phone.</value></data>
+  <data name="FileTransfer.RenameFailed" xml:space="preserve"><value>The temporary file could not be renamed on the phone.</value></data>
+  <data name="FileTransfer.RenameResultMissing" xml:space="preserve"><value>The phone did not return the final file name.</value></data>
+  <data name="FileTransfer.RenameResultInvalid" xml:space="preserve"><value>The phone returned an invalid file-name result.</value></data>
+  <data name="Log.FileTransfer.ProxyMissing" xml:space="preserve"><value>The DX Manager file-transfer helper is missing. scrcpy's original file transfer will be used: {0}</value></data>
+  <data name="Log.FileTransfer.PipeAcceptFailed" xml:space="preserve"><value>File-transfer IPC connection failed: {0}</value></data>
+  <data name="Log.FileTransfer.PipeServerFailed" xml:space="preserve"><value>The file-transfer IPC server failed.</value></data>
+  <data name="Log.FileTransfer.RequestRejected" xml:space="preserve"><value>A file-transfer request was rejected: {0}</value></data>
+  <data name="Log.FileTransfer.Starting" xml:space="preserve"><value>File transfer started: {0} ({1}), device={2}</value></data>
+  <data name="Log.FileTransfer.TempCleanupFailed" xml:space="preserve"><value>Temporary phone file cleanup failed: {0}</value></data>
+  <data name="Log.FileTransfer.Completed" xml:space="preserve"><value>File transfer completed: {0} -&gt; {1}</value></data>
+  <data name="Log.FileTransfer.Failed" xml:space="preserve"><value>File transfer failed: {0}, reason={1}</value></data>
+  <data name="Log.FileTransfer.Canceled" xml:space="preserve"><value>File transfer canceled: {0}</value></data>
+  <data name="Log.FileTransfer.ProgressSubscriberFailed" xml:space="preserve"><value>File-transfer status update failed: {0}</value></data>
 </root>

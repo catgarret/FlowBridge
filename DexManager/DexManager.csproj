@@ -41,6 +41,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -63,6 +64,9 @@
     <Compile Include="Forms\EnvironmentCheckForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\FileTransferStatusForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\ThirdPartyLicensesForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -78,6 +82,7 @@
     <Compile Include="Models\DeviceState.cs" />
     <Compile Include="Models\DisplayInfo.cs" />
     <Compile Include="Models\EnvironmentCheckItem.cs" />
+    <Compile Include="Models\FileTransferProgress.cs" />
     <Compile Include="Models\ManagedDisplaySession.cs" />
     <Compile Include="Models\VirtualDisplayLease.cs" />
     <Compile Include="Models\ScrcpyAppInfo.cs" />
@@ -91,6 +96,7 @@
     <Compile Include="Services\CaptureService.cs" />
     <Compile Include="Services\DeviceMonitorService.cs" />
     <Compile Include="Services\EnvironmentCheckService.cs" />
+    <Compile Include="Services\FileTransferCoordinator.cs" />
     <Compile Include="Services\DexOrchestrator.cs" />
     <Compile Include="Services\PathService.cs" />
     <Compile Include="Services\HotkeyService.cs" />
@@ -108,7 +114,11 @@
     <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\WindowsVersionHelper.cs" />
     <Compile Include="Utils\AdminHelper.cs" />
+    <Compile Include="Utils\AdbVersionParser.cs" />
     <Compile Include="Utils\AppIconProvider.cs" />
+    <Compile Include="..\Shared\FileTransferProtocol.cs">
+      <Link>Shared\FileTransferProtocol.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Strings.resx" />
@@ -157,6 +167,13 @@
     <Content Include="tools\adb\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DexManager.AdbProxy\DexManager.AdbProxy.csproj">
+      <Project>{C247845E-870B-49D3-B5F0-5ABF16FB3DE2}</Project>
+      <Name>DexManager.AdbProxy</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

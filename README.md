@@ -71,6 +71,8 @@ distribution.
 - Korean/English key correction and Enter/Shift+Enter switching
 - Full scrcpy-window and selected-region capture
 - Optional capture transfer to the phone
+- Managed drag-and-drop file transfer with Unicode file-name preservation,
+  progress, and cancellation
 - Automatic hiding to the system tray after the configured idle period
 - Light, dark, and Windows-following themes
 - Automatic Korean/English UI selection
@@ -91,9 +93,13 @@ real Samsung DeX use. The project prioritizes:
 - 64-bit Windows 7 SP1, 8.1, 10, or 11 (32-bit Windows is not supported)
 - .NET Framework 4.6.2 or later
 - Windows 7/8.1: Universal CRT updates required by the bundled legacy ADB
-- A Samsung device that supports Samsung DeX
+- A Samsung Galaxy device that supports Samsung DeX
 - Android Developer options and USB debugging enabled
 - A data-capable USB cable for initial authorization
+
+The currently verified phone baseline is Android 16 with One UI 8.x. One UI
+7.x and earlier have not been confirmed to work reliably and may show a black
+DeX window. Samsung firmware and device-specific behavior may still differ.
 
 DX Manager intentionally targets .NET Framework 4.6.2 to preserve compatibility
 with Windows 7 SP1 and offline or closed-network PCs. Windows 7 SP1 does not
@@ -140,13 +146,29 @@ For complete instructions, see:
 
 The capture and exit shortcuts are configurable.
 
+## Drag-and-Drop File Transfer
+
+Drop one or more files onto a DeX or single-app scrcpy window to copy them to
+the phone's `Download` folder. DX Manager file transfer is enabled by default
+and uses a Windows 7/11-compatible path that preserves Korean and other
+Unicode file names. A small status window shows the current file,
+progress, completed/failed/waiting counts, and a cancel action. If the phone
+already contains the same name, DX Manager saves the new file as
+`name (1).ext`, `name (2).ext`, and so on.
+
+This feature can be disabled under **Settings > Paths / ADB > Programs and
+storage paths**. When disabled, newly opened DeX and single-app windows use
+scrcpy's original file-drop behavior. Existing windows keep the mode with
+which they were started, and scrcpy's original behavior may not preserve
+non-ASCII file names on every Windows environment.
+
 ## Keyboard Compatibility
 
 scrcpy 4.0 migrated its Windows client from SDL2 to SDL3. On tested systems,
 the physical right Shift key is detected by Windows but is not handled
 correctly by scrcpy 4.0. scrcpy 3.3.4 does not show this behavior.
 
-While an SDL3-based scrcpy window is active, DX Manager maps physical right
+For compatibility with SDL3-based scrcpy 4.x clients, DX Manager maps physical right
 Shift events to left Shift events. This preserves normal Shift typing, but an
 Android app cannot distinguish the two Shift sides during that session. The
 mapping is not applied to SDL2-based scrcpy versions or other Windows apps.
@@ -162,15 +184,16 @@ Open `DexManager.sln` and build the `Release` configuration. The output is
 written to `DexManager/bin/Release`. To create the public portable folder and
 ZIP, run `scripts/Package-Release.ps1`. It keeps the developer output in place
 and writes `dist/DX Manager` plus
-`dist/DX-Manager-v1.0.0-win-x64.zip`. See
+`dist/DX-Manager-v1.1.0-win-x64.zip`. See
 [DexManager/README.md](DexManager/README.md) for packaging notes.
 
 ## Project Status
 
-Version 1.0.0 has been tested with:
+Version 1.1.0 bundles scrcpy 4.1. The current verification baseline includes:
 
 - Windows 11: USB and wireless DeX, plus three simultaneous single-app windows
-- 64-bit Windows 7 SP1 with .NET Framework 4.6.2: core USB workflow and scrcpy 4.0
+- 64-bit Windows 7 SP1 with .NET Framework 4.6.2: core USB workflow
+- Android 16 / One UI 8.x on Samsung Galaxy devices that support DeX
 
 Hardware, Android versions, network policies, and Samsung firmware can affect
 behavior. Use **Settings > Diagnostics** and the session log when reporting a
@@ -259,6 +282,8 @@ DX Manager는 개인적으로 사용하던 Batch 스크립트, CMD 명령과 Aut
 - 한영키 보정과 Enter/Shift+Enter 전환
 - scrcpy 전체 화면 및 선택 영역 캡처
 - 캡처 결과의 휴대폰 전송
+- 한글·Unicode 파일명을 보존하고 진행 상태와 취소를 제공하는 드래그 앤 드롭
+  파일 전송
 - 설정 시간 동안 미입력 시 시스템 트레이 자동 숨김
 - 라이트, 다크 및 Windows 설정 연동 테마
 - Windows 언어에 따른 한국어·영어 UI 자동 선택
@@ -279,9 +304,13 @@ DX Manager의 모든 기능은 Samsung DeX를 실제로 사용하면서 겪은 �
 - 64비트 Windows 7 SP1, 8.1, 10 또는 11(32비트 Windows는 지원하지 않음)
 - .NET Framework 4.6.2 이상
 - Windows 7/8.1: 번들 레거시 ADB에 필요한 Universal CRT 업데이트
-- Samsung DeX를 지원하는 Samsung 기기
+- Samsung DeX를 지원하는 Samsung Galaxy 기기
 - Android 개발자 옵션 및 USB 디버깅 활성화
 - 최초 인증을 위한 데이터 통신 지원 USB 케이블
+
+현재 정상 동작을 확인한 휴대폰 기준은 Android 16 / One UI 8.x입니다. One UI
+7.x 이하에서는 원활한 동작을 확인하지 못했으며 DeX 창이 검게 표시될 수
+있습니다. Samsung 펌웨어와 기기별 동작 차이는 여전히 있을 수 있습니다.
 
 DX Manager는 Windows 7 SP1 및 오프라인·폐쇄망 PC와의 호환성을 유지하기
 위해 의도적으로 .NET Framework 4.6.2를 대상으로 빌드합니다. Windows 7
@@ -328,6 +357,20 @@ DLL, 라이선스 파일과 scrcpy 서버 파일이 모두 필요합니다.
 
 캡처 및 종료 단축키는 설정에서 변경할 수 있습니다.
 
+## 드래그 앤 드롭 파일 전송
+
+DeX 또는 단일창의 scrcpy 창에 파일을 놓으면 휴대폰의 `Download` 폴더로
+복사합니다. DX Manager 파일 전송은 기본값으로 켜져 있으며, Windows 7/11
+호환 경로로 한글을 포함한 Unicode 파일명을 보존합니다. 작은
+상태창에서 현재 파일, 진행률, 완료·실패·대기 수를 확인하고 전송을 취소할 수
+있습니다. 휴대폰에 같은 이름이 있으면 `이름 (1).확장자`,
+`이름 (2).확장자` 순서로 충돌을 피합니다.
+
+이 기능은 **설정 > 경로 / ADB > 프로그램 및 저장 경로**에서 끌 수 있습니다.
+끄면 새로 여는 DeX와 단일창부터 scrcpy의 순정 파일 드롭 기능을 사용합니다.
+이미 열린 창은 시작할 때 선택된 방식을 계속 사용하며, 순정 방식은 일부
+Windows 환경에서 비ASCII 파일명을 보존하지 못할 수 있습니다.
+
 ## 키보드 호환성
 
 scrcpy 4.0의 Windows 클라이언트는 SDL2에서 SDL3로 변경되었습니다. 확인한
@@ -335,7 +378,7 @@ scrcpy 4.0의 Windows 클라이언트는 SDL2에서 SDL3로 변경되었습니�
 해당 입력을 올바르게 처리하지 못했습니다. scrcpy 3.3.4에서는 같은 문제가
 발생하지 않았습니다.
 
-DX Manager는 SDL3 기반 scrcpy 창이 활성화된 동안 물리 오른쪽 Shift 입력을
+DX Manager는 SDL3 기반 scrcpy 4.x 창과의 호환을 위해 물리 오른쪽 Shift 입력을
 왼쪽 Shift 입력으로 변환합니다. 일반적인 Shift 타이핑은 유지되지만 해당
 세션에서 Android 앱은 좌우 Shift를 구분할 수 없습니다. SDL2 기반 scrcpy와
 다른 Windows 프로그램에는 이 변환을 적용하지 않습니다.
@@ -350,15 +393,16 @@ DX Manager는 SDL3 기반 scrcpy 창이 활성화된 동안 물리 오른쪽 Shi
 `DexManager.sln`을 열고 `Release` 구성으로 빌드합니다. 결과물은
 `DexManager/bin/Release`에 생성됩니다. 공개용 포터블 폴더와 ZIP은
 `scripts/Package-Release.ps1`을 실행해 만듭니다. 개발 빌드 폴더는 유지하고
-`dist/DX Manager`와 `dist/DX-Manager-v1.0.0-win-x64.zip`을 생성합니다. 배포 파일 구성은
+`dist/DX Manager`와 `dist/DX-Manager-v1.1.0-win-x64.zip`을 생성합니다. 배포 파일 구성은
 [DexManager/README.md](DexManager/README.md)를 참조하십시오.
 
 ## 프로젝트 상태
 
-버전 1.0.0은 다음 환경에서 확인했습니다.
+버전 1.1.0은 scrcpy 4.1을 포함합니다. 현재 확인 기준은 다음과 같습니다.
 
 - Windows 11: USB 및 무선 DeX, 단일창 3개 동시 실행
-- 64비트 Windows 7 SP1 및 .NET Framework 4.6.2: USB 핵심 기능과 scrcpy 4.0
+- 64비트 Windows 7 SP1 및 .NET Framework 4.6.2: USB 핵심 기능
+- Samsung DeX를 지원하는 Android 16 / One UI 8.x Galaxy 기기
 
 하드웨어, Android 버전, 네트워크 정책과 Samsung 펌웨어에 따라 동작이
 달라질 수 있습니다. 문제를 제보할 때는 **설정 > 진단**과 실행 세션

@@ -43,6 +43,15 @@ namespace DexManager.Services
                 results,
                 LocalizationService.Get("Environment.ScrcpyFile"),
                 _scrcpyService.ScrcpyPath);
+            AddFileCheck(
+                results,
+                LocalizationService.Get(
+                    "Environment.FileTransferHelper"),
+                Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "tools",
+                    "adb-proxy",
+                    "DXMAdbProxy.exe"));
             AddAdbVersionCheck(results);
 
             results.Add(new EnvironmentCheckItem
@@ -116,9 +125,10 @@ namespace DexManager.Services
             try
             {
                 var version = _adbService.GetVersion();
-                var firstLine = (version.StandardOutput ?? string.Empty)
-                    .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
-                    .FirstOrDefault();
+                var displayVersion = AdbVersionParser.GetDisplayVersion(
+                    version.StandardOutput,
+                    LocalizationService.Get(
+                        "Settings.NoVersionOutput"));
                 results.Add(new EnvironmentCheckItem
                 {
                     Name = LocalizationService.Get(
@@ -127,7 +137,7 @@ namespace DexManager.Services
                         ? EnvironmentCheckStatus.Passed
                         : EnvironmentCheckStatus.Failed,
                     Message = version.IsSuccess
-                        ? firstLine
+                        ? displayVersion
                         : version.StandardError
                 });
             }

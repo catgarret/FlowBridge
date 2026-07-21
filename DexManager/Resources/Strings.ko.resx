@@ -125,13 +125,13 @@
   <data name="Settings.Keyboard" xml:space="preserve"><value>키 입력</value></data>
   <data name="Settings.Diagnostics" xml:space="preserve"><value>진단</value></data>
   <data name="Settings.About" xml:space="preserve"><value>정보</value></data>
-  <data name="Settings.AboutVersion" xml:space="preserve"><value>DX Manager v1.0.0</value></data>
+  <data name="Settings.AboutVersion" xml:space="preserve"><value>DX Manager v1.1.0</value></data>
   <data name="Settings.AboutSummary" xml:space="preserve"><value>Android 장치의 화면과 입력을 관리하는 독립 유틸리티입니다.</value></data>
   <data name="Settings.AboutDeveloper" xml:space="preserve"><value>개발자: maze</value></data>
   <data name="Settings.AboutCopyright" xml:space="preserve"><value>Copyright © 2026 maze</value></data>
   <data name="Settings.AboutLicense" xml:space="preserve"><value>DX Manager 소스 코드는 MIT License로 배포됩니다.</value></data>
   <data name="Settings.OpenProjectFailed" xml:space="preserve"><value>프로젝트 페이지를 열지 못했습니다: {0}</value></data>
-  <data name="Settings.AboutScrcpy" xml:space="preserve"><value>이 프로그램은 scrcpy 4.0을 포함하고 사용합니다. scrcpy는 Genymobile과 Romain Vimont가 Apache License 2.0으로 배포하는 오픈소스 소프트웨어입니다.</value></data>
+  <data name="Settings.AboutScrcpy" xml:space="preserve"><value>이 프로그램은 scrcpy 4.1을 포함하고 사용합니다. scrcpy는 Genymobile과 Romain Vimont가 Apache License 2.0으로 배포하는 오픈소스 소프트웨어입니다.</value></data>
   <data name="Settings.AboutComponents" xml:space="preserve"><value>동봉된 FFmpeg 라이브러리는 LGPL v2.1 이상, SDL3는 zlib, libusb는 LGPL v2.1 이상에 따라 배포됩니다. 자세한 내용은 제3자 라이선스를 확인하십시오.</value></data>
   <data name="Settings.AboutSamsung" xml:space="preserve"><value>이 프로그램은 호환되는 Samsung 장치에서 Samsung DeX 기능과 함께 동작하지만 Samsung Electronics가 제작, 후원, 보증 또는 배포하는 제품이 아닙니다. Samsung 및 Samsung DeX는 각 권리자의 상표입니다.</value></data>
   <data name="Settings.OpenNotices" xml:space="preserve"><value>제3자 라이선스 보기</value></data>
@@ -486,6 +486,7 @@
   <data name="Wireless.HostInvalid" xml:space="preserve"><value>무선 ADB 주소 형식이 올바르지 않습니다.</value></data>
   <data name="Environment.AdbFile" xml:space="preserve"><value>ADB 파일</value></data>
   <data name="Environment.ScrcpyFile" xml:space="preserve"><value>Scrcpy 파일</value></data>
+  <data name="Environment.FileTransferHelper" xml:space="preserve"><value>파일 전송 보조 프로그램</value></data>
   <data name="Environment.WindowsVersion" xml:space="preserve"><value>Windows 버전</value></data>
   <data name="Environment.PathSystem" xml:space="preserve"><value>시스템 PATH에 ADB 폴더가 등록되어 있습니다.</value></data>
   <data name="Environment.PathProcess" xml:space="preserve"><value>현재 프로세스 PATH에만 있습니다. 시스템 등록은 선택 사항입니다.</value></data>
@@ -545,4 +546,43 @@
   <data name="Settings.GroupInput" xml:space="preserve"><value>입력 보정</value></data>
   <data name="Log.Scrcpy.FlexDisplayUnsupported" xml:space="preserve"><value>선택한 Scrcpy 버전이 --flex-display를 지원하지 않아 해당 옵션을 제외했습니다.</value></data>
   <data name="Log.KeyMapping.RightShiftCompatibility" xml:space="preserve"><value>SDL3용 오른쪽 Shift 호환 입력을 사용합니다.</value></data>
+  <data name="Common.Cancel" xml:space="preserve"><value>취소</value></data>
+  <data name="Settings.ManagedFileTransfer" xml:space="preserve"><value>DX Manager 파일 전송 사용 (한글/Unicode 호환)</value></data>
+  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>Windows 7/11 호환 경로로 한글 및 Unicode 파일명을 보존합니다. 끄면 scrcpy의 순정 파일 드롭 기능을 사용하며, 새로 여는 DeX·단일창부터 적용됩니다.</value></data>
+  <data name="FileTransfer.WindowTitle" xml:space="preserve"><value>DX Manager · 파일 전송</value></data>
+  <data name="FileTransfer.Preparing" xml:space="preserve"><value>파일 전송 준비 중</value></data>
+  <data name="FileTransfer.Counts" xml:space="preserve"><value>완료: {0} · 실패: {1} · 대기: {2}</value></data>
+  <data name="FileTransfer.Size" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="FileTransfer.Queued" xml:space="preserve"><value>전송 대기 중</value></data>
+  <data name="FileTransfer.Transferring" xml:space="preserve"><value>휴대폰으로 전송 중</value></data>
+  <data name="FileTransfer.TransferringPercent" xml:space="preserve"><value>휴대폰으로 전송 중 · {0}%</value></data>
+  <data name="FileTransfer.Finalizing" xml:space="preserve"><value>파일 이름 정리 중</value></data>
+  <data name="FileTransfer.Completed" xml:space="preserve"><value>전송 완료</value></data>
+  <data name="FileTransfer.SavedAs" xml:space="preserve"><value>저장된 이름: {0}</value></data>
+  <data name="FileTransfer.Canceled" xml:space="preserve"><value>전송 취소됨</value></data>
+  <data name="FileTransfer.Failed" xml:space="preserve"><value>전송 실패</value></data>
+  <data name="FileTransfer.CanceledByUser" xml:space="preserve"><value>파일 전송이 취소되었습니다.</value></data>
+  <data name="FileTransfer.ShuttingDown" xml:space="preserve"><value>DX Manager가 종료 중입니다.</value></data>
+  <data name="FileTransfer.ProtocolMismatch" xml:space="preserve"><value>파일 전송 도우미 버전이 DX Manager와 일치하지 않습니다.</value></data>
+  <data name="FileTransfer.AuthenticationFailed" xml:space="preserve"><value>파일 전송 요청을 인증하지 못했습니다.</value></data>
+  <data name="FileTransfer.SourceUnavailable" xml:space="preserve"><value>원본 파일을 더 이상 찾을 수 없습니다.</value></data>
+  <data name="FileTransfer.TargetRejected" xml:space="preserve"><value>요청한 휴대폰 폴더는 지원하지 않습니다.</value></data>
+  <data name="FileTransfer.SessionEnded" xml:space="preserve"><value>scrcpy 세션이 이미 종료되었습니다.</value></data>
+  <data name="FileTransfer.DeviceMismatch" xml:space="preserve"><value>대상 기기가 변경되어 전송을 중지했습니다.</value></data>
+  <data name="FileTransfer.InvalidFileName" xml:space="preserve"><value>파일 이름이 올바르지 않습니다.</value></data>
+  <data name="FileTransfer.FileNameTooLong" xml:space="preserve"><value>UTF-8 파일명이 Android의 {0}바이트 제한을 초과합니다.</value></data>
+  <data name="FileTransfer.PushFailed" xml:space="preserve"><value>ADB가 파일을 휴대폰으로 복사하지 못했습니다.</value></data>
+  <data name="FileTransfer.RenameFailed" xml:space="preserve"><value>휴대폰에서 임시 파일의 이름을 변경하지 못했습니다.</value></data>
+  <data name="FileTransfer.RenameResultMissing" xml:space="preserve"><value>휴대폰이 최종 파일 이름을 반환하지 않았습니다.</value></data>
+  <data name="FileTransfer.RenameResultInvalid" xml:space="preserve"><value>휴대폰이 잘못된 파일명 결과를 반환했습니다.</value></data>
+  <data name="Log.FileTransfer.ProxyMissing" xml:space="preserve"><value>DX Manager 파일 전송 도우미가 없어 scrcpy 순정 전송을 사용합니다: {0}</value></data>
+  <data name="Log.FileTransfer.PipeAcceptFailed" xml:space="preserve"><value>파일 전송 IPC 연결에 실패했습니다: {0}</value></data>
+  <data name="Log.FileTransfer.PipeServerFailed" xml:space="preserve"><value>파일 전송 IPC 서버에 오류가 발생했습니다.</value></data>
+  <data name="Log.FileTransfer.RequestRejected" xml:space="preserve"><value>파일 전송 요청을 거부했습니다: {0}</value></data>
+  <data name="Log.FileTransfer.Starting" xml:space="preserve"><value>파일 전송 시작: {0} ({1}), 기기={2}</value></data>
+  <data name="Log.FileTransfer.TempCleanupFailed" xml:space="preserve"><value>휴대폰 임시 파일 정리에 실패했습니다: {0}</value></data>
+  <data name="Log.FileTransfer.Completed" xml:space="preserve"><value>파일 전송 완료: {0} -&gt; {1}</value></data>
+  <data name="Log.FileTransfer.Failed" xml:space="preserve"><value>파일 전송 실패: {0}, 원인={1}</value></data>
+  <data name="Log.FileTransfer.Canceled" xml:space="preserve"><value>파일 전송 취소: {0}</value></data>
+  <data name="Log.FileTransfer.ProgressSubscriberFailed" xml:space="preserve"><value>파일 전송 상태 갱신에 실패했습니다: {0}</value></data>
 </root>

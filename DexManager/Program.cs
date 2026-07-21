@@ -75,6 +75,11 @@ namespace DexManager
                     settings.Timing.ProcessTimeoutMs,
                     processRunner,
                     logService);
+                var fileTransferCoordinator =
+                    new FileTransferCoordinator(
+                        adbPath,
+                        settings,
+                        logService);
                 var wirelessAdbService = new WirelessAdbService(
                     adbService,
                     settingsService,
@@ -90,6 +95,7 @@ namespace DexManager
                     processRunner,
                     adbService,
                     scrcpyLaunchCoordinator,
+                    fileTransferCoordinator,
                     logService);
                 var singleWindowService = new SingleWindowService(
                     scrcpyPath,
@@ -97,6 +103,7 @@ namespace DexManager
                     adbService,
                     scrcpyLaunchCoordinator,
                     scrcpyService.RuntimeInfo,
+                    fileTransferCoordinator,
                     logService);
                 var screenOffService = new ScreenOffService(
                     scrcpyPath,
@@ -174,6 +181,7 @@ namespace DexManager
                     autoStartService,
                     environmentCheckService,
                     keyMappingService,
+                    fileTransferCoordinator,
                     IsAutoRun(args)));
             }
             catch (Exception ex)
