@@ -119,6 +119,7 @@ namespace DexManager.Forms
         private SettingsForm _settingsForm;
         private EnvironmentCheckForm _environmentCheckForm;
         private FileTransferStatusForm _fileTransferStatusForm;
+        private long _lastFileTransferProgressSequence;
 
         public MainForm(
             SettingsService settingsService,
@@ -1462,6 +1463,9 @@ namespace DexManager.Forms
             RunOnUi(delegate
             {
                 if (_exitInProgress || IsDisposed) return;
+                if (e.Progress.Sequence <= _lastFileTransferProgressSequence)
+                    return;
+                _lastFileTransferProgressSequence = e.Progress.Sequence;
                 if (_fileTransferStatusForm == null ||
                     _fileTransferStatusForm.IsDisposed)
                 {

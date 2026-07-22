@@ -64,6 +64,17 @@ Do not copy `DXManager.exe` by itself. Keep the complete distribution,
 including the `tools` directory, scrcpy DLLs, `scrcpy-server`, and license
 files. Version 1.1.0 bundles scrcpy 4.1.
 
+> [!IMPORTANT]
+> Keep the phone connected and use **Stop DeX** or exit DX Manager normally.
+> If USB/Wi-Fi is disconnected first, Android may leave the simulated display
+> visible on the phone.
+
+To remove a display that remains on the phone, open **Developer options >
+Simulate secondary displays**, select any resolution once, open the same menu
+again, and then select **None**. Selecting **None** first may not clear a stale
+display. See [FAQ Q1](FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone)
+for screenshots.
+
 ## 3. DeX Mode
 
 Select **DeX** in the left navigation.
@@ -147,25 +158,38 @@ mode may provide better input compatibility.
 
 ## 5. Drag-and-Drop File Transfer
 
-Drop one or more files onto a running DeX or single-app scrcpy window to copy
-them to the phone's `Download` folder. DX Manager file transfer is enabled by
-default. It uses a Windows 7/11-compatible path to preserve Korean and other
-Unicode file names that scrcpy's original Windows file-drop path may not
-preserve.
+Drop one or more files, or a complete folder, onto a running DeX or single-app
+scrcpy window. DX Manager file transfer is enabled by default and uses a
+Windows 7 SP1 through 11-compatible path to preserve Korean, Japanese, and other Unicode
+names. The default phone destination is `/sdcard/Download/`; change it under
+**Settings > Paths / ADB > Programs and storage paths**. A changed destination
+applies to newly opened DeX and single-app windows. For safety, the destination
+must be below `/sdcard/` or `/storage/emulated/0/`.
 
-A small, non-modal status window follows the scrcpy window and shows the
-current file, transferred size or progress, and completed, failed, and waiting
-counts. Select **Cancel** to stop the active transfer and discard its temporary
-phone file. If the phone already contains the same name, DX Manager saves the
-new file as `name (1).ext`, `name (2).ext`, and so on instead of overwriting
-the existing file.
+When a folder is dropped, its top-level folder, subfolders, files, and empty
+folders are preserved. Junctions, symbolic links, and other reparse points are
+skipped to prevent following a folder outside the selected tree. A standalone
+APK drop keeps scrcpy's install behavior, while an APK contained in a dropped
+folder is copied as a regular file.
+
+The independent, movable status window initially opens beside the scrcpy
+window. It shows the active item and up to four waiting items, file size,
+elapsed time, and completed/failed/waiting counts. It intentionally does not
+show a percentage or ETA because reliable byte progress is not available on
+every supported Windows/ADB combination. Select **Cancel** to stop all active
+and waiting transfers for that scrcpy window and attempt to remove their
+temporary phone data. Cancel is disabled during the brief final commit step so
+an already completed move cannot be reported inconsistently.
+
+Existing phone files and folders are not overwritten. DX Manager uses
+`name (1).ext`, `name (2).ext`, or `folder (1)` when a name already exists.
 
 To use scrcpy's original file-drop behavior, open **Settings > Paths / ADB >
 Programs and storage paths** and turn off **Use DX Manager file transfer
 (Unicode-compatible)**. The setting is applied when a DeX or single-app window
 starts, so already open windows keep their current transfer mode. APK install
-drops and ADB commands unrelated to Download-file pushes continue to use
-scrcpy's normal behavior.
+drops and ADB commands unrelated to managed target-folder pushes continue to
+use scrcpy's normal behavior.
 
 ## 6. USB Connection
 
@@ -264,6 +288,25 @@ Android cannot distinguish the left and right Shift keys in that session.
 The default capture shortcut is `F8`, and the default exit shortcut is
 `Left Alt+F8`. To change one, select its field under **Settings > Keyboard**
 and press the desired key or key combination.
+
+### Useful scrcpy shortcuts
+
+These are scrcpy-window shortcuts, not Samsung DeX shortcuts. The examples
+below use left `Alt`, one of scrcpy's default shortcut modifiers.
+
+| Shortcut | Action |
+| --- | --- |
+| `Alt+F` or `F11` | Toggle fullscreen |
+| `Alt+G` | Resize the window to the video's 1:1 pixel size |
+| `Alt+P` | Press the phone's power button |
+| `Alt+O` | Turn the phone screen off (`O` is the letter O) |
+| `Alt+Shift+O` | Turn the phone screen on |
+| `Alt+V` | Synchronize the PC clipboard and paste |
+| `Ctrl+V` | Send Ctrl+V to the active Android app (app-dependent) |
+
+Other [official scrcpy 4.1 shortcuts](https://github.com/Genymobile/scrcpy/blob/v4.1/doc/shortcuts.md)
+may work, but some Android system shortcuts can do nothing or act on the
+phone's primary display instead of the simulated DeX display.
 
 ## 10. Automatic Hiding and System Tray
 

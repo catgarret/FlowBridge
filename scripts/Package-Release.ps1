@@ -123,10 +123,31 @@ foreach ($item in $requiredOutput) {
     }
 }
 $requiredFiles = @(
+    "ko\DXManager.resources.dll",
     "tools\adb-proxy\DXMAdbProxy.exe",
+    "tools\adb\legacy\adb.exe",
+    "tools\adb\legacy\AdbWinApi.dll",
+    "tools\adb\legacy\AdbWinUsbApi.dll",
+    "tools\adb\legacy\libwinpthread-1.dll",
     "tools\scrcpy\scrcpy.exe",
     "tools\scrcpy\scrcpy-server",
-    "tools\scrcpy\adb.exe"
+    "tools\scrcpy\adb.exe",
+    "tools\scrcpy\AdbWinApi.dll",
+    "tools\scrcpy\AdbWinUsbApi.dll",
+    "tools\scrcpy\SDL3.dll",
+    "tools\scrcpy\avcodec-62.dll",
+    "tools\scrcpy\avformat-62.dll",
+    "tools\scrcpy\avutil-60.dll",
+    "tools\scrcpy\swresample-6.dll",
+    "tools\scrcpy\libusb-1.0.dll",
+    "licenses\DX-Manager-MIT-LICENSE.txt",
+    "licenses\THIRD_PARTY_NOTICES.md",
+    "licenses\scrcpy-LICENSE.txt",
+    "licenses\LGPL-2.1-LICENSE.txt",
+    "licenses\MinGW-w64-winpthreads-LICENSE.txt",
+    "licenses\SDL3-LICENSE.txt",
+    "licenses\zlib-LICENSE.txt",
+    "licenses\dav1d-LICENSE.txt"
 )
 foreach ($item in $requiredFiles) {
     $path = Join-Path $releaseRoot $item
@@ -179,10 +200,10 @@ Copy-Item -LiteralPath (Join-Path $repoRoot "LICENSE") -Destination $packageRoot
 $packageDocs = Join-Path $packageRoot "docs"
 New-Item -ItemType Directory -Path $packageDocs -Force | Out-Null
 foreach ($document in @(
-    "USER_GUIDE_KO.md",
     "USER_GUIDE_EN.md",
-    "FAQ_KO.md",
-    "FAQ_EN.md"
+    "USER_GUIDE_KO.md",
+    "FAQ_EN.md",
+    "FAQ_KO.md"
 )) {
     Copy-Item -LiteralPath (Join-Path $repoRoot "docs\$document") -Destination $packageDocs
 }

@@ -1,6 +1,6 @@
 # DX Manager Frequently Asked Questions
 
-[한국어 Q&A](FAQ_KO.md) · [English user guide](USER_GUIDE_EN.md)
+[English user guide](USER_GUIDE_EN.md) · [한국어 Q&A](FAQ_KO.md)
 
 ## Q1. A small screen (secondary display) remains on the phone.
 
@@ -13,12 +13,12 @@ If the screen remains, remove it on the phone as follows:
 
 1. Open **Developer options**.
 2. Select **Simulate secondary displays**.
-3. Select any resolution.
-4. Open the menu again and turn off the selected item, or select **None**.
+3. Select any resolution once, even if **None** is already selected.
+4. Open **Simulate secondary displays** again and select **None**.
 
-On some One UI versions, you may need to select the same resolution again to
-turn it off. The remaining virtual screen disappears when the setting is
-disabled.
+Selecting **None** first may not clear a stale display. The resolution-then-None
+sequence forces Android to refresh the overlay setting, after which the
+remaining virtual screen disappears.
 
 <p align="center">
   <img src="images/en/simulate-secondary-display-en.png" width="45%" alt="Simulate secondary displays in Developer options">
@@ -166,7 +166,9 @@ or single-window start command. Its range is 0–60 seconds and the default is
 helper process to respond or create its window. A command that finishes
 normally does not wait for the full timeout. The advanced default normally
 does not need to be changed unless timeouts repeatedly occur on a slow PC or
-device.
+device. A managed drag-and-drop file transfer is not limited to this duration;
+large ADB pushes continue until they finish, fail, are canceled, or the session
+ends.
 
 ## Q13. What happens if USB is unexpectedly disconnected during use?
 
@@ -240,16 +242,28 @@ writable location where it can save settings, logs, and screenshots.
 
 ## Q17. How does drag-and-drop file transfer work, and can I disable it?
 
-Drop one or more files onto a running DeX or single-app scrcpy window. With the
-default DX Manager file transfer enabled, files are copied to the phone's
-`Download` folder through a Windows 7/11-compatible path that preserves Korean
-and other Unicode file names. A small status window displays
-the current file, progress, completed/failed/waiting counts, and a cancel
-button.
+Drop one or more files, or a complete folder, onto a running DeX or single-app
+scrcpy window. With the default DX Manager file transfer enabled, content is
+copied through a Windows 7 SP1 through 11-compatible path that preserves Korean, Japanese,
+and other Unicode names. The default destination is `/sdcard/Download/`; it can
+be changed under **Settings > Paths / ADB > Programs and storage paths**. The
+destination must be below `/sdcard/` or `/storage/emulated/0/`.
 
-Existing phone files are not overwritten. If the same name already exists,
-the new file is saved as `name (1).ext`, `name (2).ext`, and so on. Canceling a
-transfer also attempts to remove its temporary phone file.
+Folders keep their top-level folder, subfolders, files, and empty folders.
+Junctions, symbolic links, and other reparse points are skipped. A standalone
+APK keeps scrcpy's install behavior, while an APK inside a dropped folder is
+copied as a regular file.
+
+The independent, movable status window shows the active item and up to four
+waiting items, file size, elapsed time, completed/failed/waiting counts, and a
+cancel button. It does not show a percentage or ETA because reliable byte
+progress is not available on every supported Windows/ADB combination.
+
+Existing phone files and folders are not overwritten. If the same name already
+exists, DX Manager uses `name (1).ext`, `name (2).ext`, or `folder (1)`.
+Canceling stops the active and waiting transfers for that scrcpy window and
+also attempts to remove their temporary phone data. The button is briefly
+disabled while the final name is committed.
 
 To use scrcpy's original file-drop behavior, turn off **Use DX Manager file
 transfer (Unicode-compatible)** under **Settings > Paths / ADB > Programs and

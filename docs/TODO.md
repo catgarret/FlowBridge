@@ -22,11 +22,12 @@
 - [x] 번들 구성요소 버전 확인과 제3자 라이선스 원문/고지 포함
 - [x] 한국어 Q&A 초안 사용자 검토 및 수정
 - [x] 한국어 Q&A 승인 후 독립 영문 FAQ로 번역
-- [ ] Windows 7/11 v1.1.0 최종 회귀 테스트
+- [ ] Windows 7 SP1~11 v1.1.0 최종 회귀 테스트
   - [x] Windows 11 실제 기기 관리형 Unicode 단일 파일 전송과 proxy 전달
   - [x] x64 Release 빌드 및 v1.1.0 ZIP 구성 검증
-  - [ ] Windows 7/11 Scrcpy 4.1 DeX/단일창 실행과 종료 UI 회귀
-  - [ ] 한글·Unicode 복수 파일, 충돌 이름과 취소 UI 확인
+  - [ ] Windows 7 SP1~11 Scrcpy 4.1 DeX/단일창 실행과 종료 UI 회귀
+  - [ ] Windows 7 SP1~11 한글·Unicode 복수 파일과 폴더 전체, 빈 폴더 확인
+  - [ ] 사용자 대상 경로, 파일·폴더 충돌 이름, 취소와 독립 상태창 확인
   - [ ] 관리형 전송 끄기 후 새 창에서 Scrcpy 순정 동작 복귀
   - [ ] 설정·진단의 실제 ADB `Version ...` 값 표시 확인
 - [x] GitHub 첫 공개 Release 게시 및 저장소 public 전환

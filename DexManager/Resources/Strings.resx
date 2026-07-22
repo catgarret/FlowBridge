@@ -412,7 +412,7 @@
   <data name="Settings.ManualAdbPath" xml:space="preserve"><value>Manual ADB path</value></data>
   <data name="Settings.ScrcpyPath" xml:space="preserve"><value>Scrcpy executable</value></data>
   <data name="Settings.ScreenshotFolder" xml:space="preserve"><value>PC screenshot folder</value></data>
-  <data name="Settings.DeviceFolder" xml:space="preserve"><value>Phone destination folder</value></data>
+  <data name="Settings.DeviceFolder" xml:space="preserve"><value>Capture destination on phone</value></data>
   <data name="Settings.LogFolder" xml:space="preserve"><value>Log folder</value></data>
   <data name="Settings.Usb" xml:space="preserve"><value>Use USB connection</value></data>
   <data name="Settings.Wireless" xml:space="preserve"><value>Use wireless ADB</value></data>
@@ -548,7 +548,9 @@
   <data name="Log.KeyMapping.RightShiftCompatibility" xml:space="preserve"><value>Enabled the SDL3 right Shift compatibility mapping.</value></data>
   <data name="Common.Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Settings.ManagedFileTransfer" xml:space="preserve"><value>Use DX Manager file transfer (Unicode-compatible)</value></data>
-  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>Uses a Windows 7/11-compatible path to preserve Korean and other Unicode file names. Turn this off to use scrcpy's original file-drop behavior. Changes apply to newly opened DeX and single-app windows.</value></data>
+  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>Preserves folders plus Korean and other Unicode names on Windows 7/11. Turn this off to use scrcpy's original file-drop behavior. Changes apply to newly opened DeX and single-app windows.</value></data>
+  <data name="Settings.FileTransferTargetFolder" xml:space="preserve"><value>Dropped-item destination on phone</value></data>
+  <data name="Settings.FileTransferTargetFolderInvalid" xml:space="preserve"><value>Enter a folder below /sdcard/ or /storage/emulated/0/. The path cannot contain parent-directory segments, control characters, or names longer than Android's 255-byte UTF-8 limit.</value></data>
   <data name="FileTransfer.WindowTitle" xml:space="preserve"><value>DX Manager · File transfer</value></data>
   <data name="FileTransfer.Preparing" xml:space="preserve"><value>Preparing file transfer</value></data>
   <data name="FileTransfer.Counts" xml:space="preserve"><value>Completed: {0} · Failed: {1} · Waiting: {2}</value></data>
@@ -556,8 +558,10 @@
   <data name="FileTransfer.Queued" xml:space="preserve"><value>Waiting to transfer</value></data>
   <data name="FileTransfer.Transferring" xml:space="preserve"><value>Transferring to the phone</value></data>
   <data name="FileTransfer.TransferringPercent" xml:space="preserve"><value>Transferring to the phone · {0}%</value></data>
-  <data name="FileTransfer.Finalizing" xml:space="preserve"><value>Finalizing the file name</value></data>
+  <data name="FileTransfer.Finalizing" xml:space="preserve"><value>Saving on the phone</value></data>
   <data name="FileTransfer.Completed" xml:space="preserve"><value>Transfer complete</value></data>
+  <data name="FileTransfer.CompletedSummary" xml:space="preserve"><value>Transfer complete · {0} item(s) sent</value></data>
+  <data name="FileTransfer.Detail" xml:space="preserve"><value>{0} · Elapsed {1}</value></data>
   <data name="FileTransfer.SavedAs" xml:space="preserve"><value>Saved as: {0}</value></data>
   <data name="FileTransfer.Canceled" xml:space="preserve"><value>Transfer canceled</value></data>
   <data name="FileTransfer.Failed" xml:space="preserve"><value>Transfer failed</value></data>
@@ -565,7 +569,7 @@
   <data name="FileTransfer.ShuttingDown" xml:space="preserve"><value>DX Manager is shutting down.</value></data>
   <data name="FileTransfer.ProtocolMismatch" xml:space="preserve"><value>The file transfer helper version does not match DX Manager.</value></data>
   <data name="FileTransfer.AuthenticationFailed" xml:space="preserve"><value>The file transfer request could not be authenticated.</value></data>
-  <data name="FileTransfer.SourceUnavailable" xml:space="preserve"><value>The source file is no longer available.</value></data>
+  <data name="FileTransfer.SourceUnavailable" xml:space="preserve"><value>The source file or folder is no longer available.</value></data>
   <data name="FileTransfer.TargetRejected" xml:space="preserve"><value>The requested phone folder is not supported.</value></data>
   <data name="FileTransfer.SessionEnded" xml:space="preserve"><value>The scrcpy session has already ended.</value></data>
   <data name="FileTransfer.DeviceMismatch" xml:space="preserve"><value>The target device changed, so the transfer was stopped.</value></data>
@@ -575,14 +579,21 @@
   <data name="FileTransfer.RenameFailed" xml:space="preserve"><value>The temporary file could not be renamed on the phone.</value></data>
   <data name="FileTransfer.RenameResultMissing" xml:space="preserve"><value>The phone did not return the final file name.</value></data>
   <data name="FileTransfer.RenameResultInvalid" xml:space="preserve"><value>The phone returned an invalid file-name result.</value></data>
+  <data name="FileTransfer.ReparsePointUnsupported" xml:space="preserve"><value>A shortcut, junction, or symbolic-link folder cannot be transferred.</value></data>
+  <data name="FileTransfer.FolderCreateFailed" xml:space="preserve"><value>The destination folder could not be prepared on the phone.</value></data>
+  <data name="FileTransfer.FolderFinalizeFailed" xml:space="preserve"><value>The completed folder could not be saved under its final name.</value></data>
   <data name="Log.FileTransfer.ProxyMissing" xml:space="preserve"><value>The DX Manager file-transfer helper is missing. scrcpy's original file transfer will be used: {0}</value></data>
   <data name="Log.FileTransfer.PipeAcceptFailed" xml:space="preserve"><value>File-transfer IPC connection failed: {0}</value></data>
   <data name="Log.FileTransfer.PipeServerFailed" xml:space="preserve"><value>The file-transfer IPC server failed.</value></data>
   <data name="Log.FileTransfer.RequestRejected" xml:space="preserve"><value>A file-transfer request was rejected: {0}</value></data>
   <data name="Log.FileTransfer.Starting" xml:space="preserve"><value>File transfer started: {0} ({1}), device={2}</value></data>
   <data name="Log.FileTransfer.TempCleanupFailed" xml:space="preserve"><value>Temporary phone file cleanup failed: {0}</value></data>
+  <data name="Log.FileTransfer.TargetPrepareFailed" xml:space="preserve"><value>Could not prepare the phone transfer folder {0}: {1}</value></data>
   <data name="Log.FileTransfer.Completed" xml:space="preserve"><value>File transfer completed: {0} -&gt; {1}</value></data>
   <data name="Log.FileTransfer.Failed" xml:space="preserve"><value>File transfer failed: {0}, reason={1}</value></data>
   <data name="Log.FileTransfer.Canceled" xml:space="preserve"><value>File transfer canceled: {0}</value></data>
   <data name="Log.FileTransfer.ProgressSubscriberFailed" xml:space="preserve"><value>File-transfer status update failed: {0}</value></data>
+  <data name="Log.FileTransfer.ReparseSkipped" xml:space="preserve"><value>Skipped a shortcut, junction, or symbolic link while transferring a folder: {0}</value></data>
+  <data name="Log.FileTransfer.CommitRecovered" xml:space="preserve"><value>Recovered the final file-transfer result after the ADB response was interrupted: {0}</value></data>
+  <data name="Log.FileTransfer.CommitRecoveryFailed" xml:space="preserve"><value>Could not verify an interrupted final file-transfer result: {0}</value></data>
 </root>

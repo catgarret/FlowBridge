@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DexManager.Models;
@@ -51,6 +52,7 @@ namespace DexManager.Forms
         private CheckBox _autoHideBox;
         private CheckBox _pushCaptureBox;
         private CheckBox _managedFileTransferBox;
+        private ThemedTextControl _fileTransferTargetFolderBox;
         private CheckBox _resetDisplayOnStopBox;
         private CheckBox _disableStayAwakeBox;
         private CheckBox _autoStartDexBox;
@@ -310,6 +312,11 @@ namespace DexManager.Forms
                 paths,
                 LocalizationService.Get(
                     "Settings.ManagedFileTransfer"));
+            _fileTransferTargetFolderBox = AddText(
+                paths,
+                LocalizationService.Get(
+                    "Settings.FileTransferTargetFolder"));
+            _fileTransferTargetFolderBox.UseMiddleEllipsis = true;
             AddRow(
                 paths,
                 string.Empty,
@@ -774,6 +781,8 @@ namespace DexManager.Forms
             _pushCaptureBox.Checked = _settings.Features.PushCaptureToDevice;
             _managedFileTransferBox.Checked =
                 _settings.Features.ManagedFileTransferEnabled;
+            _fileTransferTargetFolderBox.Text =
+                _settings.Paths.FileTransferTargetFolder;
 
             _deviceMonitorIntervalBox.Value = MillisecondsToSeconds(
                 _settings.Timing.DeviceMonitorIntervalMs,
@@ -970,6 +979,9 @@ namespace DexManager.Forms
             settings.Paths.ScreenshotFolder = ToConfiguredPath(
                 _screenshotFolderBox.Text);
             settings.Paths.DeviceScreenshotFolder = _deviceScreenshotFolderBox.Text.Trim();
+            settings.Paths.FileTransferTargetFolder =
+                NormalizeFileTransferTargetFolder(
+                    _fileTransferTargetFolderBox.Text);
             settings.Paths.LogFolder = ToConfiguredPath(
                 _logFolderBox.Text);
 
@@ -1117,6 +1129,51 @@ namespace DexManager.Forms
         {
             if (_manualAdbPanel != null)
                 _manualAdbPanel.Enabled = _manualAdbBox != null && _manualAdbBox.Checked;
+        }
+
+        private static string NormalizeFileTransferTargetFolder(string value)
+        {
+            var normalized = (value ?? string.Empty)
+                .Trim()
+                .Replace('\\', '/');
+            while (normalized.Contains("//"))
+                normalized = normalized.Replace("//", "/");
+            normalized = normalized.TrimEnd('/');
+
+            var validRoot = normalized.StartsWith(
+                    "/sdcard/",
+                    StringComparison.Ordinal) ||
+                normalized.StartsWith(
+                    "/storage/emulated/0/",
+                    StringComparison.Ordinal);
+            var components = normalized.Split('/');
+            var validComponents = true;
+            foreach (var component in components)
+            {
+                if (string.Equals(component, ".", StringComparison.Ordinal) ||
+                    string.Equals(component, "..", StringComparison.Ordinal) ||
+                    Encoding.UTF8.GetByteCount(component) > 255)
+                {
+                    validComponents = false;
+                    break;
+                }
+            }
+            var containsControlCharacter = false;
+            foreach (var character in normalized)
+            {
+                if (!char.IsControl(character)) continue;
+                containsControlCharacter = true;
+                break;
+            }
+            if (!validRoot || !validComponents ||
+                containsControlCharacter ||
+                normalized.IndexOf('"') >= 0)
+            {
+                throw new InvalidOperationException(
+                    LocalizationService.Get(
+                        "Settings.FileTransferTargetFolderInvalid"));
+            }
+            return normalized + "/";
         }
 
         private void UpdateWirelessControls()

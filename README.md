@@ -71,8 +71,8 @@ distribution.
 - Korean/English key correction and Enter/Shift+Enter switching
 - Full scrcpy-window and selected-region capture
 - Optional capture transfer to the phone
-- Managed drag-and-drop file transfer with Unicode file-name preservation,
-  progress, and cancellation
+- Managed drag-and-drop file and folder transfer with Unicode-name
+  preservation, actual-stage status without estimated progress, and cancellation
 - Automatic hiding to the system tray after the configured idle period
 - Light, dark, and Windows-following themes
 - Automatic Korean/English UI selection
@@ -123,15 +123,30 @@ network policies may block the connection.
 4. Run `DXManager.exe`.
 5. Wait for the connected-device status, then select **Start DeX**.
 
+> [!IMPORTANT]
+> Keep the phone connected and use **Stop DeX** or exit DX Manager normally.
+> If USB/Wi-Fi is disconnected first, Android may leave the simulated display
+> visible on the phone.
+
+To remove a display that remains on the phone:
+
+1. Open **Developer options > Simulate secondary displays**.
+2. Select any resolution once.
+3. Open **Simulate secondary displays** again.
+4. Select **None**. Selecting **None** first may not clear a stale display.
+
+See the [English FAQ](docs/FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone)
+for screenshots.
+
 Do not copy only `DXManager.exe`. The adjacent `tools`, DLL, license, and
 scrcpy server files are required.
 
 For complete instructions, see:
 
-- [한국어 사용 설명서](docs/USER_GUIDE_KO.md)
 - [English user guide](docs/USER_GUIDE_EN.md)
-- [한국어 자주 묻는 질문](docs/FAQ_KO.md)
+- [한국어 사용 설명서](docs/USER_GUIDE_KO.md)
 - [English FAQ](docs/FAQ_EN.md)
+- [한국어 자주 묻는 질문](docs/FAQ_KO.md)
 
 ## Default Shortcuts
 
@@ -146,15 +161,44 @@ For complete instructions, see:
 
 The capture and exit shortcuts are configurable.
 
+## Useful scrcpy Shortcuts
+
+These are scrcpy-window shortcuts, not Samsung DeX shortcuts. The examples
+below use left `Alt`, one of scrcpy's default shortcut modifiers.
+
+| Shortcut | Action |
+| --- | --- |
+| `Alt+F` or `F11` | Toggle fullscreen |
+| `Alt+G` | Resize the window to the video's 1:1 pixel size |
+| `Alt+P` | Press the phone's power button |
+| `Alt+O` | Turn the phone screen off (`O` is the letter O) |
+| `Alt+Shift+O` | Turn the phone screen on |
+| `Alt+V` | Synchronize the PC clipboard and paste |
+| `Ctrl+V` | Send Ctrl+V to the active Android app (app-dependent) |
+
+Other [official scrcpy 4.1 shortcuts](https://github.com/Genymobile/scrcpy/blob/v4.1/doc/shortcuts.md)
+may work, but some Android system shortcuts can do nothing or act on the
+phone's primary display instead of the simulated DeX display.
+
 ## Drag-and-Drop File Transfer
 
-Drop one or more files onto a DeX or single-app scrcpy window to copy them to
-the phone's `Download` folder. DX Manager file transfer is enabled by default
-and uses a Windows 7/11-compatible path that preserves Korean and other
-Unicode file names. A small status window shows the current file,
-progress, completed/failed/waiting counts, and a cancel action. If the phone
-already contains the same name, DX Manager saves the new file as
-`name (1).ext`, `name (2).ext`, and so on.
+Drop files or complete folders onto a DeX or single-app scrcpy window. DX
+Manager file transfer is enabled by default and uses a Windows 7 SP1 through 11-compatible
+path that preserves Korean, Japanese, and other Unicode names. The default
+destination is `/sdcard/Download/`, and it can be changed under **Settings >
+Paths / ADB > Programs and storage paths**. The destination must be below
+`/sdcard/` or `/storage/emulated/0/`.
+
+The movable status window shows the active item and up to four waiting items,
+file size, elapsed time, and completed/failed/waiting counts. It deliberately
+does not show a percentage or ETA because ADB does not report reliable byte
+progress on every supported Windows/ADB combination. If the phone already
+contains the same name, DX Manager uses `name (1).ext`, `name (2).ext`, or
+`folder (1)` for a complete folder.
+
+**Cancel** stops the active and waiting transfers for that scrcpy window and
+attempts to remove their temporary phone data. It is briefly disabled while
+the final name is committed.
 
 This feature can be disabled under **Settings > Paths / ADB > Programs and
 storage paths**. When disabled, newly opened DeX and single-app windows use
@@ -228,6 +272,14 @@ DX Manager's original source code is licensed under the
 under their own licenses. See
 [THIRD_PARTY_NOTICES.md](DexManager/licenses/THIRD_PARTY_NOTICES.md).
 
+## Developer and Project
+
+- Developer: [maze](https://github.com/maze-mei)
+- GitHub: [maze-mei/DX-Manager](https://github.com/maze-mei/DX-Manager)
+- Copyright © 2026 maze
+
+DX Manager is an independently developed personal project.
+
 ---
 
 <a id="korean"></a>
@@ -282,8 +334,8 @@ DX Manager는 개인적으로 사용하던 Batch 스크립트, CMD 명령과 Aut
 - 한영키 보정과 Enter/Shift+Enter 전환
 - scrcpy 전체 화면 및 선택 영역 캡처
 - 캡처 결과의 휴대폰 전송
-- 한글·Unicode 파일명을 보존하고 진행 상태와 취소를 제공하는 드래그 앤 드롭
-  파일 전송
+- 한글·Unicode 이름을 보존하고 추정 진행률 없이 실제 단계와 취소를 제공하는 파일·폴더
+  드래그 앤 드롭 전송
 - 설정 시간 동안 미입력 시 시스템 트레이 자동 숨김
 - 라이트, 다크 및 Windows 설정 연동 테마
 - Windows 언어에 따른 한국어·영어 UI 자동 선택
@@ -334,15 +386,31 @@ DX Manager 빌드가 실행됩니다.
 4. `DXManager.exe`를 실행합니다.
 5. 장치 연결 상태가 표시되면 **DeX 시작**을 선택합니다.
 
+> [!IMPORTANT]
+> 휴대폰을 연결한 상태에서 **DeX 중지**를 누르거나 DX Manager를 정상
+> 종료하십시오. USB 또는 무선 연결을 먼저 끊으면 Android의 가상 화면이
+> 휴대폰에 남을 수 있습니다.
+
+휴대폰에 남은 가상 화면은 다음 순서로 제거합니다.
+
+1. **개발자 옵션 > 보조 디스플레이 시뮬레이션**을 엽니다.
+2. 아무 해상도나 한 번 선택합니다.
+3. **보조 디스플레이 시뮬레이션**을 다시 엽니다.
+4. **없음**을 선택합니다. 처음부터 **없음**만 선택하면 남은 화면이 지워지지
+   않을 수 있습니다.
+
+화면을 포함한 설명은 [한국어 FAQ](docs/FAQ_KO.md#q1-휴대폰에-작은-화면보조-디스플레이이-남아-있습니다)를
+참조하십시오.
+
 `DXManager.exe`만 따로 복사하면 안 됩니다. 함께 제공되는 `tools` 폴더,
 DLL, 라이선스 파일과 scrcpy 서버 파일이 모두 필요합니다.
 
 자세한 사용법은 다음 문서를 참조하십시오.
 
-- [한국어 사용 설명서](docs/USER_GUIDE_KO.md)
 - [English user guide](docs/USER_GUIDE_EN.md)
-- [한국어 자주 묻는 질문](docs/FAQ_KO.md)
+- [한국어 사용 설명서](docs/USER_GUIDE_KO.md)
 - [English FAQ](docs/FAQ_EN.md)
+- [한국어 자주 묻는 질문](docs/FAQ_KO.md)
 
 ## 기본 단축키
 
@@ -357,14 +425,43 @@ DLL, 라이선스 파일과 scrcpy 서버 파일이 모두 필요합니다.
 
 캡처 및 종료 단축키는 설정에서 변경할 수 있습니다.
 
+## 자주 사용하는 scrcpy 단축키
+
+다음은 Samsung DeX 자체 단축키가 아니라 scrcpy 창 단축키입니다. 아래 예시는
+scrcpy의 기본 단축키 보조 키 중 하나인 왼쪽 `Alt`를 사용합니다.
+
+| 단축키 | 동작 |
+| --- | --- |
+| `Alt+F` 또는 `F11` | 전체 화면 전환 |
+| `Alt+G` | 현재 영상의 1:1 픽셀 크기에 맞춰 창 크기 조정 |
+| `Alt+P` | 휴대폰 전원 버튼 누르기 |
+| `Alt+O` | 휴대폰 화면 끄기 (`O`는 숫자 0이 아닌 영문자 O) |
+| `Alt+Shift+O` | 휴대폰 화면 켜기 |
+| `Alt+V` | PC 클립보드를 동기화하고 붙여넣기 |
+| `Ctrl+V` | 활성 Android 앱에 Ctrl+V 전달(앱에 따라 동작) |
+
+다른 [scrcpy 4.1 공식 단축키](https://github.com/Genymobile/scrcpy/blob/v4.1/doc/shortcuts.md)도
+사용할 수 있지만, 일부 Android 시스템 단축키는 가상 DeX 화면에서 동작하지
+않거나 휴대폰의 기본 화면에서 실행될 수 있습니다.
+
 ## 드래그 앤 드롭 파일 전송
 
-DeX 또는 단일창의 scrcpy 창에 파일을 놓으면 휴대폰의 `Download` 폴더로
-복사합니다. DX Manager 파일 전송은 기본값으로 켜져 있으며, Windows 7/11
-호환 경로로 한글을 포함한 Unicode 파일명을 보존합니다. 작은
-상태창에서 현재 파일, 진행률, 완료·실패·대기 수를 확인하고 전송을 취소할 수
-있습니다. 휴대폰에 같은 이름이 있으면 `이름 (1).확장자`,
-`이름 (2).확장자` 순서로 충돌을 피합니다.
+DeX 또는 단일창의 scrcpy 창에 파일이나 폴더 전체를 놓을 수 있습니다. DX
+Manager 파일 전송은 기본값으로 켜져 있으며, Windows 7 SP1부터 11까지 호환되는 경로로 한글,
+일본어 등 Unicode 이름과 폴더 구조를 보존합니다. 기본 저장 위치는
+`/sdcard/Download/`이며 **설정 > 경로 / ADB > 프로그램 및 저장 경로**에서
+변경할 수 있습니다. 저장 위치는 `/sdcard/` 또는 `/storage/emulated/0/` 아래
+폴더만 지정할 수 있습니다.
+
+독립적으로 이동할 수 있는 작은 상태창에는 현재 전송 항목과 다음 대기 항목
+4개, 파일 크기, 경과 시간 및 완료·실패·대기 수가 표시됩니다. 지원하는 모든
+Windows와 ADB 조합에서 정확한 전송 바이트를 얻을 수 없으므로 오해를 주는
+진행률과 남은 시간은 표시하지 않습니다. 같은 이름이 있으면
+`이름 (1).확장자`, `이름 (2).확장자` 또는 폴더 전체를 `폴더 (1)` 이름으로 저장합니다.
+
+**취소**를 누르면 해당 scrcpy 창의 진행 중·대기 중 전송을 모두 중단하고 임시
+데이터를 정리하도록 시도합니다. 최종 이름을 확정하는 짧은 동안에는 버튼이
+비활성화됩니다.
 
 이 기능은 **설정 > 경로 / ADB > 프로그램 및 저장 경로**에서 끌 수 있습니다.
 끄면 새로 여는 DeX와 단일창부터 scrcpy의 순정 파일 드롭 기능을 사용합니다.

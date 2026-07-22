@@ -155,6 +155,7 @@ namespace DexManager.Services
                 "--serial", "--select-usb", "--select-tcpip",
                 "--tcpip",
                 "--display-id", "--new-display",
+                "--push-target",
                 "--no-window", "--no-video",
                 "--no-video-playback", "--no-playback",
                 "--no-cleanup", "--kill-adb-on-close", "--otg",
@@ -347,6 +348,19 @@ namespace DexManager.Services
             int displayId,
             string serial)
         {
+            return BuildArguments(
+                settings,
+                displayId,
+                serial,
+                _fileTransferCoordinator.GetScrcpyPushTarget());
+        }
+
+        private string BuildArguments(
+            ScrcpySettings settings,
+            int displayId,
+            string serial,
+            string pushTarget)
+        {
             if (settings == null) throw new ArgumentNullException("settings");
             ValidateAdditionalArguments(settings.AdditionalArguments);
 
@@ -381,6 +395,8 @@ namespace DexManager.Services
                 arguments.Add("-S");
                 arguments.Add("--no-power-on");
             }
+            arguments.Add("--push-target");
+            arguments.Add(Quote(pushTarget));
 
             if (!string.IsNullOrWhiteSpace(settings.StartAppPackage))
             {
@@ -407,6 +423,7 @@ namespace DexManager.Services
                 if (equalsIndex > 0)
                     option = option.Substring(0, equalsIndex);
                 if (ReservedAdditionalOptions.Contains(option) ||
+                    IsReservedLongOptionAbbreviation(option) ||
                     ContainsReservedShortOption(option))
                 {
                     throw new InvalidOperationException(
@@ -415,6 +432,30 @@ namespace DexManager.Services
                             token));
                 }
             }
+        }
+
+        private static bool IsReservedLongOptionAbbreviation(string option)
+        {
+            if (string.IsNullOrEmpty(option) ||
+                !option.StartsWith("--", StringComparison.Ordinal) ||
+                option.Length <= 2)
+            {
+                return false;
+            }
+
+            foreach (var reserved in ReservedAdditionalOptions)
+            {
+                if (!reserved.StartsWith("--", StringComparison.Ordinal))
+                    continue;
+                if (reserved.Length > option.Length &&
+                    reserved.StartsWith(
+                        option,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static bool ContainsReservedShortOption(string option)
@@ -546,14 +587,18 @@ namespace DexManager.Services
                                     "Error.Scrcpy.FileNotFound"),
                                 _scrcpyPath);
 
+                        var pushTarget = _fileTransferCoordinator
+                            .PrepareScrcpyPushTarget(serial);
                         var arguments = BuildArguments(
                             settings,
                             displayId,
-                            serial);
+                            serial,
+                            pushTarget);
                         transferSessionId =
                             _fileTransferCoordinator.BeginSession(
                                 serial,
-                                "DeX");
+                                "DeX",
+                                pushTarget);
                         process = CreateProcess(
                             arguments,
                             true,

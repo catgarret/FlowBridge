@@ -412,7 +412,7 @@
   <data name="Settings.ManualAdbPath" xml:space="preserve"><value>수동 ADB 경로</value></data>
   <data name="Settings.ScrcpyPath" xml:space="preserve"><value>Scrcpy 실행 파일</value></data>
   <data name="Settings.ScreenshotFolder" xml:space="preserve"><value>PC 스크린샷 폴더</value></data>
-  <data name="Settings.DeviceFolder" xml:space="preserve"><value>폰 전송 폴더</value></data>
+  <data name="Settings.DeviceFolder" xml:space="preserve"><value>캡처의 휴대폰 저장 폴더</value></data>
   <data name="Settings.LogFolder" xml:space="preserve"><value>로그 폴더</value></data>
   <data name="Settings.Usb" xml:space="preserve"><value>USB 연결 사용</value></data>
   <data name="Settings.Wireless" xml:space="preserve"><value>무선 ADB 연결 사용</value></data>
@@ -548,7 +548,9 @@
   <data name="Log.KeyMapping.RightShiftCompatibility" xml:space="preserve"><value>SDL3용 오른쪽 Shift 호환 입력을 사용합니다.</value></data>
   <data name="Common.Cancel" xml:space="preserve"><value>취소</value></data>
   <data name="Settings.ManagedFileTransfer" xml:space="preserve"><value>DX Manager 파일 전송 사용 (한글/Unicode 호환)</value></data>
-  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>Windows 7/11 호환 경로로 한글 및 Unicode 파일명을 보존합니다. 끄면 scrcpy의 순정 파일 드롭 기능을 사용하며, 새로 여는 DeX·단일창부터 적용됩니다.</value></data>
+  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>Windows 7/11에서 폴더 구조와 한글·Unicode 이름을 보존합니다. 끄면 scrcpy의 순정 파일 드롭 기능을 사용하며, 새로 여는 DeX·단일창부터 적용됩니다.</value></data>
+  <data name="Settings.FileTransferTargetFolder" xml:space="preserve"><value>드래그 항목의 휴대폰 저장 폴더</value></data>
+  <data name="Settings.FileTransferTargetFolderInvalid" xml:space="preserve"><value>/sdcard/ 또는 /storage/emulated/0/ 아래의 폴더를 입력하십시오. 상위 폴더 구문, 제어 문자 및 Android의 UTF-8 255바이트 제한을 넘는 이름은 사용할 수 없습니다.</value></data>
   <data name="FileTransfer.WindowTitle" xml:space="preserve"><value>DX Manager · 파일 전송</value></data>
   <data name="FileTransfer.Preparing" xml:space="preserve"><value>파일 전송 준비 중</value></data>
   <data name="FileTransfer.Counts" xml:space="preserve"><value>완료: {0} · 실패: {1} · 대기: {2}</value></data>
@@ -556,8 +558,10 @@
   <data name="FileTransfer.Queued" xml:space="preserve"><value>전송 대기 중</value></data>
   <data name="FileTransfer.Transferring" xml:space="preserve"><value>휴대폰으로 전송 중</value></data>
   <data name="FileTransfer.TransferringPercent" xml:space="preserve"><value>휴대폰으로 전송 중 · {0}%</value></data>
-  <data name="FileTransfer.Finalizing" xml:space="preserve"><value>파일 이름 정리 중</value></data>
+  <data name="FileTransfer.Finalizing" xml:space="preserve"><value>휴대폰에 저장하는 중</value></data>
   <data name="FileTransfer.Completed" xml:space="preserve"><value>전송 완료</value></data>
+  <data name="FileTransfer.CompletedSummary" xml:space="preserve"><value>전송 완료 · {0}개 항목</value></data>
+  <data name="FileTransfer.Detail" xml:space="preserve"><value>{0} · 경과 {1}</value></data>
   <data name="FileTransfer.SavedAs" xml:space="preserve"><value>저장된 이름: {0}</value></data>
   <data name="FileTransfer.Canceled" xml:space="preserve"><value>전송 취소됨</value></data>
   <data name="FileTransfer.Failed" xml:space="preserve"><value>전송 실패</value></data>
@@ -565,7 +569,7 @@
   <data name="FileTransfer.ShuttingDown" xml:space="preserve"><value>DX Manager가 종료 중입니다.</value></data>
   <data name="FileTransfer.ProtocolMismatch" xml:space="preserve"><value>파일 전송 도우미 버전이 DX Manager와 일치하지 않습니다.</value></data>
   <data name="FileTransfer.AuthenticationFailed" xml:space="preserve"><value>파일 전송 요청을 인증하지 못했습니다.</value></data>
-  <data name="FileTransfer.SourceUnavailable" xml:space="preserve"><value>원본 파일을 더 이상 찾을 수 없습니다.</value></data>
+  <data name="FileTransfer.SourceUnavailable" xml:space="preserve"><value>원본 파일 또는 폴더를 더 이상 찾을 수 없습니다.</value></data>
   <data name="FileTransfer.TargetRejected" xml:space="preserve"><value>요청한 휴대폰 폴더는 지원하지 않습니다.</value></data>
   <data name="FileTransfer.SessionEnded" xml:space="preserve"><value>scrcpy 세션이 이미 종료되었습니다.</value></data>
   <data name="FileTransfer.DeviceMismatch" xml:space="preserve"><value>대상 기기가 변경되어 전송을 중지했습니다.</value></data>
@@ -575,14 +579,21 @@
   <data name="FileTransfer.RenameFailed" xml:space="preserve"><value>휴대폰에서 임시 파일의 이름을 변경하지 못했습니다.</value></data>
   <data name="FileTransfer.RenameResultMissing" xml:space="preserve"><value>휴대폰이 최종 파일 이름을 반환하지 않았습니다.</value></data>
   <data name="FileTransfer.RenameResultInvalid" xml:space="preserve"><value>휴대폰이 잘못된 파일명 결과를 반환했습니다.</value></data>
+  <data name="FileTransfer.ReparsePointUnsupported" xml:space="preserve"><value>바로 가기, 정션 또는 심볼릭 링크 폴더는 전송할 수 없습니다.</value></data>
+  <data name="FileTransfer.FolderCreateFailed" xml:space="preserve"><value>휴대폰에 전송 대상 폴더를 준비하지 못했습니다.</value></data>
+  <data name="FileTransfer.FolderFinalizeFailed" xml:space="preserve"><value>완성된 폴더를 최종 이름으로 저장하지 못했습니다.</value></data>
   <data name="Log.FileTransfer.ProxyMissing" xml:space="preserve"><value>DX Manager 파일 전송 도우미가 없어 scrcpy 순정 전송을 사용합니다: {0}</value></data>
   <data name="Log.FileTransfer.PipeAcceptFailed" xml:space="preserve"><value>파일 전송 IPC 연결에 실패했습니다: {0}</value></data>
   <data name="Log.FileTransfer.PipeServerFailed" xml:space="preserve"><value>파일 전송 IPC 서버에 오류가 발생했습니다.</value></data>
   <data name="Log.FileTransfer.RequestRejected" xml:space="preserve"><value>파일 전송 요청을 거부했습니다: {0}</value></data>
   <data name="Log.FileTransfer.Starting" xml:space="preserve"><value>파일 전송 시작: {0} ({1}), 기기={2}</value></data>
   <data name="Log.FileTransfer.TempCleanupFailed" xml:space="preserve"><value>휴대폰 임시 파일 정리에 실패했습니다: {0}</value></data>
+  <data name="Log.FileTransfer.TargetPrepareFailed" xml:space="preserve"><value>휴대폰 파일 전송 폴더를 준비하지 못했습니다: {0}, 원인={1}</value></data>
   <data name="Log.FileTransfer.Completed" xml:space="preserve"><value>파일 전송 완료: {0} -&gt; {1}</value></data>
   <data name="Log.FileTransfer.Failed" xml:space="preserve"><value>파일 전송 실패: {0}, 원인={1}</value></data>
   <data name="Log.FileTransfer.Canceled" xml:space="preserve"><value>파일 전송 취소: {0}</value></data>
   <data name="Log.FileTransfer.ProgressSubscriberFailed" xml:space="preserve"><value>파일 전송 상태 갱신에 실패했습니다: {0}</value></data>
+  <data name="Log.FileTransfer.ReparseSkipped" xml:space="preserve"><value>폴더 전송 중 바로 가기, 정션 또는 심볼릭 링크를 건너뛰었습니다: {0}</value></data>
+  <data name="Log.FileTransfer.CommitRecovered" xml:space="preserve"><value>ADB 응답이 중단된 뒤 최종 파일 전송 결과를 복구했습니다: {0}</value></data>
+  <data name="Log.FileTransfer.CommitRecoveryFailed" xml:space="preserve"><value>중단된 최종 파일 전송 결과를 확인하지 못했습니다: {0}</value></data>
 </root>

@@ -1,6 +1,6 @@
 # Session Handoff
 
-마지막 갱신: 2026-07-21
+마지막 갱신: 2026-07-22
 
 ## Git
 
@@ -40,24 +40,32 @@ v1.1.0 작업 전 문서 커밋은 `f9d96fa`, 복구 태그는
 - 저장소 샘플 설정을 `AppSettings.CreateDefault()`와 정확히 일치시켜 개인 설정 제거
 - scrcpy, ADB, SDL3, FFmpeg, libusb, dav1d, zlib과 MinGW 런타임 고지 및 라이선스 원문 포함
 - GitHub 메인 README와 분리된 HTML 없는 포터블 패키지 전용 README 추가
-- DeX·단일창 Scrcpy 파일 드롭 중 Download 파일 push만 처리하는
+- DeX·단일창 Scrcpy 파일·폴더 드롭 중 세션 대상 폴더 push만 처리하는
   `DXMAdbProxy.exe`와 전역 FIFO 관리형 전송 추가
-- ASCII 임시 이름과 Base64 UTF-8 최종 이름 복원으로 Windows 7/11의
+- ASCII 임시 이름과 Base64 UTF-8 최종 이름 복원으로 Windows 7 SP1~11의
   한글·Unicode 파일명을 보존하고 충돌 시 `(1)`, `(2)` 접미사 사용
-- 현재 파일/진행률/완료·실패·대기 수 상태창, 취소와 세션 종료 연동 추가
+- 현재 항목과 다음 4개, 크기·경과 시간·완료·실패·대기 수를 보여주는 독립
+  이동 상태창, 취소와 세션 종료 연동 추가(퍼센트·남은 시간은 표시하지 않음)
+- 휴대폰 대상 폴더 설정, 폴더 구조·빈 폴더 보존, staging 최종 반영과
+  재분석 지점 건너뛰기, 최종 이동 커밋 표식과 응답 중단 복구 추가
+- 요청 registry, background ADB script 입력, 대상 폴더 snapshot과 유휴 첫
+  세션의 중단 `.part` 정리로 취소·타임아웃·설정 저장·강제 분리 경합 보강
 - 관리형 전송 기본값은 켜짐이며 설정에서 끄면 새 DeX·단일창부터 Scrcpy
   순정 파일 드롭 사용
 - ADB 공통 `1.0.41` 문구 대신 실제 `Version ...` 빌드 값을 설정·진단에 표시
 - 현재 휴대폰 확인 기준을 Android 16 / One UI 8.x로 명시하고 One UI 7.x
   이하의 검은 DeX 창 가능성을 문서화
 
-2026-07-21 .NET Framework 4.6.2 참조 어셈블리로 v1.1.0 x64 Release를
-경고 0, 오류 0으로 재빌드했다. 실제 Android 16 기기에 한글·Unicode 이름을
-관리형 경로로 전송해 원래 이름과 크기를 확인했으며, proxy의 일반 ADB 명령
-stdout/stderr/종료 코드 전달도 확인했다. `DX-Manager-v1.1.0-win-x64.zip`은
-57개 항목이며 PDB, 사용자 설정, 로그, 테스트 스크린샷과 `.gitkeep`이 없고
-Scrcpy 4.1 및 `DXMAdbProxy.exe`가 포함된 것을 확인했다. Windows 7 실기
-회귀와 전체 UI 확인은 사용자 테스트 뒤 완료 처리한다.
+2026-07-22 .NET Framework 4.6.2 참조 어셈블리로 v1.1.0 x64 Debug와
+Release를 경고 0, 오류 0으로 재빌드했다. 실제 Android 16 기기에
+한글·Unicode 이름을 관리형 경로로 전송해 원래 이름과 크기를 확인했으며,
+proxy의 일반 ADB 명령 stdout/stderr/종료 코드 전달도 확인했다.
+`DX-Manager-v1.1.0-win-x64.zip`은 53개 파일이며 PDB, 사용자 설정, 로그,
+테스트 스크린샷과 `.gitkeep`이 없고 Scrcpy 4.1 및 `DXMAdbProxy.exe`가
+포함된 것을 확인했다. 최종 ZIP SHA-256은
+`57341CC63473E2286D4BCD43C0BF707D5EA104FD1C96A75F489ADF14F6CE6A40`이다.
+Windows 7 SP1~11의 폴더 전체 전송, 사용자 대상 경로,
+취소 및 독립 상태창 회귀는 사용자 실기 테스트 뒤 완료 처리한다.
 
 2026-07-17 .NET Framework 4.6.2 참조 어셈블리로 x64 Release 재빌드가
 경고 0, 오류 0으로 통과했다. `DX-Manager-v1.0.0-win-x64.zip` 56개 항목을
@@ -97,7 +105,7 @@ Debug/Release 재빌드가 모두 경고 0, 오류 0으로 통과했다. 패키�
 
 ## 다음 확인
 
-1. Windows 7/11에서 Scrcpy 4.1 DeX/단일창 시작·종료 회귀 확인
+1. Windows 7 SP1~11에서 Scrcpy 4.1 DeX/단일창 시작·종료 회귀 확인
 2. 한글·Unicode 단일/복수 파일, 충돌 이름, 취소와 순정 전환 실기 확인
 3. 설정·환경 점검의 실제 ADB `Version ...` 표시 확인
 4. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인

@@ -1,8 +1,8 @@
 # DX Manager Source and Build Notes
 
 [Repository overview](../README.md) ·
-[한국어 사용 설명서](../docs/USER_GUIDE_KO.md) ·
-[English user guide](../docs/USER_GUIDE_EN.md)
+[English user guide](../docs/USER_GUIDE_EN.md) ·
+[한국어 사용 설명서](../docs/USER_GUIDE_KO.md)
 
 ## Development Environment
 
@@ -81,12 +81,17 @@ DeX and single-app scrcpy processes receive this helper through their `ADB`
 environment variable. DX Manager's own ADB commands, wireless setup, wake-up,
 and screen-state commands continue to use the selected real ADB directly.
 
-The helper forwards ordinary ADB commands unchanged. It intercepts only a
-single-file push to `/sdcard/Download/`, authenticates the request over a
-per-session named pipe, and lets DX Manager serialize the transfer. The file
-is pushed under an ASCII temporary name and renamed on the phone from a
-Base64-encoded Unicode name. Turning the setting off restores scrcpy's native
-file-drop behavior for newly opened windows.
+The helper forwards ordinary ADB commands unchanged. It intercepts managed
+file and folder drops to the target selected in Settings (default:
+`/sdcard/Download/`), authenticates each request over a per-session named pipe,
+and lets DX Manager serialize the transfer. Files are pushed under ASCII
+temporary names and finalized on the phone from Base64-encoded Unicode names.
+Complete folder trees, including empty folders, are staged and committed under
+one collision-safe top-level name. An independent movable status window shows
+the active item and up to four waiting items without claiming byte progress
+that ADB cannot report reliably on every supported Windows version. Turning
+the setting off restores scrcpy's native file-drop behavior for newly opened
+windows.
 
 ## Compatibility
 

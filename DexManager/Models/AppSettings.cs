@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace DexManager.Models
@@ -8,7 +10,7 @@ namespace DexManager.Models
     [DataContract]
     public sealed class AppSettings
     {
-        public const int CurrentSchemaVersion = 19;
+        public const int CurrentSchemaVersion = 20;
 
         [DataMember(Order = 1)] public int SchemaVersion { get; set; }
         [DataMember(Order = 2)] public PathSettings Paths { get; set; }
@@ -41,7 +43,8 @@ namespace DexManager.Models
                     ScrcpyPath = @"tools\scrcpy\scrcpy.exe",
                     ScreenshotFolder = "screenshot",
                     DeviceScreenshotFolder = "/sdcard/DCIM/DeX Screenshots",
-                    LogFolder = "logs"
+                    LogFolder = "logs",
+                    FileTransferTargetFolder = "/sdcard/Download/"
                 },
                 VirtualDisplay = new VirtualDisplaySettings
                 {
@@ -299,6 +302,12 @@ namespace DexManager.Models
                     defaults.Features.ManagedFileTransferEnabled;
                 SchemaVersion = defaults.SchemaVersion;
             }
+            if (oldSchemaVersion < 20)
+            {
+                Paths.FileTransferTargetFolder =
+                    defaults.Paths.FileTransferTargetFolder;
+                SchemaVersion = defaults.SchemaVersion;
+            }
             VirtualDisplay.Width = NormalizeRange(
                 VirtualDisplay.Width,
                 320,
@@ -372,6 +381,9 @@ namespace DexManager.Models
                     defaults.Paths.DeviceScreenshotFolder;
             if (string.IsNullOrWhiteSpace(Paths.LogFolder))
                 Paths.LogFolder = defaults.Paths.LogFolder;
+            Paths.FileTransferTargetFolder = NormalizeSharedStorageFolder(
+                Paths.FileTransferTargetFolder,
+                defaults.Paths.FileTransferTargetFolder);
             if (!System.Enum.IsDefined(
                 typeof(AdbSelectionMode),
                 Paths.AdbSelectionMode))
@@ -473,6 +485,40 @@ namespace DexManager.Models
             return value < minimum || value > maximum
                 ? fallback
                 : value;
+        }
+
+        private static string NormalizeSharedStorageFolder(
+            string value,
+            string fallback)
+        {
+            var normalized = (value ?? string.Empty)
+                .Trim()
+                .Replace('\\', '/');
+            while (normalized.Contains("//"))
+                normalized = normalized.Replace("//", "/");
+            normalized = normalized.TrimEnd('/');
+
+            var sharedStoragePath =
+                normalized.StartsWith(
+                    "/sdcard/",
+                    System.StringComparison.Ordinal) ||
+                normalized.StartsWith(
+                    "/storage/emulated/0/",
+                    System.StringComparison.Ordinal);
+            if (!sharedStoragePath ||
+                normalized.Any(character => char.IsControl(character)) ||
+                normalized.IndexOf('"') >= 0 ||
+                normalized.Split('/').Any(part =>
+                    string.Equals(part, ".", System.StringComparison.Ordinal) ||
+                    string.Equals(part, "..", System.StringComparison.Ordinal) ||
+                    Encoding.UTF8.GetByteCount(part) > 255))
+            {
+                normalized = (fallback ?? "/sdcard/Download/")
+                    .Trim()
+                    .Replace('\\', '/')
+                    .TrimEnd('/');
+            }
+            return normalized + "/";
         }
 
         private static bool IsValidWirelessHost(string host)
@@ -608,6 +654,7 @@ namespace DexManager.Models
         [DataMember(Order = 6)] public string ScreenshotFolder { get; set; }
         [DataMember(Order = 7)] public string DeviceScreenshotFolder { get; set; }
         [DataMember(Order = 8)] public string LogFolder { get; set; }
+        [DataMember(Order = 9)] public string FileTransferTargetFolder { get; set; }
     }
 
     public enum AdbSelectionMode

@@ -1,6 +1,6 @@
 # DexManager 개발 문서
 
-마지막 전체 정리: 2026-07-21
+마지막 전체 정리: 2026-07-22
 
 새 채팅에서는 `PROJECT_BRIEF.md`, `SESSION.md`, `TODO.md`,
 `AI_WORKFLOW.md` 순서로 읽는다. 작업 성격에 따라 `TECH_NOTES.md`,
@@ -18,7 +18,7 @@
 - `CHANGELOG.md`: 사용자 관점의 큰 이정표
 - `PACKAGE_README.md`: 배포 ZIP 루트에 들어가는 HTML 없는 영어·한국어 안내
 
-사용자용 README는 저장소 루트의 `README.md`, 한국어/영어 설명서는
-`docs/USER_GUIDE_KO.md`, `docs/USER_GUIDE_EN.md`를 사용한다. 자주 묻는
-질문은 독립 문서인 `docs/FAQ_KO.md`, `docs/FAQ_EN.md`에서 관리하고 각
+사용자용 README는 저장소 루트의 `README.md`, 영어/한국어 설명서는
+`docs/USER_GUIDE_EN.md`, `docs/USER_GUIDE_KO.md`를 사용한다. 자주 묻는
+질문은 독립 문서인 `docs/FAQ_EN.md`, `docs/FAQ_KO.md`에서 관리하고 각
 사용 설명서와 README에서 링크한다.

@@ -1,5 +1,5 @@
 {
-  "SchemaVersion": 19,
+  "SchemaVersion": 20,
   "Paths": {
     "AdbPath": "",
     "AdbSelectionMode": 0,
@@ -7,7 +7,8 @@
     "ScrcpyPath": "tools\\scrcpy\\scrcpy.exe",
     "ScreenshotFolder": "screenshot",
     "DeviceScreenshotFolder": "/sdcard/DCIM/DeX Screenshots",
-    "LogFolder": "logs"
+    "LogFolder": "logs",
+    "FileTransferTargetFolder": "/sdcard/Download/"
   },
   "VirtualDisplay": {
     "Width": 1600,

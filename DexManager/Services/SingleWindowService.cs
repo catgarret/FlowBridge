@@ -376,15 +376,19 @@ namespace DexManager.Services
                                 LocalizationService.Get(
                                     "Error.Dex.NoAuthorizedDevice"));
                         }
+                        var pushTarget = _fileTransferCoordinator
+                            .PrepareScrcpyPushTarget(serial);
                         var arguments = BuildArguments(
                             slot,
                             settings,
-                            serial);
+                            serial,
+                            pushTarget);
                         transferSessionId =
                             _fileTransferCoordinator.BeginSession(
                                 serial,
                                 "Single Window " + slot.ToString(
-                                    CultureInfo.InvariantCulture));
+                                    CultureInfo.InvariantCulture),
+                                pushTarget);
                         process = CreateProcess(
                             arguments,
                             transferSessionId);
@@ -556,6 +560,19 @@ namespace DexManager.Services
             SingleWindowSlotSettings settings,
             string serial)
         {
+            return BuildArguments(
+                slot,
+                settings,
+                serial,
+                _fileTransferCoordinator.GetScrcpyPushTarget());
+        }
+
+        private string BuildArguments(
+            int slot,
+            SingleWindowSlotSettings settings,
+            string serial,
+            string pushTarget)
+        {
             ScrcpyService.ValidateAdditionalArguments(
                 settings.AdditionalArguments);
             var arguments = new List<string>();
@@ -608,6 +625,8 @@ namespace DexManager.Services
                 arguments.Add("-S");
                 arguments.Add("--no-power-on");
             }
+            arguments.Add("--push-target");
+            arguments.Add(Quote(pushTarget));
             if (!string.IsNullOrWhiteSpace(settings.AdditionalArguments))
                 arguments.Add(settings.AdditionalArguments.Trim());
 

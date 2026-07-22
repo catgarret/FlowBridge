@@ -6,16 +6,25 @@
 
 - 번들 scrcpy를 4.1로 갱신하고 SDL 3.4.12, FFmpeg 62.28.102/62.12.102/
   60.26.102, libusb 1.0.30 구성과 제3자 고지를 동기화
-- DeX·단일창 scrcpy 창에 놓은 파일을 휴대폰 `Download` 폴더로 보내는
-  DX Manager 관리형 파일 전송 추가
+- DeX·단일창 scrcpy 창에 놓은 파일과 폴더 전체를 설정한 휴대폰 폴더로 보내는
+  DX Manager 관리형 파일 전송 추가(기본 `/sdcard/Download/`)
 - Windows 7과 Windows 11에서 한글을 포함한 Unicode 파일명을 보존하도록
   ASCII 임시 이름 push 후 휴대폰에서 최종 이름을 복원
-- 전송 상태창에 현재 파일, 진행률, 완료·실패·대기 수와 취소 기능을 제공하고
-  같은 이름은 `(1)`, `(2)` 접미사로 충돌 회피
+- 독립적으로 이동할 수 있는 전송 상태창에 현재 항목과 다음 4개, 파일 크기,
+  경과 시간, 완료·실패·대기 수와 취소 기능을 제공하고 오해를 줄 수 있는
+  퍼센트와 남은 시간은 제거
+- 폴더 구조와 빈 폴더를 staging에 완성한 뒤 한 번에 공개하고 재분석 지점은
+  건너뛰며, 같은 파일·폴더 이름은 `(1)`, `(2)` 접미사로 충돌 회피
+- 최종 이름 반영 중 취소·ADB 응답 중단과 큐 등록 경합을 방어하고 기기 측
+  P/C 커밋 표식으로 이동 완료 여부를 재확인하며, 다음 유휴 세션에서 중단된
+  대용량 전송의 `.part` 잔여물을 정리
+- 모든 non-terminal 요청 registry, 비동기 ADB script 입력과 세션 시작 시 대상
+  폴더 snapshot으로 dequeue 취소·stdin 정지·설정 저장 경합을 방어
 - 관리형 전송은 기본값으로 켜고 설정에서 끄면 새로 여는 DeX·단일창부터
   scrcpy 순정 파일 드롭 동작을 사용하도록 구성
-- scrcpy 전용 ADB proxy는 Download 파일 push만 관리 큐로 전달하고 그 밖의
-  shell, 서버 push, APK 설치와 DX Manager 내부 ADB 명령은 실제 ADB로 유지
+- scrcpy 전용 ADB proxy는 세션 대상 폴더의 파일·폴더 push만 관리 큐로
+  전달하고 그 밖의 shell, 서버 push, 단독 APK 설치와 DX Manager 내부 ADB
+  명령은 실제 ADB로 유지
 - 설정, 환경 점검과 로그의 ADB 버전을 공통 `1.0.41` 문구 대신 실제
   `Version ...` platform-tools 빌드 값으로 표시
 - Android 16 / One UI 8.x를 현재 확인 기준으로 명시하고 One UI 7.x 이하의
@@ -104,7 +113,7 @@
 
 - 번들 Scrcpy 4.0
 - 단일창 동적 크기 변경
-- Windows 7/11 기본 실행 확인
+- Windows 7 SP1~11 기본 실행 확인
 
 ## 2026-06 - 단일창
 
