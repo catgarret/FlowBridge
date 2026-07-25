@@ -110,6 +110,16 @@ not require a downgrade.
 64-bit Windows 7 compatibility should be checked on real hardware before each public
 release.
 
+## Android cleanup companion
+
+The repository also contains `DXDisplayCleanup`, a separately distributed
+Android recovery utility for removing a simulated secondary display left on
+the phone. DX Manager verifies the installed package's APK Signature Scheme v2
+certificate against the pinned release certificate before enabling the grant,
+re-verifies immediately before granting `WRITE_SECURE_SETTINGS`, and confirms
+the final permission state. Build and signing details are documented in
+`DXDisplayCleanup/README.md` and `DXDisplayCleanup/SIGNING.md`.
+
 ## Repository Documentation
 
 Internal architecture, decisions, and handoff notes are maintained in the

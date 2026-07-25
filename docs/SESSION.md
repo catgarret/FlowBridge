@@ -1,13 +1,13 @@
 # Session Handoff
 
-마지막 갱신: 2026-07-22
+마지막 갱신: 2026-07-25
 
 ## Git
 
 - 저장소: `E:\vs\dex system`
 - 브랜치: `fix/audit-hardening-20260711`
 - 마지막 공개 커밋: 이 문서를 포함한 최신 `main` (`git log -1`로 확인)
-- 현재 작업: v1.1.0 Scrcpy 4.1 및 관리형 Unicode 파일 전송 구현·회귀 확인
+- 현재 작업: v1.1.0 마무리와 별도 Android 가상화면 정리 앱 구현·검증
 
 v1.1.0 작업 전 문서 커밋은 `f9d96fa`, 복구 태그는
 `pre-v1.1.0-20260721`이다. 공개 배포와 push는 사용자 실기 확인 뒤 진행한다.
@@ -32,7 +32,7 @@ v1.1.0 작업 전 문서 커밋은 `f9d96fa`, 복구 태그는
 - 기본/고급 설정 재정리와 환경 점검 표 레이아웃 수정
 - 제작자/GitHub 링크, MIT 라이선스, 제3자 고지와 파일 속성 완료
 - README/설명서/FAQ용 한국어 10장·영어 8장 스크린샷 배치 완료
-- 한국어/영어 FAQ 19문항을 독립 문서로 작성하고 README와 설명서에서 연결
+- 한국어/영어 FAQ 23문항을 독립 문서로 작성하고 README와 설명서에서 연결
 - 사용자 지정 해상도 가로·세로 4096 상한과 DPI 120 하한 위반 시 이전 값 복원
 - 초기화 직후 현재 선택한 모드의 실행 옵션이 다시 덮어써지지 않도록 UI 재동기화
 - 공개 패키지를 `dist\DX Manager`와 버전별 x64 ZIP으로 만드는 스크립트 추가
@@ -55,17 +55,47 @@ v1.1.0 작업 전 문서 커밋은 `f9d96fa`, 복구 태그는
 - ADB 공통 `1.0.41` 문구 대신 실제 `Version ...` 빌드 값을 설정·진단에 표시
 - 현재 휴대폰 확인 기준을 Android 16 / One UI 8.x로 명시하고 One UI 7.x
   이하의 검은 DeX 창 가능성을 문서화
+- overlay 제거 명령을 잘못된 sentinel 문자열 저장이 아닌
+  `settings delete global overlay_display_devices`로 통일
+- 설정 경로 페이지의 줄바꿈 라벨이 입력칸 높이를 늘리거나 가로 스크롤을
+  만들지 않도록 카드·행 레이아웃을 정리
+- 진단 페이지에서 별도 Android 정리 앱의 package와 설치 `base.apk` v2 서명
+  인증서를 검증한 뒤 권한을 부여하고 결과를 재확인하도록 실제 연동
+- 캡처와 드롭 파일의 휴대폰 저장 폴더에 Unicode ADB 찾아보기 추가
+- `DXDisplayCleanup` Android 앱 구현: 상태 확인, 설정 삭제 후 재검증, 메인
+  정리 버튼, 빠른 설정 타일, 홈 위젯, 한국어/영어 UI
+- Android 앱은 네트워크·임의 shell 없이 `WRITE_SECURE_SETTINGS` 하나만
+  요청하며 package ID와 공개 서명 지문을 문서화
+
+2026-07-25 DX Manager x64 Release를 .NET Framework 4.6.2 참조 어셈블리로
+재빌드해 오류 0을 확인했다. 설정창 경로/ADB와 진단 페이지를 실제 실행해
+가로 스크롤 제거, 두 줄 안내 높이와 권한 카드 배치를 확인했다.
+
+`DXDisplayCleanup`은 JDK 17, compile/target SDK 36, min SDK 24와 Gradle
+8.14.5로 `testDebugUnitTest`, `lintRelease`, `assembleRelease`를 통과했다.
+Release APK는 v2 서명, RSA 4096, package
+`io.github.mazemei.dxdisplaycleanup`, 인증서 SHA-256
+`AD615803C63760439750C36801E8152AB8664C60EE481EF1473F1DF5E80733BE`로
+검증했다. 실제 Android 16 / One UI 8.x 휴대폰에서 APK 설치, 설치 APK 인증서
+검증, 권한 부여 전 `Ready`와 부여 후 `Granted` 상태를 확인했다. 휴대폰 폴더
+찾아보기는 `/sdcard/DCIM`에서 한글·영문 폴더를 정상 표시했다. 사용자가 앱
+본체의 활성 overlay 삭제와 삭제 후 상태 갱신을 확인했으며, 빠른 설정
+타일·위젯 동작 확인은 아직 남아 있다.
 
 2026-07-22 .NET Framework 4.6.2 참조 어셈블리로 v1.1.0 x64 Debug와
 Release를 경고 0, 오류 0으로 재빌드했다. 실제 Android 16 기기에
 한글·Unicode 이름을 관리형 경로로 전송해 원래 이름과 크기를 확인했으며,
 proxy의 일반 ADB 명령 stdout/stderr/종료 코드 전달도 확인했다.
-`DX-Manager-v1.1.0-win-x64.zip`은 53개 파일이며 PDB, 사용자 설정, 로그,
-테스트 스크린샷과 `.gitkeep`이 없고 Scrcpy 4.1 및 `DXMAdbProxy.exe`가
-포함된 것을 확인했다. 최종 ZIP SHA-256은
-`57341CC63473E2286D4BCD43C0BF707D5EA104FD1C96A75F489ADF14F6CE6A40`이다.
-Windows 7 SP1~11의 폴더 전체 전송, 사용자 대상 경로,
-취소 및 독립 상태창 회귀는 사용자 실기 테스트 뒤 완료 처리한다.
+2026-07-25 다시 만든 `DX-Manager-v1.1.0-win-x64.zip`은 57개 항목이며 PDB,
+사용자 설정, 로그, 테스트 스크린샷과 `.gitkeep`이 없고 Scrcpy 4.1 및
+`DXMAdbProxy.exe`가 포함된 것을 확인했다. ZIP SHA-256은
+`153D6001BD89B9E0BF5BED235F656C7E08689E09A13C27E21A2BBA1A3E4259EF`이다.
+
+Android 로컬 배포 후보 `DX-Display-Cleaner-v1.0.0.apk`의 SHA-256은
+`2817913CC4987EBF46805B108E23F3EDF105AEF519BAAFA69324496B687F5592`,
+3개 항목 APK ZIP의 SHA-256은
+`9152DCC484B0078B515D9D9267582A6ECE6FA6A88BC3ADDEAC305ADEE4016C1D`다.
+Android 산출물은 아직 GitHub에 게시하지 않았다.
 
 2026-07-17 .NET Framework 4.6.2 참조 어셈블리로 x64 Release 재빌드가
 경고 0, 오류 0으로 통과했다. `DX-Manager-v1.0.0-win-x64.zip` 56개 항목을
@@ -105,13 +135,12 @@ Debug/Release 재빌드가 모두 경고 0, 오류 0으로 통과했다. 패키�
 
 ## 다음 확인
 
-1. Windows 7 SP1~11에서 Scrcpy 4.1 DeX/단일창 시작·종료 회귀 확인
-2. 한글·Unicode 단일/복수 파일, 충돌 이름, 취소와 순정 전환 실기 확인
-3. 설정·환경 점검의 실제 ADB `Version ...` 표시 확인
-4. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
-5. v1.1.0 패키지에서 helper, 문서, 라이선스와 런타임 데이터 제외 확인
-6. 공개 Release 사용 피드백과 새 이슈 확인
-7. Scrcpy 4.0/SDL3 오른쪽 Shift 재현 내용을 upstream에 보고
+1. 빠른 설정 타일과 홈 위젯의 활성/비활성/권한 없음 표시 확인
+2. Windows 7 SP1~11의 남은 파일 충돌·취소·순정 전환 회귀 확인
+3. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
+4. v1.1.0 최종 ZIP에서 helper, 문서, 라이선스와 런타임 데이터 제외 확인
+5. 공개 Release 사용 피드백과 새 이슈 확인
+6. Scrcpy 4.0/SDL3 오른쪽 Shift 재현 내용을 upstream에 보고
 
 빌드·커밋·배포 전 `bin\Debug`, `bin\Release`의 `logs`, `screenshot` 테스트
 파일을 비운다. 실기 확인하지 않은 흐름은 문서나 보고에서 확인 완료로 쓰지 않는다.

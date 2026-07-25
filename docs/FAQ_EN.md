@@ -20,6 +20,13 @@ Selecting **None** first may not clear a stale display. The resolution-then-None
 sequence forces Android to refresh the overlay setting, after which the
 remaining virtual screen disappears.
 
+If the separately distributed official **DX Display Cleaner** is installed and
+its one-time permission was granted under **Settings > Diagnostics > Phone
+virtual display cleanup**, the leftover display can also be removed from the
+main app, Quick Settings tile, or home-screen widget. See the
+[English user guide](USER_GUIDE_EN.md#12-dx-display-cleaner-optional) for full
+installation and usage details.
+
 <p align="center">
   <img src="images/en/simulate-secondary-display-en.png" width="45%" alt="Simulate secondary displays in Developer options">
   <img src="images/en/simulate-secondary-display-options-en.png" width="45%" alt="Simulate secondary displays selection menu">
@@ -295,3 +302,55 @@ DX Manager 1.1.0 reads the following `Version ...` line instead. The bundled
 scrcpy ADB reports `37.0.0-14910828`, while the Windows 7/8.1 legacy ADB reports
 `34.0.1-9979309`. A manually selected ADB displays its own corresponding
 `Version ...` value.
+
+## Q20. A banking or game app refuses to run, or its screen is black.
+
+Some banking, game, streaming, and security-sensitive apps detect USB
+debugging or Developer options and refuse to run. An app may also block
+mirroring of protected or DRM-controlled content, or disallow virtual and
+secondary displays.
+
+This behavior is enforced by the app or Android security policy. DX Manager
+does not bypass these restrictions.
+
+## Q21. An app launched from DeX opens on the phone instead.
+
+Some apps do not fully support multiple displays or reuse an existing instance
+that is already running on the phone. Close the app completely on the phone and
+launch it again from DeX, or try DX Manager's **Force-stop selected app** option.
+
+If it still opens on the phone, the app may not support launching on a
+secondary display and DX Manager may not be able to override that behavior.
+
+## Q22. The mouse cannot leave the DeX window.
+
+When **HID mouse (`-M`)** is enabled, scrcpy sends the mouse as if it were
+physically connected to Android, so the pointer is captured by the scrcpy
+window. Press left `Alt` to release or recapture it temporarily.
+
+To move the pointer freely between Windows and DeX, disable HID mouse and
+reopen the DeX or single-app window. In this mode the mouse behaves more like
+touch input than a regular hardware mouse. For example, a side button may open
+Recent Apps and holding the left button may act as a touchscreen long press.
+
+## Q23. Why is the cleanup permission button under Diagnostics disabled?
+
+The button is enabled only when the separately distributed official **DX
+Display Cleaner** is installed on the connected phone and its APK signing
+certificate matches. DX Manager does not grant the permission when ADB is not
+authorized, the app is absent, or another app uses the same package ID with a
+different signature. Check the status message below the button.
+
+Select **Grant cleanup permission** to make DX Manager re-verify the app, grant
+`WRITE_SECURE_SETTINGS`, and confirm the resulting permission state. The button
+then displays **Permission granted**. The companion app has no arbitrary ADB
+command feature.
+
+The permission survives a reboot and an update signed with the same official
+certificate. Uninstalling and reinstalling the app removes its permission, so
+grant it again after a fresh installation. Once granted, cleanup is available
+from the main app, Quick Settings tile, and home-screen widget.
+
+Without the companion app, open **Developer options > Simulate secondary
+displays**, select any resolution once, open the menu again, and select
+**None**.

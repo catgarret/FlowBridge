@@ -2,6 +2,15 @@
 
 ## 다음 작업
 
+- [ ] DX Display Cleaner 실제 Galaxy 기기 검증
+  - [x] 공식 Release APK 설치와 package/certificate 재확인
+  - [x] ADB 1회 권한 부여 전·후 상태 표시
+  - [x] 앱 본체의 활성 overlay 삭제와 삭제 후 재조회
+  - [ ] 빠른 설정 타일 및 홈 위젯 세 상태 확인
+- [x] DX Manager의 정리 앱 package/v2 인증서 검증과 실제 권한 부여 연결
+  - 부여 직전·직후 재검증 및 사후 검증 실패 시 권한 회수
+- [x] 캡처·드롭 파일 휴대폰 저장 경로 ADB 폴더 찾아보기
+
 - [x] v1 최초 휴대폰 고정 로직 실기 확인
   - 시작 시 USB 휴대폰 2대 중 한 대 선택 및 고정
   - 실행 중 다른 휴대폰 연결 무시
@@ -26,7 +35,7 @@
   - [x] Windows 11 실제 기기 관리형 Unicode 단일 파일 전송과 proxy 전달
   - [x] x64 Release 빌드 및 v1.1.0 ZIP 구성 검증
   - [ ] Windows 7 SP1~11 Scrcpy 4.1 DeX/단일창 실행과 종료 UI 회귀
-  - [ ] Windows 7 SP1~11 한글·Unicode 복수 파일과 폴더 전체, 빈 폴더 확인
+  - [x] Windows 7/11 한글·Unicode 복수 파일과 폴더 전체 전송 확인
   - [ ] 사용자 대상 경로, 파일·폴더 충돌 이름, 취소와 독립 상태창 확인
   - [ ] 관리형 전송 끄기 후 새 창에서 Scrcpy 순정 동작 복귀
   - [ ] 설정·진단의 실제 ADB `Version ...` 값 표시 확인

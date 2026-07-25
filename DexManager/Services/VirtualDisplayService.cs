@@ -10,6 +10,8 @@ namespace DexManager.Services
 {
     public sealed class VirtualDisplayService
     {
+        private const string DeleteOverlaySettingCommand =
+            "settings delete global overlay_display_devices";
         internal const string RetainedLeaseDataKey =
             "DexManager.VirtualDisplayLease";
         private static readonly Regex DisplayIdRegex = new Regex(
@@ -103,7 +105,7 @@ namespace DexManager.Services
                         {
                             Serial = serial,
                             DisplayId = existingOverlay.Id,
-                            PreviousOverlaySetting = "none",
+                            PreviousOverlaySetting = string.Empty,
                             AppliedOverlaySetting = current,
                             OwnsOverlaySetting = true,
                             ReusedExistingDisplay = true
@@ -147,7 +149,7 @@ namespace DexManager.Services
             var lease = new VirtualDisplayLease
             {
                 Serial = serial,
-                PreviousOverlaySetting = "none",
+                PreviousOverlaySetting = string.Empty,
                 AppliedOverlaySetting = value,
                 OwnsOverlaySetting = true,
                 ReusedExistingDisplay = false
@@ -208,7 +210,7 @@ namespace DexManager.Services
         {
             var result = ShellForSerial(
                 serial,
-                "settings put global overlay_display_devices none");
+                DeleteOverlaySettingCommand);
             if (result.IsSuccess)
             {
                 _logService.Info(LocalizationService.Get(
@@ -233,7 +235,7 @@ namespace DexManager.Services
                 // restoring a previous value can leave a stale DeX screen.
                 var result = ShellForSerial(
                     lease.Serial,
-                    "settings put global overlay_display_devices none");
+                    DeleteOverlaySettingCommand);
                 if (!result.IsSuccess)
                 {
                     _logService.Warning(LocalizationService.Format(
@@ -311,7 +313,7 @@ namespace DexManager.Services
         {
             var result = ShellForSerial(
                 serial,
-                "settings put global overlay_display_devices none");
+                DeleteOverlaySettingCommand);
             if (!result.IsSuccess)
             {
                 throw new InvalidOperationException(

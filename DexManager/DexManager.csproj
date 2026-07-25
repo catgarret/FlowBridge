@@ -64,6 +64,9 @@
     <Compile Include="Forms\EnvironmentCheckForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\DeviceFolderBrowserForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\FileTransferStatusForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -95,6 +98,8 @@
     <Compile Include="Services\CaptureCoordinator.cs" />
     <Compile Include="Services\CaptureService.cs" />
     <Compile Include="Services\DeviceMonitorService.cs" />
+    <Compile Include="Services\DeviceFolderService.cs" />
+    <Compile Include="Services\DisplayCleanupPermissionService.cs" />
     <Compile Include="Services\EnvironmentCheckService.cs" />
     <Compile Include="Services\FileTransferCoordinator.cs" />
     <Compile Include="Services\DexOrchestrator.cs" />
@@ -115,6 +120,7 @@
     <Compile Include="Utils\WindowsVersionHelper.cs" />
     <Compile Include="Utils\AdminHelper.cs" />
     <Compile Include="Utils\AdbVersionParser.cs" />
+    <Compile Include="Utils\ApkSigningCertificateReader.cs" />
     <Compile Include="Utils\AppIconProvider.cs" />
     <Compile Include="..\Shared\FileTransferProtocol.cs">
       <Link>Shared\FileTransferProtocol.cs</Link>

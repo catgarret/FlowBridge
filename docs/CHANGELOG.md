@@ -29,6 +29,16 @@
   `Version ...` platform-tools 빌드 값으로 표시
 - Android 16 / One UI 8.x를 현재 확인 기준으로 명시하고 One UI 7.x 이하의
   검은 DeX 창 가능성을 사용자 문서에 안내
+- overlay 정리는 문자열 `none` 저장 대신 `settings delete global
+  overlay_display_devices`로 설정 항목 자체를 삭제하도록 변경
+- 파일 전송 중 기기 연결이 해제되면 중단 대상 수와 기기를 명시적으로 기록
+- 진단 페이지에서 별도 DX Display Cleaner의 package와 공식 v2 서명 인증서를
+  확인한 뒤 `WRITE_SECURE_SETTINGS` 권한을 부여하고 결과를 재검증
+- DX Display Cleaner Android 앱에 가상화면 상태 조회·삭제 후 재검증, 빠른
+  설정 타일, 홈 화면 위젯과 한국어/영어 UI 제공
+- 캡처와 드롭 파일의 휴대폰 저장 폴더에 Unicode ADB 폴더 찾아보기 추가
+- 보안·DRM 앱 제한, 다중 디스플레이를 지원하지 않는 앱의 휴대폰 화면 실행과
+  HID 마우스 캡처 해제 방법을 한영 FAQ에 추가
 
 ## 2026-07 - v1 배포 안정화
 

@@ -548,8 +548,32 @@
   <data name="Log.KeyMapping.RightShiftCompatibility" xml:space="preserve"><value>SDL3용 오른쪽 Shift 호환 입력을 사용합니다.</value></data>
   <data name="Common.Cancel" xml:space="preserve"><value>취소</value></data>
   <data name="Settings.ManagedFileTransfer" xml:space="preserve"><value>DX Manager 파일 전송 사용 (한글/Unicode 호환)</value></data>
-  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>Windows 7/11에서 폴더 구조와 한글·Unicode 이름을 보존합니다. 끄면 scrcpy의 순정 파일 드롭 기능을 사용하며, 새로 여는 DeX·단일창부터 적용됩니다.</value></data>
-  <data name="Settings.FileTransferTargetFolder" xml:space="preserve"><value>드래그 항목의 휴대폰 저장 폴더</value></data>
+  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>켜면 DX Manager 파일 전송 기능을 사용합니다. 폴더 전체와 한글을 포함한 Unicode 이름을 깨짐 없이 전송할 수 있습니다. 끄면 scrcpy의 순정 파일 드롭 기능을 사용합니다. 변경은 새로 여는 DeX, 단일창부터 적용됩니다.</value></data>
+  <data name="Settings.FileTransferTargetFolder" xml:space="preserve"><value>드롭 파일 휴대폰 저장 폴더</value></data>
+  <data name="Settings.GroupDisplayCleanup" xml:space="preserve"><value>휴대폰 가상화면 정리 도구</value></data>
+  <data name="Settings.DisplayCleanupGuide" xml:space="preserve"><value>DX Manager가 비정상 종료되거나 휴대폰 연결이 먼저 끊어져 가상화면이 남은 경우, 별도로 제공되는 Android 정리 앱에서 직접 제거할 수 있도록 권한을 부여합니다. 공식 정리 앱의 설치와 서명이 확인된 경우에만 사용할 수 있습니다.</value></data>
+  <data name="Settings.GrantDisplayCleanupPermission" xml:space="preserve"><value>정리 앱 권한 부여</value></data>
+  <data name="Settings.DisplayCleanupChecking" xml:space="preserve"><value>연결된 휴대폰과 설치된 정리 앱을 확인하는 중입니다…</value></data>
+  <data name="Settings.DisplayCleanupNoDevice" xml:space="preserve"><value>정리 앱을 확인하려면 승인된 휴대폰을 연결하십시오.</value></data>
+  <data name="Settings.DisplayCleanupNotInstalled" xml:space="preserve"><value>연결된 휴대폰에 DX Display Cleaner 앱이 설치되어 있지 않습니다.</value></data>
+  <data name="Settings.DisplayCleanupVerificationFailed" xml:space="preserve"><value>설치된 앱을 공식 DX Display Cleaner로 확인할 수 없어 권한을 부여하지 않았습니다.</value></data>
+  <data name="Settings.DisplayCleanupReady" xml:space="preserve"><value>공식 정리 앱과 서명 인증서를 확인했습니다. 이제 권한을 부여할 수 있습니다.</value></data>
+  <data name="Settings.DisplayCleanupGranted" xml:space="preserve"><value>공식 정리 앱이 확인되었으며 필요한 권한이 이미 부여되어 있습니다.</value></data>
+  <data name="Settings.DisplayCleanupFailed" xml:space="preserve"><value>정리 앱 또는 권한 상태를 확인하지 못했습니다.</value></data>
+  <data name="Settings.DisplayCleanupGrantConfirm" xml:space="preserve"><value>확인된 DX Display Cleaner에 Android 가상화면 설정만 변경할 수 있는 권한을 부여하시겠습니까? 임의의 ADB 명령 실행 권한은 제공되지 않습니다.</value></data>
+  <data name="Settings.DisplayCleanupGranting" xml:space="preserve"><value>설치된 앱을 다시 확인하고 권한을 부여하는 중입니다…</value></data>
+  <data name="Settings.DisplayCleanupGrantSucceeded" xml:space="preserve"><value>권한을 정상적으로 부여했습니다. 이제 DX Display Cleaner에서 휴대폰에 남은 가상화면을 직접 제거할 수 있습니다.</value></data>
+  <data name="Settings.DisplayCleanupPermissionGrantedButton" xml:space="preserve"><value>권한 부여됨</value></data>
+  <data name="DeviceFolder.Title" xml:space="preserve"><value>휴대폰 폴더 찾아보기</value></data>
+  <data name="DeviceFolder.Heading" xml:space="preserve"><value>휴대폰 저장 폴더 선택</value></data>
+  <data name="DeviceFolder.Up" xml:space="preserve"><value>위로</value></data>
+  <data name="DeviceFolder.Refresh" xml:space="preserve"><value>새로 고침</value></data>
+  <data name="DeviceFolder.SelectCurrent" xml:space="preserve"><value>이 폴더 선택</value></data>
+  <data name="DeviceFolder.Loading" xml:space="preserve"><value>폴더를 불러오는 중입니다…</value></data>
+  <data name="DeviceFolder.Empty" xml:space="preserve"><value>하위 폴더가 없습니다.</value></data>
+  <data name="DeviceFolder.Count" xml:space="preserve"><value>폴더 {0}개</value></data>
+  <data name="DeviceFolder.LoadFailed" xml:space="preserve"><value>휴대폰 폴더를 읽지 못했습니다: {0}</value></data>
+  <data name="DeviceFolder.NoDevice" xml:space="preserve"><value>휴대폰 폴더를 찾으려면 승인된 휴대폰을 먼저 연결하십시오.</value></data>
   <data name="Settings.FileTransferTargetFolderInvalid" xml:space="preserve"><value>/sdcard/ 또는 /storage/emulated/0/ 아래의 폴더를 입력하십시오. 상위 폴더 구문, 제어 문자 및 Android의 UTF-8 255바이트 제한을 넘는 이름은 사용할 수 없습니다.</value></data>
   <data name="FileTransfer.WindowTitle" xml:space="preserve"><value>DX Manager · 파일 전송</value></data>
   <data name="FileTransfer.Preparing" xml:space="preserve"><value>파일 전송 준비 중</value></data>
@@ -596,4 +620,5 @@
   <data name="Log.FileTransfer.ReparseSkipped" xml:space="preserve"><value>폴더 전송 중 바로 가기, 정션 또는 심볼릭 링크를 건너뛰었습니다: {0}</value></data>
   <data name="Log.FileTransfer.CommitRecovered" xml:space="preserve"><value>ADB 응답이 중단된 뒤 최종 파일 전송 결과를 복구했습니다: {0}</value></data>
   <data name="Log.FileTransfer.CommitRecoveryFailed" xml:space="preserve"><value>중단된 최종 파일 전송 결과를 확인하지 못했습니다: {0}</value></data>
+  <data name="Log.FileTransfer.DeviceDisconnected" xml:space="preserve"><value>기기 연결이 해제되어 진행 중이거나 대기 중인 파일 전송을 중단합니다: 기기={0}, 항목={1}개</value></data>
 </root>

@@ -16,6 +16,8 @@ namespace DexManager.Forms
     {
         private const int CardContentTop = 44;
         private const int CardContentBottom = 18;
+        private const int CardWidth = 662;
+        private const int CardContentWidth = 622;
         private const int WmMouseWheel = 0x020A;
         private const string ProjectUrl =
             "https://github.com/maze-mei/DX-Manager";
@@ -23,6 +25,8 @@ namespace DexManager.Forms
         private readonly SettingsService _settingsService;
         private readonly AppSettings _settings;
         private readonly AdbService _adbService;
+        private readonly DisplayCleanupPermissionService
+            _displayCleanupPermissionService;
         private readonly WirelessAdbService _wirelessAdbService;
         private readonly Action _showLogs;
         private readonly Action _showEnvironmentCheck;
@@ -93,6 +97,10 @@ namespace DexManager.Forms
         private Label _saveStatusLabel;
         private Timer _saveStatusTimer;
         private ThirdPartyLicensesForm _thirdPartyLicensesForm;
+        private Button _displayCleanupPermissionButton;
+        private Label _displayCleanupStatusLabel;
+        private DisplayCleanupPermissionStatus _displayCleanupStatus;
+        private bool _displayCleanupOperationRunning;
 
         public SettingsForm(
             SettingsService settingsService,
@@ -107,6 +115,8 @@ namespace DexManager.Forms
             _settingsService = settingsService;
             _settings = settings;
             _adbService = adbService;
+            _displayCleanupPermissionService =
+                new DisplayCleanupPermissionService(adbService);
             _wirelessAdbService = wirelessAdbService;
             _showLogs = showLogs;
             _showEnvironmentCheck = showEnvironmentCheck;
@@ -303,7 +313,9 @@ namespace DexManager.Forms
             var paths = CreateTable();
             _scrcpyPathBox = AddPath(paths, LocalizationService.Get("Settings.ScrcpyPath"), true);
             _screenshotFolderBox = AddPath(paths, LocalizationService.Get("Settings.ScreenshotFolder"), false);
-            _deviceScreenshotFolderBox = AddText(paths, LocalizationService.Get("Settings.DeviceFolder"));
+            _deviceScreenshotFolderBox = AddDevicePath(
+                paths,
+                LocalizationService.Get("Settings.DeviceFolder"));
             _deviceScreenshotFolderBox.UseMiddleEllipsis = true;
             _pushCaptureBox = AddCheck(
                 paths,
@@ -312,7 +324,7 @@ namespace DexManager.Forms
                 paths,
                 LocalizationService.Get(
                     "Settings.ManagedFileTransfer"));
-            _fileTransferTargetFolderBox = AddText(
+            _fileTransferTargetFolderBox = AddDevicePath(
                 paths,
                 LocalizationService.Get(
                     "Settings.FileTransferTargetFolder"));
@@ -548,6 +560,48 @@ namespace DexManager.Forms
             resetButton.Click += ResetDefaultsButton_Click;
             panel.Controls.Add(resetButton);
             AddCard(page, LocalizationService.Get("Settings.Diagnostics"), panel);
+
+            var displayCleanup = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                Width = 620,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false
+            };
+            displayCleanup.Controls.Add(new Label
+            {
+                AutoSize = true,
+                MaximumSize = new Size(610, 0),
+                ForeColor = _theme.TextTertiary,
+                BackColor = _theme.CardBackground,
+                Margin = new Padding(0, 0, 0, 12),
+                Text = LocalizationService.Get(
+                    "Settings.DisplayCleanupGuide")
+            });
+            _displayCleanupPermissionButton = CreateActionButton(
+                LocalizationService.Get(
+                    "Settings.GrantDisplayCleanupPermission"),
+                220);
+            _displayCleanupPermissionButton.Enabled = false;
+            _displayCleanupPermissionButton.Click +=
+                DisplayCleanupPermissionButton_Click;
+            displayCleanup.Controls.Add(_displayCleanupPermissionButton);
+            _displayCleanupStatusLabel = new Label
+            {
+                AutoSize = true,
+                MaximumSize = new Size(610, 0),
+                ForeColor = _theme.TextTertiary,
+                BackColor = _theme.CardBackground,
+                Margin = new Padding(0, 10, 0, 0),
+                Text = LocalizationService.Get(
+                    "Settings.DisplayCleanupChecking")
+            };
+            displayCleanup.Controls.Add(_displayCleanupStatusLabel);
+            AddCard(
+                page,
+                LocalizationService.Get(
+                    "Settings.GroupDisplayCleanup"),
+                displayCleanup);
 
             var advanced = CreateTable();
             _wakeUpModeBox = AddCombo<ScrcpyWakeUpMode>(
@@ -978,7 +1032,9 @@ namespace DexManager.Forms
             settings.Paths.ScrcpyPath = scrcpyPath;
             settings.Paths.ScreenshotFolder = ToConfiguredPath(
                 _screenshotFolderBox.Text);
-            settings.Paths.DeviceScreenshotFolder = _deviceScreenshotFolderBox.Text.Trim();
+            settings.Paths.DeviceScreenshotFolder = NormalizeDeviceFolder(
+                _deviceScreenshotFolderBox.Text,
+                false);
             settings.Paths.FileTransferTargetFolder =
                 NormalizeFileTransferTargetFolder(
                     _fileTransferTargetFolderBox.Text);
@@ -1133,6 +1189,13 @@ namespace DexManager.Forms
 
         private static string NormalizeFileTransferTargetFolder(string value)
         {
+            return NormalizeDeviceFolder(value, true);
+        }
+
+        private static string NormalizeDeviceFolder(
+            string value,
+            bool trailingSlash)
+        {
             var normalized = (value ?? string.Empty)
                 .Trim()
                 .Replace('\\', '/');
@@ -1140,8 +1203,16 @@ namespace DexManager.Forms
                 normalized = normalized.Replace("//", "/");
             normalized = normalized.TrimEnd('/');
 
-            var validRoot = normalized.StartsWith(
+            var validRoot = string.Equals(
+                    normalized,
+                    "/sdcard",
+                    StringComparison.Ordinal) ||
+                normalized.StartsWith(
                     "/sdcard/",
+                    StringComparison.Ordinal) ||
+                string.Equals(
+                    normalized,
+                    "/storage/emulated/0",
                     StringComparison.Ordinal) ||
                 normalized.StartsWith(
                     "/storage/emulated/0/",
@@ -1173,7 +1244,9 @@ namespace DexManager.Forms
                     LocalizationService.Get(
                         "Settings.FileTransferTargetFolderInvalid"));
             }
-            return normalized + "/";
+            return trailingSlash
+                ? normalized + "/"
+                : normalized;
         }
 
         private void UpdateWirelessControls()
@@ -1573,6 +1646,164 @@ namespace DexManager.Forms
                 _navigationButtons[i].Invalidate();
             }
             _pages[index].BringToFront();
+            if (index == 4)
+                RefreshDisplayCleanupStatusAsync();
+        }
+
+        private async void RefreshDisplayCleanupStatusAsync()
+        {
+            if (_displayCleanupOperationRunning ||
+                _displayCleanupPermissionButton == null ||
+                _displayCleanupStatusLabel == null)
+            {
+                return;
+            }
+
+            _displayCleanupOperationRunning = true;
+            _displayCleanupPermissionButton.Enabled = false;
+            _displayCleanupStatusLabel.ForeColor = _theme.TextTertiary;
+            _displayCleanupStatusLabel.Text = LocalizationService.Get(
+                "Settings.DisplayCleanupChecking");
+            try
+            {
+                var status = await Task.Run(
+                    () => _displayCleanupPermissionService.Inspect());
+                if (IsDisposed) return;
+                _displayCleanupOperationRunning = false;
+                _displayCleanupStatus = status;
+                ApplyDisplayCleanupStatus(status);
+            }
+            catch (Exception ex)
+            {
+                if (IsDisposed) return;
+                _displayCleanupStatus = new DisplayCleanupPermissionStatus
+                {
+                    State = DisplayCleanupPermissionState.Error,
+                    Detail = ex.Message
+                };
+                ApplyDisplayCleanupStatus(_displayCleanupStatus);
+            }
+            finally
+            {
+                _displayCleanupOperationRunning = false;
+            }
+        }
+
+        private async void DisplayCleanupPermissionButton_Click(
+            object sender,
+            EventArgs e)
+        {
+            if (_displayCleanupOperationRunning ||
+                _displayCleanupStatus == null ||
+                _displayCleanupStatus.State !=
+                    DisplayCleanupPermissionState.Ready)
+            {
+                return;
+            }
+
+            var answer = MessageBox.Show(
+                this,
+                LocalizationService.Get(
+                    "Settings.DisplayCleanupGrantConfirm"),
+                LocalizationService.Get(
+                    "Settings.GroupDisplayCleanup"),
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Information,
+                MessageBoxDefaultButton.Button2);
+            if (answer != DialogResult.Yes) return;
+
+            _displayCleanupOperationRunning = true;
+            _displayCleanupPermissionButton.Enabled = false;
+            _displayCleanupStatusLabel.ForeColor = _theme.TextTertiary;
+            _displayCleanupStatusLabel.Text = LocalizationService.Get(
+                "Settings.DisplayCleanupGranting");
+            try
+            {
+                var previous = _displayCleanupStatus;
+                var status = await Task.Run(
+                    () => _displayCleanupPermissionService.Grant(previous));
+                if (IsDisposed) return;
+                _displayCleanupOperationRunning = false;
+                _displayCleanupStatus = status;
+                ApplyDisplayCleanupStatus(status);
+                if (status.State ==
+                    DisplayCleanupPermissionState.Granted)
+                {
+                    MessageBox.Show(
+                        this,
+                        LocalizationService.Get(
+                            "Settings.DisplayCleanupGrantSucceeded"),
+                        LocalizationService.Get(
+                            "Settings.GroupDisplayCleanup"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (IsDisposed) return;
+                _displayCleanupStatus = new DisplayCleanupPermissionStatus
+                {
+                    State = DisplayCleanupPermissionState.Error,
+                    Detail = ex.Message
+                };
+                ApplyDisplayCleanupStatus(_displayCleanupStatus);
+            }
+            finally
+            {
+                _displayCleanupOperationRunning = false;
+            }
+        }
+
+        private void ApplyDisplayCleanupStatus(
+            DisplayCleanupPermissionStatus status)
+        {
+            if (status == null) return;
+            string key;
+            switch (status.State)
+            {
+                case DisplayCleanupPermissionState.NoDevice:
+                    key = "Settings.DisplayCleanupNoDevice";
+                    break;
+                case DisplayCleanupPermissionState.NotInstalled:
+                    key = "Settings.DisplayCleanupNotInstalled";
+                    break;
+                case DisplayCleanupPermissionState.VerificationFailed:
+                    key = "Settings.DisplayCleanupVerificationFailed";
+                    break;
+                case DisplayCleanupPermissionState.Ready:
+                    key = "Settings.DisplayCleanupReady";
+                    break;
+                case DisplayCleanupPermissionState.Granted:
+                    key = "Settings.DisplayCleanupGranted";
+                    break;
+                default:
+                    key = "Settings.DisplayCleanupFailed";
+                    break;
+            }
+
+            var text = LocalizationService.Get(key);
+            if ((status.State ==
+                    DisplayCleanupPermissionState.VerificationFailed ||
+                status.State == DisplayCleanupPermissionState.Error) &&
+                !string.IsNullOrWhiteSpace(status.Detail))
+            {
+                text += Environment.NewLine + status.Detail;
+            }
+            _displayCleanupStatusLabel.Text = text;
+            _displayCleanupStatusLabel.ForeColor =
+                status.State ==
+                        DisplayCleanupPermissionState.VerificationFailed ||
+                    status.State == DisplayCleanupPermissionState.Error
+                    ? Color.Firebrick
+                    : _theme.TextTertiary;
+            _displayCleanupPermissionButton.Text = LocalizationService.Get(
+                status.State == DisplayCleanupPermissionState.Granted
+                    ? "Settings.DisplayCleanupPermissionGrantedButton"
+                    : "Settings.GrantDisplayCleanupPermission");
+            _displayCleanupPermissionButton.Enabled =
+                status.State == DisplayCleanupPermissionState.Ready &&
+                !_displayCleanupOperationRunning;
         }
 
         public bool PreFilterMessage(ref Message message)
@@ -1642,21 +1873,21 @@ namespace DexManager.Forms
             Control content)
         {
             content.Location = new Point(18, CardContentTop);
-            content.Width = 630;
+            content.Width = CardContentWidth;
             content.BackColor = _theme.CardBackground;
             NormalizeLastRowMargin(content);
             content.PerformLayout();
             var preferred = content.GetPreferredSize(
-                new Size(630, 0));
+                new Size(CardContentWidth, 0));
             content.Size = new Size(
-                630,
+                CardContentWidth,
                 Math.Max(preferred.Height, 32));
 
             var card = new RoundedPanel
             {
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                MinimumSize = new Size(670, 94),
+                MinimumSize = new Size(CardWidth, 94),
                 Padding = new Padding(
                     0,
                     0,
@@ -1689,9 +1920,9 @@ namespace DexManager.Forms
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = 2,
-                Width = 630,
-                MinimumSize = new Size(630, 0),
-                MaximumSize = new Size(630, 0),
+                Width = CardContentWidth,
+                MinimumSize = new Size(CardContentWidth, 0),
+                MaximumSize = new Size(CardContentWidth, 0),
                 BackColor = ThemeColors.Current.CardBackground,
                 Padding = Padding.Empty
             };
@@ -1798,6 +2029,69 @@ namespace DexManager.Forms
             var panel = CreatePathPanel(out box, file);
             AddRow(table, label, panel);
             return box;
+        }
+
+        private ThemedTextControl AddDevicePath(
+            TableLayoutPanel table,
+            string label)
+        {
+            var box = CreateTextBox();
+            box.UseMiddleEllipsis = true;
+            var button = new ThemedButton
+            {
+                Text = LocalizationService.Get("Common.Browse"),
+                Dock = DockStyle.Fill,
+                Margin = new Padding(8, 0, 0, 0)
+            };
+            button.Click += delegate { BrowseDeviceFolder(box); };
+            var panel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                Height = 32,
+                ColumnCount = 2,
+                RowCount = 1,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty,
+                BackColor = ThemeColors.Current.CardBackground
+            };
+            panel.ColumnStyles.Add(new ColumnStyle(
+                SizeType.Percent,
+                100F));
+            panel.ColumnStyles.Add(new ColumnStyle(
+                SizeType.Absolute,
+                100F));
+            panel.Controls.Add(box, 0, 0);
+            panel.Controls.Add(button, 1, 0);
+            AddRow(table, label, panel);
+            return box;
+        }
+
+        private void BrowseDeviceFolder(ThemedTextControl targetBox)
+        {
+            var serial = _adbService.TargetSerial;
+            if (string.IsNullOrWhiteSpace(serial) ||
+                !_adbService.IsAuthorizedDeviceConnected(serial))
+            {
+                MessageBox.Show(
+                    this,
+                    LocalizationService.Get("DeviceFolder.NoDevice"),
+                    LocalizationService.Get("DeviceFolder.Title"),
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (var dialog = new DeviceFolderBrowserForm(
+                _adbService,
+                serial,
+                targetBox.Text))
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK &&
+                    !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+                {
+                    targetBox.Text = dialog.SelectedPath;
+                }
+            }
         }
 
         private static Panel CreatePathPanel(
@@ -1970,6 +2264,12 @@ namespace DexManager.Forms
                 BackColor = ThemeColors.Current.CardBackground,
                 Margin = new Padding(3, 9, 12, 9)
             }, 0, row);
+            if (control.Dock == DockStyle.Fill)
+            {
+                control.Dock = DockStyle.None;
+                control.Width = CardContentWidth - 208;
+            }
+            control.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             table.Controls.Add(control, 1, row);
             control.Margin = new Padding(3, 5, 0, 6);
         }

@@ -125,12 +125,32 @@ USB serial과 무선 `IP:PORT`는 같은 휴대폰에서도 다르므로 ADB 주
 
 기존 overlay가 있다는 사실만으로 제거하지 않는다. 실제 display의 너비,
 높이, DPI를 숫자로 비교해 세 값이 모두 설정과 같으면 기존 display ID를
-등록해 재사용한다. 하나라도 다르면 `overlay_display_devices`를 `none`으로
-만든 뒤 현재 설정으로 다시 생성한다.
+등록해 재사용한다. 하나라도 다르면 `settings delete global
+overlay_display_devices`로 설정 항목을 삭제한 뒤 현재 설정으로 다시 생성한다.
 
 정상 종료에서는 생성 주체나 이전 세션 여부를 구분하지 않고 연결된 관리
-기기에 `overlay_display_devices "none"`을 한 번 실행한다. 실패는 로그로
+기기에 `settings delete global overlay_display_devices`를 한 번 실행한다. 실패는 로그로
 남기되 앱 종료는 계속한다.
+
+## Android 정리 앱 권한은 package와 인증서를 함께 검증
+
+같은 package ID만으로는 신뢰하지 않는다. DX Manager는 연결된 휴대폰의 설치
+`base.apk`를 임시로 가져와 APK Signature Scheme v2의 단일 인증서 SHA-256을
+공식 고정값과 비교한다. 모두 일치할 때만 `WRITE_SECURE_SETTINGS` 권한 버튼을
+활성화하며 부여 직전·직후에도 재검증한다. 사후 검증 실패 시 권한을 즉시
+회수한다. DX Manager는 APK를 자동 설치하지 않고 사용자가 별도로 받은 공식
+앱에만 권한을 부여한다.
+
+정리 앱은 복구 범위를 넓히는 범용 설정 편집기나 shell 도구로 만들지 않는다.
+`overlay_display_devices` 조회·삭제, 메인 화면, 빠른 설정 타일과 홈 위젯만
+제공한다. Android 전역 설정 하나를 다루므로 DX Manager 생성 화면과 사용자가
+직접 만든 시뮬레이션 화면을 구분하지 않고 현재 overlay 전체를 정리한다.
+
+## 휴대폰 경로는 Android 표기 유지
+
+PC 경로와 같은 입력칸·찾아보기 버튼 구성을 사용하되 휴대폰 경로는 Android의
+`/sdcard/...`와 `/` 구분자를 유지한다. 폴더 목록은 UTF-8 NUL 구분 데이터를
+Base64로 받아 Windows 7에서도 한글·Unicode 이름을 보존한다.
 
 ## 기기 연결 후 시작 대기
 

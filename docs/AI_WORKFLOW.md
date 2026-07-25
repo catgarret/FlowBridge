@@ -54,6 +54,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package-Release.ps
 v1.1.0 패키지는 Scrcpy 4.1 런타임과
 `tools\adb-proxy\DXMAdbProxy.exe`를 반드시 포함해야 한다.
 
+Android 정리 앱은 다음 명령으로 단위 테스트, lint와 서명 Release 빌드를
+함께 실행한다.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass `
+  -File .\scripts\Build-AndroidCleanup.ps1
+```
+
+Android 앱은 `overlay_display_devices` 이외의 설정, 임의 shell 또는 네트워크
+기능을 추가하지 않는다. `signing.properties`, keystore, 비밀번호와 Android
+빌드 산출물은 Git에 넣지 않는다. Release keystore는 Git 외부에 안전하게
+백업하고 공개 인증서 지문은 `DXDisplayCleanup/SIGNING.md`와 대조한다.
+
 ## Git과 문서
 
 - diff를 확인하고 한 커밋에 한 목적만 담는다.

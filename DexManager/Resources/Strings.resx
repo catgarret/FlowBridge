@@ -548,8 +548,32 @@
   <data name="Log.KeyMapping.RightShiftCompatibility" xml:space="preserve"><value>Enabled the SDL3 right Shift compatibility mapping.</value></data>
   <data name="Common.Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Settings.ManagedFileTransfer" xml:space="preserve"><value>Use DX Manager file transfer (Unicode-compatible)</value></data>
-  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>Preserves folders plus Korean and other Unicode names on Windows 7/11. Turn this off to use scrcpy's original file-drop behavior. Changes apply to newly opened DeX and single-app windows.</value></data>
-  <data name="Settings.FileTransferTargetFolder" xml:space="preserve"><value>Dropped-item destination on phone</value></data>
+  <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>When enabled, DX Manager handles file transfer and preserves complete folders and Unicode names. Turn it off to use scrcpy's original file-drop behavior. Changes apply to newly opened DeX and single-app windows.</value></data>
+  <data name="Settings.FileTransferTargetFolder" xml:space="preserve"><value>Dropped files destination on phone</value></data>
+  <data name="Settings.GroupDisplayCleanup" xml:space="preserve"><value>Phone virtual display cleanup</value></data>
+  <data name="Settings.DisplayCleanupGuide" xml:space="preserve"><value>Grants the separately distributed Android cleanup app permission to remove a virtual display left on the phone after an abnormal exit or disconnection. This will be available only when the official app is installed and its signature has been verified.</value></data>
+  <data name="Settings.GrantDisplayCleanupPermission" xml:space="preserve"><value>Grant cleanup permission</value></data>
+  <data name="Settings.DisplayCleanupChecking" xml:space="preserve"><value>Checking the connected phone and installed cleanup app…</value></data>
+  <data name="Settings.DisplayCleanupNoDevice" xml:space="preserve"><value>Connect and authorize a phone to check the cleanup app.</value></data>
+  <data name="Settings.DisplayCleanupNotInstalled" xml:space="preserve"><value>The DX Display Cleaner app is not installed on the connected phone.</value></data>
+  <data name="Settings.DisplayCleanupVerificationFailed" xml:space="preserve"><value>The installed app could not be verified as the official DX Display Cleaner. Permission was not granted.</value></data>
+  <data name="Settings.DisplayCleanupReady" xml:space="preserve"><value>The official cleanup app and its signing certificate were verified. Permission can now be granted.</value></data>
+  <data name="Settings.DisplayCleanupGranted" xml:space="preserve"><value>The official cleanup app is verified and already has the required permission.</value></data>
+  <data name="Settings.DisplayCleanupFailed" xml:space="preserve"><value>The cleanup app or permission status could not be checked.</value></data>
+  <data name="Settings.DisplayCleanupGrantConfirm" xml:space="preserve"><value>Grant the verified DX Display Cleaner permission to change only the Android virtual-display setting? The app does not receive arbitrary ADB command access.</value></data>
+  <data name="Settings.DisplayCleanupGranting" xml:space="preserve"><value>Re-verifying the installed app and granting permission…</value></data>
+  <data name="Settings.DisplayCleanupGrantSucceeded" xml:space="preserve"><value>Permission was granted successfully. DX Display Cleaner can now remove a leftover virtual display directly on the phone.</value></data>
+  <data name="Settings.DisplayCleanupPermissionGrantedButton" xml:space="preserve"><value>Permission granted</value></data>
+  <data name="DeviceFolder.Title" xml:space="preserve"><value>Browse phone folders</value></data>
+  <data name="DeviceFolder.Heading" xml:space="preserve"><value>Select a folder on the phone</value></data>
+  <data name="DeviceFolder.Up" xml:space="preserve"><value>Up</value></data>
+  <data name="DeviceFolder.Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="DeviceFolder.SelectCurrent" xml:space="preserve"><value>Select folder</value></data>
+  <data name="DeviceFolder.Loading" xml:space="preserve"><value>Loading folders…</value></data>
+  <data name="DeviceFolder.Empty" xml:space="preserve"><value>No subfolders</value></data>
+  <data name="DeviceFolder.Count" xml:space="preserve"><value>{0} folder(s)</value></data>
+  <data name="DeviceFolder.LoadFailed" xml:space="preserve"><value>Could not read phone folders: {0}</value></data>
+  <data name="DeviceFolder.NoDevice" xml:space="preserve"><value>Connect and authorize a phone before browsing its folders.</value></data>
   <data name="Settings.FileTransferTargetFolderInvalid" xml:space="preserve"><value>Enter a folder below /sdcard/ or /storage/emulated/0/. The path cannot contain parent-directory segments, control characters, or names longer than Android's 255-byte UTF-8 limit.</value></data>
   <data name="FileTransfer.WindowTitle" xml:space="preserve"><value>DX Manager · File transfer</value></data>
   <data name="FileTransfer.Preparing" xml:space="preserve"><value>Preparing file transfer</value></data>
@@ -596,4 +620,5 @@
   <data name="Log.FileTransfer.ReparseSkipped" xml:space="preserve"><value>Skipped a shortcut, junction, or symbolic link while transferring a folder: {0}</value></data>
   <data name="Log.FileTransfer.CommitRecovered" xml:space="preserve"><value>Recovered the final file-transfer result after the ADB response was interrupted: {0}</value></data>
   <data name="Log.FileTransfer.CommitRecoveryFailed" xml:space="preserve"><value>Could not verify an interrupted final file-transfer result: {0}</value></data>
+  <data name="Log.FileTransfer.DeviceDisconnected" xml:space="preserve"><value>The device disconnected. Active and queued file transfers will be canceled: device={0}, items={1}</value></data>
 </root>

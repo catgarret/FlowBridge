@@ -15,6 +15,8 @@ Windows WinForms 프로그램이다. DeX 화면 한 개와 앱별 단일창 세 
 - .NET Framework 4.6.2
 - 외부 NuGet 패키지 없음
 - 번들 Scrcpy 4.1
+- 별도 Android companion: `DXDisplayCleanup` (Java 17, min SDK 24,
+  compile/target SDK 36)
 - 지원 목표: 64비트 Windows 7 SP1부터 Windows 11(32비트 Windows 제외)
 - 현재 휴대폰 확인 기준: Android 16 / One UI 8.x의 DeX 지원 Galaxy 기기
 
@@ -59,6 +61,17 @@ GitHub 메인 README와 별도로 HTML이 없는 `docs\PACKAGE_README.md`를 배
   취소와 충돌 파일·폴더 이름 자동 변경
 - 설정에서 관리형 전송을 끄면 새 창부터 Scrcpy 순정 전송으로 복귀
 - 공통 `1.0.41` 문구 대신 ADB의 실제 `Version ...` 빌드 값 표시
+- overlay 제거 시 global setting 자체를 삭제
+- 진단 페이지에서 공식 Android 정리 앱의 package/v2 서명 인증서를 검증한 뒤
+  `WRITE_SECURE_SETTINGS` 권한을 한 번 부여하고 결과를 재확인
+- 캡처와 드롭 파일의 휴대폰 저장 위치를 ADB 폴더 탐색기로 선택
+
+별도 `DXDisplayCleanup` 앱은 휴대폰에 남은 `overlay_display_devices` 상태만
+확인·삭제하는 제한된 복구 도구다. 메인 버튼, 빠른 설정 타일과 홈 위젯을
+제공하고 네트워크나 임의 shell 기능은 포함하지 않는다. 실제 기기 검증과
+DX Manager의 package/서명 확인 기반 권한 부여 연동 및 앱 본체의 활성 overlay
+삭제를 실제 기기에서 확인했으며, 빠른 설정 타일·위젯의 나머지 실기 확인은
+남아 있다.
 
 ## 현재 상태
 

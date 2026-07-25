@@ -316,6 +316,7 @@ namespace DexManager.Services
         {
             if (string.IsNullOrWhiteSpace(serial)) return;
             string[] sessions;
+            TransferWorkItem[] requests;
             lock (_syncRoot)
             {
                 sessions = _sessions.Values
@@ -325,6 +326,21 @@ namespace DexManager.Services
                         StringComparison.OrdinalIgnoreCase))
                     .Select(item => item.Id)
                     .ToArray();
+                var sessionSet = new HashSet<string>(
+                    sessions,
+                    StringComparer.OrdinalIgnoreCase);
+                requests = _requests.Values
+                    .Where(item => sessionSet.Contains(
+                        item.Request.SessionId) &&
+                        !item.IsTerminal)
+                    .ToArray();
+            }
+            if (requests.Length > 0)
+            {
+                _logService.Warning(LocalizationService.Format(
+                    "Log.FileTransfer.DeviceDisconnected",
+                    serial,
+                    requests.Length));
             }
             foreach (var sessionId in sessions)
                 CancelSessionRequests(sessionId, false);

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DX Display Cleaner</string>
+    <string name="app_description">Checks and removes a simulated secondary display left on the phone by DX Manager.</string>
+    <string name="status_icon_description">Virtual display status</string>
+    <string name="status_active">Virtual display is active</string>
+    <string name="status_active_detail">Tap Clean up to remove the simulated display.</string>
+    <string name="status_inactive">No virtual display</string>
+    <string name="status_inactive_detail">There is nothing to clean up.</string>
+    <string name="status_permission_required">Permission required</string>
+    <string name="status_permission_required_active">A virtual display was found, but cleanup permission has not been granted.</string>
+    <string name="status_permission_required_detail">Grant permission once from DX Manager or ADB.</string>
+    <string name="status_error">Could not check the display</string>
+    <string name="status_error_detail">Refresh and try again.</string>
+    <string name="detected_setting_title">Detected overlay setting</string>
+    <string name="setting_not_present">Not set</string>
+    <string name="cleanup_button">Clean up virtual display</string>
+    <string name="refresh_button">Refresh status</string>
+    <string name="cleanup_success">The virtual display was removed.</string>
+    <string name="cleanup_failed">The virtual display could not be removed.</string>
+    <string name="permission_required_short">Cleanup permission is required.</string>
+    <string name="permission_title">One-time permission</string>
+    <string name="permission_description">This protected Android permission cannot be granted inside the app. Use the verified permission button in DX Manager or run this ADB command once:</string>
+    <string name="permission_command">adb shell pm grant %1$s %2$s</string>
+    <string name="widget_tile_hint">You can also add the DX Display Cleaner widget and Quick Settings tile. The widget refresh button checks changes made outside this app.</string>
+    <string name="tile_label">DX display cleanup</string>
+    <string name="tile_active">Tap to clean up</string>
+    <string name="tile_inactive">No virtual display</string>
+    <string name="widget_title">DX virtual display</string>
+    <string name="widget_active">Active</string>
+    <string name="widget_inactive">Inactive</string>
+    <string name="widget_permission">Permission needed</string>
+    <string name="widget_error">Check failed</string>
+    <string name="widget_cleanup">Clean</string>
+    <string name="widget_refresh">&#x21BB;</string>
+    <string name="widget_description">Shows and cleans up the DX Manager virtual display.</string>
+</resources>

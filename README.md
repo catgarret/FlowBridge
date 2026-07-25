@@ -77,6 +77,8 @@ distribution.
 - Light, dark, and Windows-following themes
 - Automatic Korean/English UI selection
 - Session logs and environment diagnostics
+- Optional DX Display Cleaner companion with verified one-time permission grant,
+  on-phone cleanup, a Quick Settings tile, and a home-screen widget
 - 64-bit Windows 7 SP1 compatibility through .NET Framework 4.6.2
 
 ## Design Philosophy
@@ -100,6 +102,12 @@ real Samsung DeX use. The project prioritizes:
 The currently verified phone baseline is Android 16 with One UI 8.x. One UI
 7.x and earlier have not been confirmed to work reliably and may show a black
 DeX window. Samsung firmware and device-specific behavior may still differ.
+
+Some banking, game, streaming, and security-sensitive apps may refuse to run
+when USB debugging is enabled, block protected or DRM-controlled content from
+mirroring, or disallow secondary displays. DX Manager does not bypass these
+app and Android security policies. An app that does not fully support multiple
+displays may also open on the phone instead of the DeX display.
 
 DX Manager intentionally targets .NET Framework 4.6.2 to preserve compatibility
 with Windows 7 SP1 and offline or closed-network PCs. Windows 7 SP1 does not
@@ -137,6 +145,12 @@ To remove a display that remains on the phone:
 
 See the [English FAQ](docs/FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone)
 for screenshots.
+
+If the separately distributed **DX Display Cleaner** is installed, open
+**Settings > Diagnostics > Phone virtual display cleanup**. DX Manager enables
+the permission button only after it verifies the connected phone, the exact
+package ID, and the official APK signing certificate. After the one-time grant,
+the companion app can remove a leftover display directly on the phone.
 
 Do not copy only `DXManager.exe`. The adjacent `tools`, DLL, license, and
 scrcpy server files are required.
@@ -187,7 +201,8 @@ Manager file transfer is enabled by default and uses a Windows 7 SP1 through 11-
 path that preserves Korean, Japanese, and other Unicode names. The default
 destination is `/sdcard/Download/`, and it can be changed under **Settings >
 Paths / ADB > Programs and storage paths**. The destination must be below
-`/sdcard/` or `/storage/emulated/0/`.
+`/sdcard/` or `/storage/emulated/0/`. Use the adjacent **Browse** button to
+select an existing phone folder; Android paths are displayed with `/`.
 
 The movable status window shows the active item and up to four waiting items,
 file size, elapsed time, and completed/failed/waiting counts. It deliberately
@@ -205,6 +220,17 @@ storage paths**. When disabled, newly opened DeX and single-app windows use
 scrcpy's original file-drop behavior. Existing windows keep the mode with
 which they were started, and scrcpy's original behavior may not preserve
 non-ASCII file names on every Windows environment.
+
+## Optional DX Display Cleaner
+
+The separately distributed **DX Display Cleaner** is a small Android recovery
+utility for removing a simulated secondary display left on the phone after an
+interrupted session. DX Manager grants its required permission only after
+verifying the connected device, exact package ID, and official signing
+certificate. The app can then clean the display from its main screen, Quick
+Settings tile, or home-screen widget. It has no Internet, data-collection, or
+arbitrary-shell feature. See the [English user guide](docs/USER_GUIDE_EN.md#12-dx-display-cleaner-optional)
+for installation, status indicators, and safety details.
 
 ## Keyboard Compatibility
 
@@ -340,6 +366,8 @@ DX Manager는 개인적으로 사용하던 Batch 스크립트, CMD 명령과 Aut
 - 라이트, 다크 및 Windows 설정 연동 테마
 - Windows 언어에 따른 한국어·영어 UI 자동 선택
 - 실행 세션 로그와 환경 점검
+- 연결 기기·패키지명·공식 서명을 확인한 뒤 최초 1회 권한을 부여하는 선택형
+  DX Display Cleaner, 휴대폰 정리 버튼·빠른 설정 타일·홈 화면 위젯
 - .NET Framework 4.6.2를 통한 64비트 Windows 7 SP1 호환
 
 ## 개발 철학
@@ -363,6 +391,12 @@ DX Manager의 모든 기능은 Samsung DeX를 실제로 사용하면서 겪은 �
 현재 정상 동작을 확인한 휴대폰 기준은 Android 16 / One UI 8.x입니다. One UI
 7.x 이하에서는 원활한 동작을 확인하지 못했으며 DeX 창이 검게 표시될 수
 있습니다. Samsung 펌웨어와 기기별 동작 차이는 여전히 있을 수 있습니다.
+
+일부 금융·게임·스트리밍·보안 앱은 USB 디버깅이 켜진 환경에서 실행을
+거부하거나 보호된 화면과 DRM 콘텐츠의 미러링을 차단하거나 보조 디스플레이
+실행을 허용하지 않을 수 있습니다. DX Manager는 이러한 앱 및 Android 보안
+정책을 우회하지 않습니다. 다중 디스플레이를 완전히 지원하지 않는 앱은 DeX가
+아닌 휴대폰 화면에서 열릴 수도 있습니다.
 
 DX Manager는 Windows 7 SP1 및 오프라인·폐쇄망 PC와의 호환성을 유지하기
 위해 의도적으로 .NET Framework 4.6.2를 대상으로 빌드합니다. Windows 7
@@ -401,6 +435,11 @@ DX Manager 빌드가 실행됩니다.
 
 화면을 포함한 설명은 [한국어 FAQ](docs/FAQ_KO.md#q1-휴대폰에-작은-화면보조-디스플레이이-남아-있습니다)를
 참조하십시오.
+
+별도로 제공되는 **DX Display Cleaner**를 설치한 경우 **설정 > 진단 > 휴대폰
+가상화면 정리 도구**를 여십시오. DX Manager는 연결 기기, 정확한 패키지명과
+공식 APK 서명 인증서를 모두 확인한 경우에만 권한 버튼을 활성화합니다. 한 번
+권한을 부여하면 정리 앱에서 휴대폰에 남은 가상화면을 직접 제거할 수 있습니다.
 
 `DXManager.exe`만 따로 복사하면 안 됩니다. 함께 제공되는 `tools` 폴더,
 DLL, 라이선스 파일과 scrcpy 서버 파일이 모두 필요합니다.
@@ -451,7 +490,8 @@ Manager 파일 전송은 기본값으로 켜져 있으며, Windows 7 SP1부터 1
 일본어 등 Unicode 이름과 폴더 구조를 보존합니다. 기본 저장 위치는
 `/sdcard/Download/`이며 **설정 > 경로 / ADB > 프로그램 및 저장 경로**에서
 변경할 수 있습니다. 저장 위치는 `/sdcard/` 또는 `/storage/emulated/0/` 아래
-폴더만 지정할 수 있습니다.
+폴더만 지정할 수 있습니다. 옆의 **찾아보기** 버튼으로 휴대폰의 기존 폴더를
+선택할 수 있으며 Android 경로는 `/` 구분자로 표시됩니다.
 
 독립적으로 이동할 수 있는 작은 상태창에는 현재 전송 항목과 다음 대기 항목
 4개, 파일 크기, 경과 시간 및 완료·실패·대기 수가 표시됩니다. 지원하는 모든
@@ -467,6 +507,17 @@ Windows와 ADB 조합에서 정확한 전송 바이트를 얻을 수 없으므�
 끄면 새로 여는 DeX와 단일창부터 scrcpy의 순정 파일 드롭 기능을 사용합니다.
 이미 열린 창은 시작할 때 선택된 방식을 계속 사용하며, 순정 방식은 일부
 Windows 환경에서 비ASCII 파일명을 보존하지 못할 수 있습니다.
+
+## 선택형 DX Display Cleaner
+
+별도로 제공되는 **DX Display Cleaner**는 비정상 종료나 연결 분리 뒤 휴대폰에
+남은 보조 디스플레이 시뮬레이션 화면을 제거하는 작은 Android 복구 도구입니다.
+DX Manager가 연결 기기, 정확한 패키지명과 공식 서명 인증서를 확인한 뒤에만
+필요한 권한을 한 번 부여합니다. 이후 앱 본체, 빠른 설정 타일 또는 홈 화면
+위젯에서 가상화면을 정리할 수 있습니다. 인터넷 연결, 데이터 수집과 임의
+shell 실행 기능은 없습니다. 설치 방법과 상태 표시, 주의사항은
+[한국어 사용 설명서](docs/USER_GUIDE_KO.md#12-선택형-dx-display-cleaner)를
+참조하십시오.
 
 ## 키보드 호환성
 

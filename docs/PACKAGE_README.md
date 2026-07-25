@@ -17,6 +17,11 @@ The currently verified phone baseline is Android 16 with One UI 8.x on a
 DeX-capable Galaxy device. One UI 7.x and earlier have not been confirmed to
 work reliably and may show a black DeX window.
 
+Some banking, game, streaming, and security-sensitive apps may reject USB
+debugging, block protected or DRM-controlled content from mirroring, or open
+on the phone because they do not fully support secondary displays. DX Manager
+does not bypass these app and Android security policies.
+
 Windows 7 and 8.1 may require Universal CRT updates for the bundled legacy
 ADB. Wireless ADB also requires the PC and phone to communicate on the same
 local network.
@@ -44,6 +49,13 @@ language, and documentation files together.
 > displays**, select any resolution once, open the menu again, and select
 > **None**. Selecting **None** first may not clear a stale display.
 
+If the separately distributed official **DX Display Cleaner** is installed,
+use **Settings > Diagnostics > Phone virtual display cleanup** for its one-time
+permission grant. The button is enabled only after the installed package and
+official signing certificate are verified. After setup, use the companion's
+main screen, Quick Settings tile, or home-screen widget to remove a leftover
+simulated display without reconnecting the PC.
+
 ### Default settings
 
 - DeX and single windows: 1600 x 900, 150 DPI, 8 Mbps, 60 FPS
@@ -63,7 +75,8 @@ Drop files or complete folders onto a DeX or single-app window. The default DX
 Manager transfer preserves Korean, Japanese, and other Unicode names on
 Windows 7 SP1 through 11. The default destination is `/sdcard/Download/` and can be changed
 under **Settings > Paths / ADB > Programs and storage paths**. It must be below
-`/sdcard/` or `/storage/emulated/0/`.
+`/sdcard/` or `/storage/emulated/0/`. The adjacent **Browse** button lists
+existing folders on the connected phone, including Unicode names.
 
 The independent, movable status window shows the active item, up to four
 waiting items, file size, elapsed time, completed/failed/waiting counts, and a
@@ -132,6 +145,11 @@ Windows용 포터블 프로그램입니다. 이 릴리스는 scrcpy 4.1을 포�
 Galaxy 기기입니다. One UI 7.x 이하에서는 원활한 동작을 확인하지 못했으며
 DeX 창이 검게 표시될 수 있습니다.
 
+일부 금융·게임·스트리밍·보안 앱은 USB 디버깅 환경을 거부하거나 보호된
+화면과 DRM 콘텐츠의 미러링을 차단할 수 있습니다. 다중 디스플레이를 완전히
+지원하지 않는 앱은 휴대폰 화면에서 열릴 수도 있습니다. DX Manager는 이러한
+앱과 Android의 보안 정책을 우회하지 않습니다.
+
 Windows 7과 8.1에서는 동봉된 레거시 ADB를 위해 Universal CRT 업데이트가
 필요할 수 있습니다. 무선 ADB는 PC와 휴대폰이 같은 로컬 네트워크에서 직접
 통신할 수 있어야 합니다.
@@ -161,6 +179,12 @@ Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. �
 > 선택하십시오. 처음부터 **없음**만 선택하면 남은 화면이 지워지지 않을 수
 > 있습니다.
 
+별도로 제공되는 공식 **DX Display Cleaner**를 설치했다면 **설정 > 진단 >
+휴대폰 가상화면 정리 도구**에서 권한을 한 번 부여할 수 있습니다. 설치된
+패키지와 공식 서명 인증서가 확인된 경우에만 버튼이 활성화됩니다. 설정을
+마치면 정리 앱 본체, 빠른 설정 타일 또는 홈 화면 위젯으로 PC를 다시 연결하지
+않고 남은 가상화면을 제거할 수 있습니다.
+
 ### 기본 설정
 
 - DeX와 단일창: 1600 x 900, 150 DPI, 8 Mbps, 60 FPS
@@ -180,7 +204,8 @@ DeX 또는 단일창에 파일이나 폴더 전체를 놓을 수 있습니다. �
 전송은 Windows 7 SP1부터 11까지 한글·일본어 등 Unicode 이름을 보존합니다. 기본 저장
 위치는 `/sdcard/Download/`이며 **설정 > 경로 / ADB > 프로그램 및 저장
 경로**에서 바꿀 수 있습니다. `/sdcard/` 또는 `/storage/emulated/0/` 아래
-폴더만 지정할 수 있습니다.
+폴더만 지정할 수 있습니다. 옆의 **찾아보기** 버튼은 연결된 휴대폰의 기존
+폴더와 Unicode 이름을 표시합니다.
 
 독립적으로 이동할 수 있는 상태창에는 현재 항목, 다음 대기 항목 4개, 파일
 크기, 경과 시간, 완료·실패·대기 수와 취소 기능이 표시됩니다. 지원하는 모든

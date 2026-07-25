@@ -164,7 +164,10 @@ Windows 7 SP1 through 11-compatible path to preserve Korean, Japanese, and other
 names. The default phone destination is `/sdcard/Download/`; change it under
 **Settings > Paths / ADB > Programs and storage paths**. A changed destination
 applies to newly opened DeX and single-app windows. For safety, the destination
-must be below `/sdcard/` or `/storage/emulated/0/`.
+must be below `/sdcard/` or `/storage/emulated/0/`. Use **Browse** beside
+**Capture destination on phone** or **Dropped files destination on phone** to
+select an existing folder on the connected device. Android paths use `/`
+separators rather than Windows backslashes.
 
 When a folder is dropped, its top-level folder, subfolders, files, and empty
 folders are preserved. Junctions, symbolic links, and other reparse points are
@@ -355,10 +358,96 @@ monitoring intervals, virtual-display detection timeout, ADB wake-up settings,
 process timeout, and capture selection timeout. These recovery and timing
 values normally do not need to be changed.
 
+If the separately distributed **DX Display Cleaner** is installed on the phone,
+use **Phone virtual display cleanup** on the Diagnostics page for its one-time
+permission grant. DX Manager enables **Grant cleanup permission** only after it
+verifies the connected phone, the exact package ID, and the official APK signing
+certificate. It rechecks the app immediately before and after granting and does
+not grant the permission to another app.
+
+The button remains disabled with a status explanation when no authorized phone
+is connected, the app is absent, or its signature does not match. It displays
+**Permission granted** when setup is complete. The permission lets the companion
+app delete Android's virtual-display setting; it does not provide arbitrary ADB
+command access.
+
 Before sharing a saved log, verify that it does not contain private network
 information or other sensitive data.
 
-## 12. Language, Theme, and Reset
+### App security and multiple-display limitations
+
+Some banking, game, streaming, and security-sensitive apps may refuse to run
+when USB debugging or Developer options are enabled. Protected or DRM-controlled
+content may be black, and an app may disallow virtual or secondary displays.
+DX Manager does not bypass these app and Android security policies.
+
+An app that does not fully support multiple displays may open on the phone even
+when launched from DeX. Close it completely on the phone or enable **Force-stop
+selected app**, then try again.
+
+## 12. DX Display Cleaner (Optional)
+
+**DX Display Cleaner** is a separately distributed Android recovery utility for
+cases where a simulated secondary display remains on the phone after DX Manager
+is terminated unexpectedly or the device disconnects first. Normally, keep the
+phone connected and use **Stop DeX** or exit DX Manager normally. Use the
+companion when a leftover display must be removed without the PC.
+
+### Installation and one-time permission grant
+
+1. Install the official `DX-Display-Cleaner-v1.0.0.apk` supplied separately. A
+   standalone APK dropped onto a running DeX or single-app scrcpy window keeps
+   scrcpy's normal APK-install behavior. You may also open the APK on the phone.
+2. Enable USB debugging, approve this computer's RSA prompt, and connect the
+   phone to DX Manager.
+3. Open **Settings > Diagnostics > Phone virtual display cleanup**.
+4. When the status says **Ready to grant**, select **Grant cleanup permission**
+   and approve the confirmation dialog.
+5. Confirm that the status changes to **Permission granted**.
+
+DX Manager checks that the installed package ID is
+`io.github.mazemei.dxdisplaycleanup`, pulls the installed APK from the phone,
+and compares its v2 signing certificate with the pinned official certificate.
+The button is enabled only when the connected device, package, and certificate
+all match. DX Manager verifies the app again immediately before and after the
+grant, and revokes the newly granted permission if post-grant verification
+fails. It never grants this permission to an app with another signature.
+
+The grant survives phone restarts and updates signed with the same certificate.
+Uninstalling the app removes its permission, so repeat these steps after a fresh
+installation. Android cannot present this protected permission as a normal
+runtime-permission dialog inside the app.
+
+### Main app, Quick Settings tile, and home-screen widget
+
+- **Main app**: inspect the current `overlay_display_devices` setting, select
+  **Clean virtual display**, or refresh the status.
+- **Quick Settings tile**: add **DX Display Cleanup** from Quick Settings edit
+  mode to clean a leftover display from anywhere on the phone.
+- **Home-screen widget**: add the DX virtual-display widget to view status and
+  use **Clean** or refresh. If the state changed outside the app, select the
+  widget's refresh button.
+
+The indicators mean:
+
+- Color DX icon: an overlay setting is active and can be cleaned
+- Grayscale DX icon: no overlay setting is present
+- Warning indicator: permission is missing or status inspection failed
+
+Cleanup deletes Android's global `overlay_display_devices` setting and reads it
+again to verify the result. Android provides only one such global setting, so
+the app cannot distinguish a display created by DX Manager from one selected
+manually in Developer options. Cleanup removes every currently configured
+simulated secondary display.
+
+The app requests only `WRITE_SECURE_SETTINGS` and contains no Internet
+permission, data collection, or arbitrary-shell feature. Its implemented
+settings access is limited to reading and deleting `overlay_display_devices`.
+
+You can remove the same display without the app by following the
+[manual FAQ procedure](FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone).
+
+## 13. Language, Theme, and Reset
 
 <p align="center">
   <img src="images/en/guide-settings-basic-en.png" width="900" alt="DX Manager General settings page">
@@ -374,13 +463,13 @@ connections, and keyboard options.
 
 Settings are stored in `config/settings.json` next to the application.
 
-## 13. Frequently Asked Questions
+## 14. Frequently Asked Questions
 
 For common questions and troubleshooting steps, see the
 [Frequently Asked Questions](FAQ_EN.md). A [Korean version](FAQ_KO.md) is
 also available.
 
-## 14. Removal
+## 15. Removal
 
 DX Manager does not use an installer.
 

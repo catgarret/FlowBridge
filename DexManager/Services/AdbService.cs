@@ -250,6 +250,26 @@ namespace DexManager.Services
                 true);
         }
 
+        public ProcessResult PullForSerial(
+            string serial,
+            string remotePath,
+            string localPath,
+            bool writeLog)
+        {
+            if (string.IsNullOrWhiteSpace(remotePath))
+                throw new ArgumentException(
+                    LocalizationService.Get("Error.Adb.RemotePathEmpty"),
+                    "remotePath");
+            if (string.IsNullOrWhiteSpace(localPath))
+                throw new ArgumentException(
+                    "Local ADB pull path is empty.",
+                    "localPath");
+            return RunForSerial(
+                serial,
+                "pull " + Quote(remotePath) + " " + Quote(localPath),
+                writeLog);
+        }
+
         private static void ValidatePushPaths(
             string localPath,
             string remotePath)

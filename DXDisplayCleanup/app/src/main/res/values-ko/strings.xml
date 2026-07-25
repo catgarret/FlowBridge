@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DX 가상화면 정리</string>
+    <string name="app_description">DX Manager 사용 후 휴대폰에 남은 보조 디스플레이 시뮬레이션 화면을 확인하고 제거합니다.</string>
+    <string name="status_icon_description">가상화면 상태</string>
+    <string name="status_active">가상화면이 켜져 있습니다</string>
+    <string name="status_active_detail">정리 버튼을 누르면 보조 디스플레이를 제거합니다.</string>
+    <string name="status_inactive">가상화면이 없습니다</string>
+    <string name="status_inactive_detail">정리할 보조 디스플레이가 없습니다.</string>
+    <string name="status_permission_required">권한이 필요합니다</string>
+    <string name="status_permission_required_active">가상화면을 찾았지만 정리 권한이 부여되지 않았습니다.</string>
+    <string name="status_permission_required_detail">DX Manager 또는 ADB에서 권한을 한 번 부여하십시오.</string>
+    <string name="status_error">가상화면을 확인하지 못했습니다</string>
+    <string name="status_error_detail">새로고침한 뒤 다시 시도하십시오.</string>
+    <string name="detected_setting_title">감지된 overlay 설정</string>
+    <string name="setting_not_present">설정 없음</string>
+    <string name="cleanup_button">가상화면 정리</string>
+    <string name="refresh_button">상태 새로고침</string>
+    <string name="cleanup_success">가상화면을 제거했습니다.</string>
+    <string name="cleanup_failed">가상화면을 제거하지 못했습니다.</string>
+    <string name="permission_required_short">가상화면 정리 권한이 필요합니다.</string>
+    <string name="permission_title">최초 1회 권한 부여</string>
+    <string name="permission_description">이 Android 보호 권한은 앱 안에서 허용할 수 없습니다. DX Manager의 검증된 권한 부여 버튼을 사용하거나 다음 ADB 명령을 한 번 실행하십시오.</string>
+    <string name="permission_command">adb shell pm grant %1$s %2$s</string>
+    <string name="widget_tile_hint">홈 화면 위젯과 빠른 설정 타일도 사용할 수 있습니다. 앱 밖에서 상태가 바뀌었다면 위젯의 새로고침 버튼을 누르십시오.</string>
+    <string name="tile_label">DX 가상화면 정리</string>
+    <string name="tile_active">눌러서 정리</string>
+    <string name="tile_inactive">가상화면 없음</string>
+    <string name="widget_title">DX 가상화면</string>
+    <string name="widget_active">켜짐</string>
+    <string name="widget_inactive">꺼짐</string>
+    <string name="widget_permission">권한 필요</string>
+    <string name="widget_error">확인 실패</string>
+    <string name="widget_cleanup">정리</string>
+    <string name="widget_refresh">&#x21BB;</string>
+    <string name="widget_description">DX Manager 가상화면 상태를 확인하고 정리합니다.</string>
+</resources>
