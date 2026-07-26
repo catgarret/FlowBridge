@@ -125,7 +125,7 @@
   <data name="Settings.Keyboard" xml:space="preserve"><value>키 입력</value></data>
   <data name="Settings.Diagnostics" xml:space="preserve"><value>진단</value></data>
   <data name="Settings.About" xml:space="preserve"><value>정보</value></data>
-  <data name="Settings.AboutVersion" xml:space="preserve"><value>DX Manager v1.1.0</value></data>
+  <data name="Settings.AboutVersion" xml:space="preserve"><value>DX Manager v{0}</value></data>
   <data name="Settings.AboutSummary" xml:space="preserve"><value>Android 장치의 화면과 입력을 관리하는 독립 유틸리티입니다.</value></data>
   <data name="Settings.AboutDeveloper" xml:space="preserve"><value>개발자: maze</value></data>
   <data name="Settings.AboutCopyright" xml:space="preserve"><value>Copyright © 2026 maze</value></data>

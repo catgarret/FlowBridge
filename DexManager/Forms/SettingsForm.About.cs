@@ -25,7 +25,9 @@ namespace DexManager.Forms
                 WrapContents = false
             };
             panel.Controls.Add(CreateAboutLabel(
-                LocalizationService.Get("Settings.AboutVersion"),
+                LocalizationService.Format(
+                    "Settings.AboutVersion",
+                    Application.ProductVersion),
                 true,
                 new Padding(0, 0, 0, 14)));
             panel.Controls.Add(CreateAboutLabel(

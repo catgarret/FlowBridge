@@ -18,6 +18,7 @@ namespace DexManager.Forms
         {
             if (message.Msg != WmMouseWheel ||
                 !Visible ||
+                Form.ActiveForm != this ||
                 _contentHost == null ||
                 !_contentHost.RectangleToScreen(
                     _contentHost.ClientRectangle).Contains(Cursor.Position))

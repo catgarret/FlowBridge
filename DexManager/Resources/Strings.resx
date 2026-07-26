@@ -125,7 +125,7 @@
   <data name="Settings.Keyboard" xml:space="preserve"><value>Keyboard</value></data>
   <data name="Settings.Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
   <data name="Settings.About" xml:space="preserve"><value>About</value></data>
-  <data name="Settings.AboutVersion" xml:space="preserve"><value>DX Manager v1.1.0</value></data>
+  <data name="Settings.AboutVersion" xml:space="preserve"><value>DX Manager v{0}</value></data>
   <data name="Settings.AboutSummary" xml:space="preserve"><value>An independently developed utility for managing Android device displays and input.</value></data>
   <data name="Settings.AboutDeveloper" xml:space="preserve"><value>Developer: maze</value></data>
   <data name="Settings.AboutCopyright" xml:space="preserve"><value>Copyright © 2026 maze</value></data>
