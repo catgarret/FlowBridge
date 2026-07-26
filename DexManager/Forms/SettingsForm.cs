@@ -61,6 +61,8 @@ namespace DexManager.Forms
         private CheckBox _disableStayAwakeBox;
         private CheckBox _autoStartDexBox;
         private CheckBox _showConnectedDeviceInfoBox;
+        private CheckBox _miniControlBarBox;
+        private ThemedSelectControl _miniControlBarSideBox;
         private ThemedNumberControl _deviceMonitorIntervalBox;
         private ThemedNumberControl _disconnectMonitorIntervalBox;
         private ThemedNumberControl _connectedStartDelayBox;

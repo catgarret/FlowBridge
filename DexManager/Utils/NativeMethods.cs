@@ -96,6 +96,10 @@ namespace DexManager.Utils
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool IsWindowVisible(IntPtr windowHandle);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool ShowWindow(IntPtr windowHandle, int command);
 
         [DllImport("user32.dll")]

@@ -1,0 +1,377 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Windows.Forms;
+using DexManager.Forms;
+using DexManager.Models;
+using DexManager.Utils;
+
+namespace DexManager.Services
+{
+    internal sealed class MiniControlBarManager : IDisposable
+    {
+        private const int FollowIntervalMs = 60;
+        private const int BarGap = 6;
+        private readonly AppSettings _settings;
+        private readonly ScrcpyService _scrcpyService;
+        private readonly SingleWindowService _singleWindowService;
+        private readonly CaptureCoordinator _captureCoordinator;
+        private readonly Action _showMainWindow;
+        private readonly LogService _logService;
+        private readonly System.Windows.Forms.Timer _timer;
+        private readonly Dictionary<string, MiniControlBarForm> _bars =
+            new Dictionary<string, MiniControlBarForm>(
+                StringComparer.OrdinalIgnoreCase);
+        private bool _started;
+        private bool _disposed;
+
+        internal MiniControlBarManager(
+            AppSettings settings,
+            ScrcpyService scrcpyService,
+            SingleWindowService singleWindowService,
+            CaptureCoordinator captureCoordinator,
+            Action showMainWindow,
+            LogService logService)
+        {
+            _settings = settings ?? throw new ArgumentNullException("settings");
+            _scrcpyService = scrcpyService ??
+                throw new ArgumentNullException("scrcpyService");
+            _singleWindowService = singleWindowService ??
+                throw new ArgumentNullException("singleWindowService");
+            _captureCoordinator = captureCoordinator ??
+                throw new ArgumentNullException("captureCoordinator");
+            _showMainWindow = showMainWindow ??
+                throw new ArgumentNullException("showMainWindow");
+            _logService = logService ??
+                throw new ArgumentNullException("logService");
+            _timer = new System.Windows.Forms.Timer
+            {
+                Interval = FollowIntervalMs
+            };
+            _timer.Tick += Timer_Tick;
+        }
+
+        internal void Start()
+        {
+            if (_disposed || _started) return;
+            _started = true;
+            Synchronize();
+            _timer.Start();
+        }
+
+        internal void ApplySettings()
+        {
+            if (_disposed) return;
+            foreach (var bar in _bars.Values)
+                bar.ApplyTheme(_settings.Theme);
+            Synchronize();
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _timer.Stop();
+            _timer.Tick -= Timer_Tick;
+            _timer.Dispose();
+            CloseAll();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            Synchronize();
+        }
+
+        private void Synchronize()
+        {
+            if (_disposed) return;
+            if (!_settings.Features.MiniControlBarEnabled)
+            {
+                CloseAll();
+                return;
+            }
+
+            var desired = GetDesiredWindows();
+            RemoveMissingBars(desired);
+            foreach (var item in desired)
+                EnsureBar(item.Key, item.Value);
+
+            var foreground = NativeMethods.GetForegroundWindow();
+            var scrcpyForeground = false;
+            foreach (var handle in desired.Values)
+            {
+                if (foreground == handle)
+                {
+                    scrcpyForeground = true;
+                    break;
+                }
+            }
+
+            foreach (var item in _bars)
+            {
+                IntPtr target;
+                var canShow = desired.TryGetValue(item.Key, out target) &&
+                    target == item.Value.TargetHandle &&
+                    scrcpyForeground &&
+                    NativeMethods.IsWindow(target) &&
+                    NativeMethods.IsWindowVisible(target) &&
+                    !NativeMethods.IsIconic(target);
+                if (!canShow)
+                {
+                    if (item.Value.Visible) item.Value.Hide();
+                    continue;
+                }
+
+                PositionBar(item.Value, target);
+                if (!item.Value.Visible)
+                    item.Value.Show();
+            }
+        }
+
+        private Dictionary<string, IntPtr> GetDesiredWindows()
+        {
+            var desired = new Dictionary<string, IntPtr>(
+                StringComparer.OrdinalIgnoreCase);
+            AddWindow(desired, "dex", _scrcpyService.MainWindowHandle);
+            for (var slot = 1; slot <= 3; slot++)
+            {
+                AddWindow(
+                    desired,
+                    "single:" + slot,
+                    _singleWindowService.MainWindowHandle(slot));
+            }
+            return desired;
+        }
+
+        private static void AddWindow(
+            IDictionary<string, IntPtr> windows,
+            string key,
+            IntPtr handle)
+        {
+            if (handle != IntPtr.Zero && NativeMethods.IsWindow(handle))
+                windows[key] = handle;
+        }
+
+        private void EnsureBar(string key, IntPtr target)
+        {
+            MiniControlBarForm existing;
+            if (_bars.TryGetValue(key, out existing))
+            {
+                if (existing.TargetHandle == target &&
+                    !existing.IsDisposed)
+                {
+                    return;
+                }
+                CloseBar(existing);
+                _bars.Remove(key);
+            }
+
+            var bar = new MiniControlBarForm(target, _settings.Theme);
+            bar.CommandRequested += Bar_CommandRequested;
+            _bars[key] = bar;
+        }
+
+        private void RemoveMissingBars(
+            IDictionary<string, IntPtr> desired)
+        {
+            var missing = new List<string>();
+            foreach (var item in _bars)
+            {
+                IntPtr target;
+                if (!desired.TryGetValue(item.Key, out target) ||
+                    target != item.Value.TargetHandle)
+                {
+                    missing.Add(item.Key);
+                }
+            }
+            foreach (var key in missing)
+            {
+                CloseBar(_bars[key]);
+                _bars.Remove(key);
+            }
+        }
+
+        private void PositionBar(
+            MiniControlBarForm bar,
+            IntPtr target)
+        {
+            NativeRect rect;
+            if (!NativeMethods.GetWindowRect(target, out rect)) return;
+            var workArea = Screen.FromHandle(target).WorkingArea;
+            var leftSide =
+                _settings.Features.MiniControlBarSide ==
+                    MiniControlBarSide.Left;
+            var x = leftSide
+                ? rect.Left - bar.Width - BarGap
+                : rect.Right + BarGap;
+
+            if (x < workArea.Left ||
+                x + bar.Width > workArea.Right)
+            {
+                x = leftSide
+                    ? rect.Left + BarGap
+                    : rect.Right - bar.Width - BarGap;
+            }
+            x = Math.Max(
+                workArea.Left,
+                Math.Min(workArea.Right - bar.Width, x));
+            var y = rect.Top + 10;
+            y = Math.Max(
+                workArea.Top,
+                Math.Min(workArea.Bottom - bar.Height, y));
+            var location = new Point(x, y);
+            if (bar.Location != location) bar.Location = location;
+        }
+
+        private void Bar_CommandRequested(
+            object sender,
+            MiniControlBarCommandEventArgs e)
+        {
+            if (_disposed || e == null ||
+                !NativeMethods.IsWindow(e.TargetHandle))
+            {
+                return;
+            }
+
+            try
+            {
+                switch (e.Command)
+                {
+                    case MiniControlBarCommand.ScreenOff:
+                        SendShortcut(e.TargetHandle, Keys.O, false);
+                        break;
+                    case MiniControlBarCommand.ScreenOn:
+                        SendShortcut(e.TargetHandle, Keys.O, true);
+                        break;
+                    case MiniControlBarCommand.Power:
+                        SendShortcut(e.TargetHandle, Keys.P, false);
+                        break;
+                    case MiniControlBarCommand.Fullscreen:
+                        SendShortcut(e.TargetHandle, Keys.F, false);
+                        break;
+                    case MiniControlBarCommand.ResetSize:
+                        SendShortcut(e.TargetHandle, Keys.G, false);
+                        break;
+                    case MiniControlBarCommand.Capture:
+                        _captureCoordinator.CaptureWindow(e.TargetHandle);
+                        break;
+                    case MiniControlBarCommand.OpenManager:
+                        _showMainWindow();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logService.Error(
+                    LocalizationService.Get(
+                        "Log.MiniBar.CommandFailed"),
+                    ex);
+            }
+        }
+
+        private void SendShortcut(
+            IntPtr target,
+            Keys key,
+            bool shift)
+        {
+            if (!ScrcpyShortcutSender.Send(target, key, shift))
+            {
+                _logService.Warning(LocalizationService.Get(
+                    "Log.MiniBar.CommandFailed"));
+            }
+        }
+
+        private void CloseAll()
+        {
+            foreach (var bar in _bars.Values) CloseBar(bar);
+            _bars.Clear();
+        }
+
+        private void CloseBar(MiniControlBarForm bar)
+        {
+            if (bar == null) return;
+            bar.CommandRequested -= Bar_CommandRequested;
+            try { bar.Close(); }
+            catch (InvalidOperationException) { }
+            bar.Dispose();
+        }
+    }
+
+    internal static class ScrcpyShortcutSender
+    {
+        internal static bool Send(
+            IntPtr target,
+            Keys key,
+            bool shift)
+        {
+            if (target == IntPtr.Zero || !NativeMethods.IsWindow(target))
+                return false;
+
+            if (NativeMethods.IsIconic(target))
+                NativeMethods.ShowWindow(target, NativeMethods.SwRestore);
+            NativeMethods.SetForegroundWindow(target);
+            Thread.Sleep(20);
+
+            var inputs = new List<Input>();
+            AddKey(inputs, NativeMethods.VkLMenu, false);
+            if (shift) AddKey(inputs, NativeMethods.VkLShift, false);
+            AddKey(inputs, (int)key, false);
+            AddKey(inputs, (int)key, true);
+            if (shift) AddKey(inputs, NativeMethods.VkLShift, true);
+            AddKey(inputs, NativeMethods.VkLMenu, true);
+
+            var array = inputs.ToArray();
+            var sent = NativeMethods.SendInput(
+                (uint)array.Length,
+                array,
+                Marshal.SizeOf(typeof(Input)));
+            if (sent == array.Length) return true;
+
+            NativeMethods.keybd_event(
+                (byte)key,
+                0,
+                NativeMethods.KeyeventfKeyup,
+                UIntPtr.Zero);
+            if (shift)
+            {
+                NativeMethods.keybd_event(
+                    (byte)NativeMethods.VkLShift,
+                    0,
+                    NativeMethods.KeyeventfKeyup,
+                    UIntPtr.Zero);
+            }
+            NativeMethods.keybd_event(
+                (byte)NativeMethods.VkLMenu,
+                0,
+                NativeMethods.KeyeventfKeyup,
+                UIntPtr.Zero);
+            return false;
+        }
+
+        private static void AddKey(
+            ICollection<Input> inputs,
+            int virtualKey,
+            bool keyUp)
+        {
+            inputs.Add(new Input
+            {
+                Type = NativeMethods.InputKeyboard,
+                Data = new InputUnion
+                {
+                    Keyboard = new KeyboardInput
+                    {
+                        VirtualKey = (ushort)virtualKey,
+                        ScanCode = 0,
+                        Flags = keyUp
+                            ? NativeMethods.KeyeventfKeyUpInput
+                            : 0,
+                        Time = 0,
+                        ExtraInfo = UIntPtr.Zero
+                    }
+                }
+            });
+        }
+    }
+}

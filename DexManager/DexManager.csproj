@@ -121,6 +121,9 @@
     <Compile Include="Forms\FileTransferStatusForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\MiniControlBarForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\ThirdPartyLicensesForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -166,6 +169,7 @@
     <Compile Include="Services\HotkeyService.cs" />
     <Compile Include="Services\KeyMappingService.cs" />
     <Compile Include="Services\LocalizationService.cs" />
+    <Compile Include="Services\MiniControlBarManager.cs" />
     <Compile Include="Services\ScrcpyLaunchCoordinator.cs" />
     <Compile Include="Services\ScrcpyService.cs" />
     <Compile Include="Services\ScreenOffService.cs" />

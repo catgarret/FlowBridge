@@ -145,6 +145,31 @@ namespace DexManager.Services
             if (handler != null) handler(this, EventArgs.Empty);
         }
 
+        public void CaptureWindow(IntPtr windowHandle)
+        {
+            if (_disposed ||
+                windowHandle == IntPtr.Zero ||
+                !NativeMethods.IsWindow(windowHandle))
+            {
+                return;
+            }
+
+            _captureWindowHandle = windowHandle;
+            _captureSerial = ResolveWindowSerial(windowHandle);
+            if (NativeMethods.IsIconic(windowHandle))
+                NativeMethods.ShowWindow(
+                    windowHandle,
+                    NativeMethods.SwRestore);
+            NativeMethods.SetForegroundWindow(windowHandle);
+            var captureSerial = _captureSerial;
+            RunCaptureAsync(delegate
+            {
+                return _captureService.CaptureWindow(
+                    windowHandle,
+                    captureSerial);
+            });
+        }
+
         private void BeginCaptureMode()
         {
             if (!BringScrcpyToFront()) return;

@@ -384,6 +384,12 @@
   <data name="Settings.ThemeLight" xml:space="preserve"><value>Light</value></data>
   <data name="Settings.ThemeDark" xml:space="preserve"><value>Dark</value></data>
   <data name="Settings.ThemeRestart" xml:space="preserve"><value>Theme changes are applied immediately after saving.</value></data>
+  <data name="Settings.GroupMiniControlBar" xml:space="preserve"><value>Mini control bar</value></data>
+  <data name="Settings.MiniControlBar" xml:space="preserve"><value>Show a mini control bar next to Scrcpy windows</value></data>
+  <data name="Settings.MiniControlBarSide" xml:space="preserve"><value>Attached side</value></data>
+  <data name="Settings.MiniControlBarRight" xml:space="preserve"><value>Right</value></data>
+  <data name="Settings.MiniControlBarLeft" xml:space="preserve"><value>Left</value></data>
+  <data name="Settings.MiniControlBarHint" xml:space="preserve"><value>The bar follows each DeX or single-app window and appears while a Scrcpy window is active.</value></data>
   <data name="Settings.ResetDefaults" xml:space="preserve"><value>Restore all defaults</value></data>
   <data name="Settings.ResetDefaultsGuide" xml:space="preserve"><value>Reset every option, including DeX, single-window, connection, and keyboard settings.</value></data>
   <data name="Settings.ResetDefaultsConfirm" xml:space="preserve"><value>Restore every setting to its default value? Saved custom settings will be removed, and active services will fully use the defaults after restart.</value></data>
@@ -621,4 +627,14 @@
   <data name="Log.FileTransfer.CommitRecovered" xml:space="preserve"><value>Recovered the final file-transfer result after the ADB response was interrupted: {0}</value></data>
   <data name="Log.FileTransfer.CommitRecoveryFailed" xml:space="preserve"><value>Could not verify an interrupted final file-transfer result: {0}</value></data>
   <data name="Log.FileTransfer.DeviceDisconnected" xml:space="preserve"><value>The device disconnected. Active and queued file transfers will be canceled: device={0}, items={1}</value></data>
+  <data name="MiniBar.ScreenOff" xml:space="preserve"><value>Turn phone screen off (Alt+O)</value></data>
+  <data name="MiniBar.ScreenOn" xml:space="preserve"><value>Turn phone screen on (Alt+Shift+O)</value></data>
+  <data name="MiniBar.Power" xml:space="preserve"><value>Press the phone power button (Alt+P)</value></data>
+  <data name="MiniBar.Fullscreen" xml:space="preserve"><value>Toggle fullscreen (Alt+F)</value></data>
+  <data name="MiniBar.ResetSize" xml:space="preserve"><value>Reset the Scrcpy window size (Alt+G)</value></data>
+  <data name="MiniBar.Capture" xml:space="preserve"><value>Capture this Scrcpy window</value></data>
+  <data name="MiniBar.OpenManager" xml:space="preserve"><value>Open DX Manager</value></data>
+  <data name="MiniBar.Collapse" xml:space="preserve"><value>Collapse the control bar</value></data>
+  <data name="MiniBar.Expand" xml:space="preserve"><value>Expand the control bar</value></data>
+  <data name="Log.MiniBar.CommandFailed" xml:space="preserve"><value>The mini control bar command could not be sent.</value></data>
 </root>

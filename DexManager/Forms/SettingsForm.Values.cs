@@ -55,6 +55,21 @@ namespace DexManager.Forms
             _autoStartDexBox.Checked = _settings.Features.AutoStartDexOnDeviceConnected;
             _showConnectedDeviceInfoBox.Checked =
                 _settings.Features.ShowConnectedDeviceInfo;
+            _miniControlBarBox.Checked =
+                _settings.Features.MiniControlBarEnabled;
+            foreach (var item in _miniControlBarSideBox.Items)
+            {
+                var option = item as MiniControlBarSideOption;
+                if (option != null &&
+                    option.Value ==
+                        _settings.Features.MiniControlBarSide)
+                {
+                    _miniControlBarSideBox.SelectedItem = option;
+                    break;
+                }
+            }
+            _miniControlBarSideBox.Enabled =
+                _miniControlBarBox.Checked;
             _resetDisplayOnStopBox.Checked = true;
             _disableStayAwakeBox.Checked = _settings.Features.DisableStayAwakeOnStop;
             _pushCaptureBox.Checked = _settings.Features.PushCaptureToDevice;
@@ -278,6 +293,15 @@ namespace DexManager.Forms
             settings.Features.PushCaptureToDevice = _pushCaptureBox.Checked;
             settings.Features.ManagedFileTransferEnabled =
                 _managedFileTransferBox.Checked;
+            settings.Features.MiniControlBarEnabled =
+                _miniControlBarBox.Checked;
+            var miniControlBarSide =
+                _miniControlBarSideBox.SelectedItem as
+                    MiniControlBarSideOption;
+            settings.Features.MiniControlBarSide =
+                miniControlBarSide == null
+                    ? MiniControlBarSide.Right
+                    : miniControlBarSide.Value;
 
             settings.Timing.DeviceMonitorIntervalMs =
                 SecondsToMilliseconds(_deviceMonitorIntervalBox);
@@ -504,6 +528,24 @@ namespace DexManager.Forms
                 if (Value == AppTheme.Dark)
                     return LocalizationService.Get("Settings.ThemeDark");
                 return LocalizationService.Get("Settings.ThemeAuto");
+            }
+        }
+
+        private sealed class MiniControlBarSideOption
+        {
+            public MiniControlBarSideOption(MiniControlBarSide value)
+            {
+                Value = value;
+            }
+
+            public MiniControlBarSide Value { get; private set; }
+
+            public override string ToString()
+            {
+                return LocalizationService.Get(
+                    Value == MiniControlBarSide.Left
+                        ? "Settings.MiniControlBarLeft"
+                        : "Settings.MiniControlBarRight");
             }
         }
     }

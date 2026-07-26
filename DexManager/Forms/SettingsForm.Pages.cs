@@ -36,6 +36,36 @@ namespace DexManager.Forms
                 CreateHint(LocalizationService.Get("Settings.ThemeRestart")));
             AddCard(page, LocalizationService.Get("Settings.GroupAppearance"), appearance);
 
+            var miniControlBar = CreateTable();
+            _miniControlBarBox = AddCheck(
+                miniControlBar,
+                LocalizationService.Get("Settings.MiniControlBar"));
+            _miniControlBarSideBox = CreateSelect();
+            foreach (MiniControlBarSide side in Enum.GetValues(
+                typeof(MiniControlBarSide)))
+            {
+                _miniControlBarSideBox.Items.Add(
+                    new MiniControlBarSideOption(side));
+            }
+            AddRow(
+                miniControlBar,
+                LocalizationService.Get("Settings.MiniControlBarSide"),
+                _miniControlBarSideBox);
+            AddRow(
+                miniControlBar,
+                string.Empty,
+                CreateHint(LocalizationService.Get(
+                    "Settings.MiniControlBarHint")));
+            _miniControlBarBox.CheckedChanged += delegate
+            {
+                _miniControlBarSideBox.Enabled =
+                    _miniControlBarBox.Checked;
+            };
+            AddCard(
+                page,
+                LocalizationService.Get("Settings.GroupMiniControlBar"),
+                miniControlBar);
+
             var startup = CreateTable();
             _startWithWindowsBox = AddCheck(startup, LocalizationService.Get("Settings.StartWithWindows"));
             _startMinimizedBox = AddCheck(startup, LocalizationService.Get("Settings.StartMinimized"));

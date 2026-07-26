@@ -132,6 +132,7 @@ namespace DexManager.Forms
                 _settings.Features.AutoHideEnabled,
                 _settings.Timing.AutoHideIdleSeconds);
             _wirelessAdbService.SynchronizeTargetWithSettings();
+            _miniControlBarManager.ApplySettings();
 
             try
             {
@@ -186,6 +187,9 @@ namespace DexManager.Forms
             _screenOffService.RequestShutdown();
             _fileTransferCoordinator.RequestShutdown();
             var wakeSerials = CaptureWakeSerials();
+            TryCleanup(
+                "mini control bar",
+                _miniControlBarManager.Dispose);
             TryCleanup("capture coordinator", _captureCoordinator.Stop);
             TryCleanup("key mapping", _keyMappingService.Stop);
             BeginPhoneScreenWakeSuppression();

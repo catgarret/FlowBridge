@@ -60,6 +60,9 @@ namespace DexManager.Forms
                 !_exitCleanupTask.IsCompleted;
             if (!cleanupStillRunning)
                 TryCleanup("device monitor", _deviceMonitor.Dispose);
+            TryCleanup(
+                "mini control bar",
+                _miniControlBarManager.Dispose);
             TryCleanup("capture coordinator", _captureCoordinator.Dispose);
             TryCleanup("automatic hide", _autoHideService.Dispose);
             TryCleanup("key mapping", _keyMappingService.Dispose);
@@ -112,6 +115,9 @@ namespace DexManager.Forms
             _singleWindowService.RequestShutdown();
             _screenOffService.RequestShutdown();
             _fileTransferCoordinator.RequestShutdown();
+            TryCleanup(
+                "mini control bar",
+                _miniControlBarManager.Dispose);
             TryCleanup("capture coordinator", _captureCoordinator.Stop);
             TryCleanup("key mapping", _keyMappingService.Stop);
             BeginPhoneScreenWakeSuppression();

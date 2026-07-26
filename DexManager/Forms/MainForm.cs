@@ -36,6 +36,7 @@ namespace DexManager.Forms
         private readonly EnvironmentCheckService _environmentCheckService;
         private readonly KeyMappingService _keyMappingService;
         private readonly FileTransferCoordinator _fileTransferCoordinator;
+        private readonly MiniControlBarManager _miniControlBarManager;
         private readonly bool _isAutoRun;
         private readonly TrayService _trayService;
         private readonly Label _adbStatusValue;
@@ -159,6 +160,13 @@ namespace DexManager.Forms
             _keyMappingService = keyMappingService;
             _fileTransferCoordinator = fileTransferCoordinator ??
                 throw new ArgumentNullException("fileTransferCoordinator");
+            _miniControlBarManager = new MiniControlBarManager(
+                _settings,
+                _scrcpyService,
+                _singleWindowService,
+                _captureCoordinator,
+                ShowMainWindow,
+                _logService);
             _isAutoRun = isAutoRun;
             _lastDeviceState = DeviceState.Disconnected();
             _selectedMode = 0;
@@ -437,6 +445,8 @@ namespace DexManager.Forms
                     LocalizationService.Get("App.Name"),
                     LocalizationService.Get("Main.KeyMappingFailed"));
             }
+
+            _miniControlBarManager.Start();
 
             await InitializeAdbAndMonitorAsync();
             if (_exitInProgress || IsDisposed) return;

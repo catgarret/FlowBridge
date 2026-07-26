@@ -10,7 +10,7 @@ namespace DexManager.Models
     [DataContract]
     public sealed class AppSettings
     {
-        public const int CurrentSchemaVersion = 20;
+        public const int CurrentSchemaVersion = 21;
 
         [DataMember(Order = 1)] public int SchemaVersion { get; set; }
         [DataMember(Order = 2)] public PathSettings Paths { get; set; }
@@ -93,7 +93,9 @@ namespace DexManager.Models
                     DisableStayAwakeOnStop = true,
                     AutoStartDexOnDeviceConnected = false,
                     ShowConnectedDeviceInfo = true,
-                    ManagedFileTransferEnabled = true
+                    ManagedFileTransferEnabled = true,
+                    MiniControlBarEnabled = true,
+                    MiniControlBarSide = MiniControlBarSide.Right
                 },
                 KeyMappings = new KeyMappingSettings
                 {
@@ -308,6 +310,14 @@ namespace DexManager.Models
                     defaults.Paths.FileTransferTargetFolder;
                 SchemaVersion = defaults.SchemaVersion;
             }
+            if (oldSchemaVersion < 21)
+            {
+                Features.MiniControlBarEnabled =
+                    defaults.Features.MiniControlBarEnabled;
+                Features.MiniControlBarSide =
+                    defaults.Features.MiniControlBarSide;
+                SchemaVersion = defaults.SchemaVersion;
+            }
             VirtualDisplay.Width = NormalizeRange(
                 VirtualDisplay.Width,
                 320,
@@ -405,6 +415,13 @@ namespace DexManager.Models
                 Language = defaults.Language;
             if (!System.Enum.IsDefined(typeof(AppTheme), Theme))
                 Theme = defaults.Theme;
+            if (!System.Enum.IsDefined(
+                typeof(MiniControlBarSide),
+                Features.MiniControlBarSide))
+            {
+                Features.MiniControlBarSide =
+                    defaults.Features.MiniControlBarSide;
+            }
             if (!System.Enum.IsDefined(
                 typeof(ScrcpyWakeUpMode),
                 Features.ScrcpyWakeUpMode))
@@ -693,6 +710,12 @@ namespace DexManager.Models
         Dark = 2
     }
 
+    public enum MiniControlBarSide
+    {
+        Right = 0,
+        Left = 1
+    }
+
     [DataContract]
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public sealed class VirtualDisplaySettings
@@ -776,6 +799,8 @@ namespace DexManager.Models
         [DataMember(Order = 9)] public bool AutoStartDexOnDeviceConnected { get; set; }
         [DataMember(Order = 10)] public bool ShowConnectedDeviceInfo { get; set; }
         [DataMember(Order = 11)] public bool ManagedFileTransferEnabled { get; set; }
+        [DataMember(Order = 12)] public bool MiniControlBarEnabled { get; set; }
+        [DataMember(Order = 13)] public MiniControlBarSide MiniControlBarSide { get; set; }
     }
 
     [DataContract]
