@@ -123,7 +123,7 @@ DX Manager가 만든 화면과 사용자가 개발자 옵션에서 직접 선택
 ## 배포
 
 - 설치 프로그램 없음
-- Assembly/File version은 `1.1.0.0`
+- Assembly/File version은 `1.2.0.0`
 - 앱 아이콘, 제작자/GitHub 링크, MIT 라이선스와 제3자 고지 완료
 - README, 사용 설명서와 FAQ의 한국어/영어 스크린샷 배치 완료
 - 공개 ZIP에서 개인 설정, PDB, 로그와 테스트 스크린샷 제외 확인

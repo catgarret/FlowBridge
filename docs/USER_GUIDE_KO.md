@@ -58,7 +58,7 @@ Framework 4.x가 이 요구 사항을 충족합니다.
 
 `DXManager.exe`만 다른 폴더로 복사하면 실행되지 않습니다. `tools` 폴더,
 scrcpy DLL, `scrcpy-server`, 라이선스 파일을 포함한 배포 폴더 전체를
-유지하십시오. 버전 1.1.0은 scrcpy 4.1을 포함합니다.
+유지하십시오. 버전 1.2.0은 scrcpy 4.1을 포함합니다.
 
 > [!IMPORTANT]
 > 휴대폰을 연결한 상태에서 **DeX 중지**를 누르거나 DX Manager를 정상

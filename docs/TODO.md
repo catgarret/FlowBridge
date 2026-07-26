@@ -2,6 +2,17 @@
 
 ## 다음 작업
 
+- [x] v1.2.0 구조 분리
+  - [x] MainForm·SettingsForm feature partial 분리
+  - [x] 파일 전송 IPC·처리·ADB·원격 작업·진행 상태 분리
+  - [x] 폴더 전송 계획과 실행 결과 모델 분리
+  - [x] .NET Framework 4.6.2 x64 Debug/Release 빌드
+- [ ] v1.2.0 실기 회귀 테스트
+  - DeX·단일창 시작/중지와 USB·무선 재연결
+  - 화면 끄기·잠자기 방지·키보드 보정과 비정상 분리 정리
+  - 단일 파일·폴더·Unicode 파일 전송, 취소와 연결 해제
+  - Windows 11 확인 후 Windows 7 SP1 확인
+
 - [ ] DX Display Cleaner 실제 Galaxy 기기 검증
   - [x] 공식 Release APK 설치와 package/certificate 재확인
   - [x] ADB 1회 권한 부여 전·후 상태 표시
