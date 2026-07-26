@@ -153,6 +153,14 @@
     <Compile Include="Services\DisplayCleanupPermissionService.cs" />
     <Compile Include="Services\EnvironmentCheckService.cs" />
     <Compile Include="Services\FileTransferCoordinator.cs" />
+    <Compile Include="Services\FileTransferCoordinator.Adb.cs" />
+    <Compile Include="Services\FileTransferCoordinator.Ipc.cs" />
+    <Compile Include="Services\FileTransferCoordinator.Processing.cs" />
+    <Compile Include="Services\FileTransferCoordinator.Progress.cs" />
+    <Compile Include="Services\FileTransferCoordinator.Remote.cs" />
+    <Compile Include="Services\FileTransferCoordinator.State.cs" />
+    <Compile Include="Services\FileTransferExecutionModels.cs" />
+    <Compile Include="Services\FileTransferPlanner.cs" />
     <Compile Include="Services\DexOrchestrator.cs" />
     <Compile Include="Services\PathService.cs" />
     <Compile Include="Services\HotkeyService.cs" />
