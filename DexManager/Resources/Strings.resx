@@ -632,7 +632,7 @@
   <data name="MiniBar.Power" xml:space="preserve"><value>Press the phone power button (Alt+P)</value></data>
   <data name="MiniBar.Fullscreen" xml:space="preserve"><value>Toggle fullscreen (Alt+F)</value></data>
   <data name="MiniBar.ResetSize" xml:space="preserve"><value>Reset the Scrcpy window size (Alt+G)</value></data>
-  <data name="MiniBar.Capture" xml:space="preserve"><value>Capture this Scrcpy window</value></data>
+  <data name="MiniBar.Capture" xml:space="preserve"><value>Capture this Scrcpy window (hotkey: {0})</value></data>
   <data name="MiniBar.OpenManager" xml:space="preserve"><value>Open DX Manager</value></data>
   <data name="MiniBar.Collapse" xml:space="preserve"><value>Collapse the control bar</value></data>
   <data name="MiniBar.Expand" xml:space="preserve"><value>Expand the control bar</value></data>

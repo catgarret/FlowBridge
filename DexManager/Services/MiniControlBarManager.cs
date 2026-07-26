@@ -64,8 +64,7 @@ namespace DexManager.Services
         internal void ApplySettings()
         {
             if (_disposed) return;
-            foreach (var bar in _bars.Values)
-                bar.ApplyTheme(_settings.Theme);
+            CloseAll();
             Synchronize();
         }
 
@@ -126,7 +125,7 @@ namespace DexManager.Services
 
                 PositionBar(item.Value, target);
                 if (!item.Value.Visible)
-                    item.Value.Show();
+                    item.Value.Show(new WindowHandleOwner(target));
             }
         }
 
@@ -168,7 +167,10 @@ namespace DexManager.Services
                 _bars.Remove(key);
             }
 
-            var bar = new MiniControlBarForm(target, _settings.Theme);
+            var bar = new MiniControlBarForm(
+                target,
+                _settings.Theme,
+                _settings.KeyMappings.CaptureHotkey);
             bar.CommandRequested += Bar_CommandRequested;
             _bars[key] = bar;
         }
@@ -198,7 +200,7 @@ namespace DexManager.Services
             IntPtr target)
         {
             NativeRect rect;
-            if (!NativeMethods.GetWindowRect(target, out rect)) return;
+            if (!TryGetVisibleWindowRect(target, out rect)) return;
             var workArea = Screen.FromHandle(target).WorkingArea;
             var leftSide =
                 _settings.Features.MiniControlBarSide ==
@@ -217,12 +219,54 @@ namespace DexManager.Services
             x = Math.Max(
                 workArea.Left,
                 Math.Min(workArea.Right - bar.Width, x));
-            var y = rect.Top + 10;
+            var y = GetClientTop(target, rect.Top + 10);
             y = Math.Max(
                 workArea.Top,
                 Math.Min(workArea.Bottom - bar.Height, y));
             var location = new Point(x, y);
             if (bar.Location != location) bar.Location = location;
+        }
+
+        private static int GetClientTop(
+            IntPtr target,
+            int fallback)
+        {
+            NativeRect clientRect;
+            var origin = new NativePoint();
+            if (NativeMethods.GetClientRect(target, out clientRect) &&
+                NativeMethods.ClientToScreen(target, ref origin))
+            {
+                return origin.Y;
+            }
+            return fallback;
+        }
+
+        private static bool TryGetVisibleWindowRect(
+            IntPtr target,
+            out NativeRect rect)
+        {
+            try
+            {
+                var result = NativeMethods.DwmGetWindowAttribute(
+                    target,
+                    NativeMethods.DwmwaExtendedFrameBounds,
+                    out rect,
+                    Marshal.SizeOf(typeof(NativeRect)));
+                if (result == 0 &&
+                    rect.Right > rect.Left &&
+                    rect.Bottom > rect.Top)
+                {
+                    return true;
+                }
+            }
+            catch (DllNotFoundException)
+            {
+            }
+            catch (EntryPointNotFoundException)
+            {
+            }
+
+            return NativeMethods.GetWindowRect(target, out rect);
         }
 
         private void Bar_CommandRequested(
@@ -296,6 +340,21 @@ namespace DexManager.Services
             try { bar.Close(); }
             catch (InvalidOperationException) { }
             bar.Dispose();
+        }
+    }
+
+    internal sealed class WindowHandleOwner : IWin32Window
+    {
+        private readonly IntPtr _handle;
+
+        internal WindowHandleOwner(IntPtr handle)
+        {
+            _handle = handle;
+        }
+
+        public IntPtr Handle
+        {
+            get { return _handle; }
         }
     }
 

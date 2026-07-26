@@ -39,6 +39,7 @@ namespace DexManager.Forms
         private const int ButtonSize = 36;
         private const int ButtonGap = 2;
         private const int BarPadding = 4;
+        private const int CornerRadius = 9;
         private const int WmMouseActivate = 0x0021;
         private const int MaNoActivate = 3;
         private const int WsExNoActivate = 0x08000000;
@@ -47,21 +48,28 @@ namespace DexManager.Forms
         private readonly IntPtr _targetHandle;
         private readonly List<MiniControlButton> _commandButtons =
             new List<MiniControlButton>();
-        private readonly ToolTip _toolTip = new ToolTip();
+        private readonly ToolTip _toolTip = new ToolTip
+        {
+            ShowAlways = true,
+            InitialDelay = 350,
+            ReshowDelay = 100,
+            AutoPopDelay = 6000
+        };
         private readonly MiniControlButton _collapseButton;
         private ThemePalette _theme;
         private bool _collapsed;
 
         internal MiniControlBarForm(
             IntPtr targetHandle,
-            AppTheme theme)
+            AppTheme theme,
+            string captureHotkey)
         {
             _targetHandle = targetHandle;
             AutoScaleMode = AutoScaleMode.None;
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.Manual;
-            TopMost = true;
+            TopMost = false;
             Size = new Size(BarWidth, BarWidth);
 
             AddCommandButton(
@@ -87,7 +95,8 @@ namespace DexManager.Forms
             AddCommandButton(
                 MiniControlBarCommand.Capture,
                 MiniControlIcon.Capture,
-                "MiniBar.Capture");
+                "MiniBar.Capture",
+                captureHotkey);
             AddCommandButton(
                 MiniControlBarCommand.OpenManager,
                 MiniControlIcon.Manager,
@@ -153,14 +162,36 @@ namespace DexManager.Forms
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             using (var pen = new Pen(_theme.CardBorder))
+            using (var path = CreateRoundedRectangle(
+                new RectangleF(
+                    0.5F,
+                    0.5F,
+                    ClientSize.Width - 1F,
+                    ClientSize.Height - 1F),
+                CornerRadius))
             {
-                e.Graphics.DrawRectangle(
-                    pen,
+                e.Graphics.DrawPath(pen, path);
+            }
+        }
+
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            if (ClientSize.Width <= 0 || ClientSize.Height <= 0) return;
+
+            using (var path = CreateRoundedRectangle(
+                new RectangleF(
                     0,
                     0,
-                    ClientSize.Width - 1,
-                    ClientSize.Height - 1);
+                    ClientSize.Width,
+                    ClientSize.Height),
+                CornerRadius))
+            {
+                var previous = Region;
+                Region = new Region(path);
+                if (previous != null) previous.Dispose();
             }
         }
 
@@ -173,9 +204,13 @@ namespace DexManager.Forms
         private void AddCommandButton(
             MiniControlBarCommand command,
             MiniControlIcon icon,
-            string toolTipKey)
+            string toolTipKey,
+            params object[] toolTipValues)
         {
-            var button = CreateButton(icon, toolTipKey);
+            var button = CreateButton(
+                icon,
+                toolTipKey,
+                toolTipValues);
             button.Click += delegate
             {
                 var handler = CommandRequested;
@@ -194,7 +229,8 @@ namespace DexManager.Forms
 
         private MiniControlButton CreateButton(
             MiniControlIcon icon,
-            string toolTipKey)
+            string toolTipKey,
+            params object[] toolTipValues)
         {
             var button = new MiniControlButton(icon)
             {
@@ -204,7 +240,11 @@ namespace DexManager.Forms
             };
             _toolTip.SetToolTip(
                 button,
-                LocalizationService.Get(toolTipKey));
+                toolTipValues != null && toolTipValues.Length > 0
+                    ? LocalizationService.Format(
+                        toolTipKey,
+                        toolTipValues)
+                    : LocalizationService.Get(toolTipKey));
             return button;
         }
 
@@ -239,6 +279,30 @@ namespace DexManager.Forms
             _collapseButton.Location = new Point(BarPadding, top);
             top += ButtonSize + BarPadding;
             ClientSize = new Size(BarWidth, top);
+        }
+
+        private static GraphicsPath CreateRoundedRectangle(
+            RectangleF bounds,
+            float radius)
+        {
+            var diameter = Math.Min(
+                radius * 2F,
+                Math.Min(bounds.Width, bounds.Height));
+            var path = new GraphicsPath();
+            var arc = new RectangleF(
+                bounds.Left,
+                bounds.Top,
+                diameter,
+                diameter);
+            path.AddArc(arc, 180, 90);
+            arc.X = bounds.Right - diameter;
+            path.AddArc(arc, 270, 90);
+            arc.Y = bounds.Bottom - diameter;
+            path.AddArc(arc, 0, 90);
+            arc.X = bounds.Left;
+            path.AddArc(arc, 90, 90);
+            path.CloseFigure();
+            return path;
         }
     }
 
@@ -402,12 +466,12 @@ namespace DexManager.Forms
                     }
                     break;
                 case MiniControlIcon.Collapse:
-                    graphics.DrawLine(pen, cx + 4, cy - 7, cx - 3, cy);
-                    graphics.DrawLine(pen, cx - 3, cy, cx + 4, cy + 7);
+                    graphics.DrawLine(pen, cx - 7, cy + 4, cx, cy - 3);
+                    graphics.DrawLine(pen, cx, cy - 3, cx + 7, cy + 4);
                     break;
                 case MiniControlIcon.Expand:
-                    graphics.DrawLine(pen, cx - 4, cy - 7, cx + 3, cy);
-                    graphics.DrawLine(pen, cx + 3, cy, cx - 4, cy + 7);
+                    graphics.DrawLine(pen, cx - 7, cy - 4, cx, cy + 3);
+                    graphics.DrawLine(pen, cx, cy + 3, cx + 7, cy - 4);
                     break;
             }
         }

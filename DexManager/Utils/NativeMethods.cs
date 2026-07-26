@@ -46,6 +46,7 @@ namespace DexManager.Utils
         internal const uint InputKeyboard = 1;
         internal const uint KeyeventfScanCodeInput = 0x0008;
         internal const uint KeyeventfKeyUpInput = 0x0002;
+        internal const int DwmwaExtendedFrameBounds = 9;
 
         internal delegate IntPtr LowLevelKeyboardProc(
             int code,
@@ -77,6 +78,13 @@ namespace DexManager.Utils
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GetWindowRect(IntPtr windowHandle, out NativeRect rect);
+
+        [DllImport("dwmapi.dll")]
+        internal static extern int DwmGetWindowAttribute(
+            IntPtr windowHandle,
+            int attribute,
+            out NativeRect value,
+            int valueSize);
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]

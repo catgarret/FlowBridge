@@ -632,7 +632,7 @@
   <data name="MiniBar.Power" xml:space="preserve"><value>휴대폰 전원 버튼 누르기 (Alt+P)</value></data>
   <data name="MiniBar.Fullscreen" xml:space="preserve"><value>전체 화면 전환 (Alt+F)</value></data>
   <data name="MiniBar.ResetSize" xml:space="preserve"><value>Scrcpy 창 크기 복구 (Alt+G)</value></data>
-  <data name="MiniBar.Capture" xml:space="preserve"><value>이 Scrcpy 창 캡처</value></data>
+  <data name="MiniBar.Capture" xml:space="preserve"><value>이 Scrcpy 창 캡처 (단축키: {0})</value></data>
   <data name="MiniBar.OpenManager" xml:space="preserve"><value>DX Manager 열기</value></data>
   <data name="MiniBar.Collapse" xml:space="preserve"><value>컨트롤바 접기</value></data>
   <data name="MiniBar.Expand" xml:space="preserve"><value>컨트롤바 펼치기</value></data>
