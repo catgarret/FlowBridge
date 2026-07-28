@@ -44,17 +44,20 @@ Do not copy only `DXManager.exe`. Keep the adjacent `tools`, DLL, license,
 language, and documentation files together.
 
 > [!IMPORTANT]
-> Keep the phone connected and use **Stop DeX** or exit DX Manager normally.
+> Keep the phone connected and use **Stop DeX**, press `Left Alt+F8`, or
+> right-click the tray icon and select **Exit**. Wait for cleanup before
+> disconnecting the phone.
 > If a simulated display remains, open **Developer options > Simulate secondary
 > displays**, select any resolution once, open the menu again, and select
 > **None**. Selecting **None** first may not clear a stale display.
 
-If the separately distributed official **DX Display Cleaner** is installed,
+If the separately distributed official **DX Companion** is installed,
 use **Settings > Diagnostics > Phone virtual display cleanup** for its one-time
 permission grant. The button is enabled only after the installed package and
 official signing certificate are verified. After setup, use the companion's
 main screen, Quick Settings tile, or home-screen widget to remove a leftover
-simulated display without reconnecting the PC.
+simulated display and turn off Developer options **Stay awake** without
+reconnecting the PC. DX Companion is not included in this ZIP.
 
 ### Default settings
 
@@ -68,6 +71,18 @@ simulated display without reconnecting the PC.
 - Stay awake while a managed window is running: On
 - DX Manager Unicode-compatible file transfer: On
 - Phone file-transfer destination: `/sdcard/Download/`
+- Mini control bars beside scrcpy windows: On, right side
+
+### Mini control bar and app profiles
+
+Each DeX and single-app window can have its own mini control bar for screen
+off/on, power, fullscreen, 1:1 size, capture, and opening DX Manager. Hover
+over an icon to see its shortcut. Configure its side under **Settings >
+General**.
+
+In single-window mode, open **App profile** to save the selected app's current
+display and run settings. Selecting that app in any slot applies the profile
+automatically. DeX settings are not affected.
 
 ### Drag-and-drop file transfer
 
@@ -173,17 +188,19 @@ Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. �
 라이선스, 언어 및 문서 파일을 함께 유지하십시오.
 
 > [!IMPORTANT]
-> 휴대폰을 연결한 상태에서 **DeX 중지**를 누르거나 DX Manager를 정상
-> 종료하십시오. 가상 화면이 남으면 **개발자 옵션 > 보조 디스플레이
+> 휴대폰을 연결한 상태에서 **DeX 중지**를 누르거나 `Left Alt+F8`을 누르거나,
+> 트레이 아이콘을 마우스 오른쪽 버튼으로 눌러 **종료**를 선택하십시오. 정리가
+> 끝난 뒤 연결을 해제하십시오. 가상 화면이 남으면 **개발자 옵션 > 보조 디스플레이
 > 시뮬레이션**에서 아무 해상도나 한 번 선택하고, 메뉴를 다시 열어 **없음**을
 > 선택하십시오. 처음부터 **없음**만 선택하면 남은 화면이 지워지지 않을 수
 > 있습니다.
 
-별도로 제공되는 공식 **DX Display Cleaner**를 설치했다면 **설정 > 진단 >
+별도로 제공되는 공식 **DX Companion**을 설치했다면 **설정 > 진단 >
 휴대폰 가상화면 정리 도구**에서 권한을 한 번 부여할 수 있습니다. 설치된
 패키지와 공식 서명 인증서가 확인된 경우에만 버튼이 활성화됩니다. 설정을
-마치면 정리 앱 본체, 빠른 설정 타일 또는 홈 화면 위젯으로 PC를 다시 연결하지
-않고 남은 가상화면을 제거할 수 있습니다.
+마치면 앱 본체, 빠른 설정 타일 또는 홈 화면 위젯으로 PC를 다시 연결하지 않고
+남은 가상화면을 제거하고 **절전모드 해제**를 끌 수 있습니다. DX Companion은
+이 ZIP에 포함되지 않습니다.
 
 ### 기본 설정
 
@@ -197,6 +214,17 @@ Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. �
 - 관리 창 실행 중 잠자기 방지: 켜짐
 - DX Manager 한글·Unicode 호환 파일 전송: 켜짐
 - 휴대폰 파일 전송 위치: `/sdcard/Download/`
+- scrcpy 창 옆 미니 컨트롤바: 켜짐, 오른쪽
+
+### 미니 컨트롤바와 앱 프로필
+
+각 DeX·단일창에는 휴대폰 화면 끄기·켜기, 전원, 전체 화면, 1:1 크기, 캡처와
+DX Manager 열기를 제공하는 전용 미니바를 표시할 수 있습니다. 아이콘에
+마우스를 올리면 단축키가 표시되며 **설정 > 기본**에서 위치를 바꿀 수 있습니다.
+
+단일창에서 **앱 프로필**을 열면 선택 앱의 현재 화면·실행 설정을 저장할 수
+있습니다. 이후 어느 슬롯에서든 같은 앱을 선택하면 프로필이 자동 적용되며,
+DeX 설정에는 영향을 주지 않습니다.
 
 ### 드래그 앤 드롭 파일 전송
 

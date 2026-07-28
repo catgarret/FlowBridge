@@ -9,6 +9,10 @@ forcibly, or if the USB or wireless connection is completely lost before the
 cleanup command can be sent. DX Manager removes this setting automatically
 when it exits normally.
 
+For a normal exit, keep the phone connected and use **Stop DeX**, press
+`Left Alt+F8`, or right-click the DX Manager tray icon and select **Exit**.
+Wait for cleanup before disconnecting USB or wireless ADB.
+
 If the screen remains, remove it on the phone as follows:
 
 1. Open **Developer options**.
@@ -20,11 +24,12 @@ Selecting **None** first may not clear a stale display. The resolution-then-None
 sequence forces Android to refresh the overlay setting, after which the
 remaining virtual screen disappears.
 
-If the separately distributed official **DX Display Cleaner** is installed and
+If the separately distributed official **DX Companion** is installed and
 its one-time permission was granted under **Settings > Diagnostics > Phone
 virtual display cleanup**, the leftover display can also be removed from the
-main app, Quick Settings tile, or home-screen widget. See the
-[English user guide](USER_GUIDE_EN.md#12-dx-display-cleaner-optional) for full
+main app, Quick Settings tile, or home-screen widget. DX Companion can also
+turn off Developer options **Stay awake** after an interrupted session. See the
+[English user guide](USER_GUIDE_EN.md#12-dx-companion-optional) for full
 installation and usage details.
 
 <p align="center">
@@ -336,7 +341,7 @@ Recent Apps and holding the left button may act as a touchscreen long press.
 ## Q23. Why is the cleanup permission button under Diagnostics disabled?
 
 The button is enabled only when the separately distributed official **DX
-Display Cleaner** is installed on the connected phone and its APK signing
+Companion** is installed on the connected phone and its APK signing
 certificate matches. DX Manager does not grant the permission when ADB is not
 authorized, the app is absent, or another app uses the same package ID with a
 different signature. Check the status message below the button.
@@ -348,8 +353,10 @@ command feature.
 
 The permission survives a reboot and an update signed with the same official
 certificate. Uninstalling and reinstalling the app removes its permission, so
-grant it again after a fresh installation. Once granted, cleanup is available
-from the main app, Quick Settings tile, and home-screen widget.
+grant it again after a fresh installation. Once granted, the main app can clean
+the virtual display, turn off **Stay awake**, or do both. The Quick Settings
+tile and compact 2 × 1 widget clean both by default; their targets can be
+changed in the app.
 
 Without the companion app, open **Developer options > Simulate secondary
 displays**, select any resolution once, open the menu again, and select

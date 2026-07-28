@@ -7,17 +7,17 @@
   - [x] 파일 전송 IPC·처리·ADB·원격 작업·진행 상태 분리
   - [x] 폴더 전송 계획과 실행 결과 모델 분리
   - [x] .NET Framework 4.6.2 x64 Debug/Release 빌드
-- [ ] v1.2.0 실기 회귀 테스트
+- [x] v1.2.0 실기 회귀 테스트
   - DeX·단일창 시작/중지와 USB·무선 재연결
   - 화면 끄기·잠자기 방지·키보드 보정과 비정상 분리 정리
   - 단일 파일·폴더·Unicode 파일 전송, 취소와 연결 해제
   - Windows 11 확인 후 Windows 7 SP1 확인
 
-- [ ] DX Display Cleaner 실제 Galaxy 기기 검증
+- [x] DX Companion 실제 Galaxy 기기 검증
   - [x] 공식 Release APK 설치와 package/certificate 재확인
   - [x] ADB 1회 권한 부여 전·후 상태 표시
   - [x] 앱 본체의 활성 overlay 삭제와 삭제 후 재조회
-  - [ ] 빠른 설정 타일 및 홈 위젯 세 상태 확인
+  - [x] 빠른 설정 타일·2 × 1 홈 위젯과 절전모드 해제 복구 확인
 - [x] DX Manager의 정리 앱 package/v2 인증서 검증과 실제 권한 부여 연결
   - 부여 직전·직후 재검증 및 사후 검증 실패 시 권한 회수
 - [x] 캡처·드롭 파일 휴대폰 저장 경로 ADB 폴더 찾아보기
@@ -27,7 +27,7 @@
   - 실행 중 다른 휴대폰 연결 무시
   - 고정 휴대폰 분리 시 다른 휴대폰으로 자동 전환하지 않음
   - 같은 휴대폰 재연결 및 USB↔무선 전환 허용
-- [ ] Windows 7에서 최신 입력/설정 UI 회귀 확인
+- [x] Windows 7에서 최신 입력/설정 UI 회귀 확인
 - [ ] Scrcpy 4.0/SDL3 오른쪽 Shift 재현 내용을 upstream에 보고
 - [ ] Scrcpy 4.1/SDL3에서도 오른쪽 Shift 호환 보정의 필요 여부 실기 확인
 - [ ] Upstream 수정 시 오른쪽 Shift 치환 우회 제거 여부 검토
@@ -42,19 +42,18 @@
 - [x] 번들 구성요소 버전 확인과 제3자 라이선스 원문/고지 포함
 - [x] 한국어 Q&A 초안 사용자 검토 및 수정
 - [x] 한국어 Q&A 승인 후 독립 영문 FAQ로 번역
-- [ ] Windows 7 SP1~11 v1.1.0 최종 회귀 테스트
+- [x] Windows 7 SP1~11 v1.1.0/1.2.0 최종 회귀 테스트
   - [x] Windows 11 실제 기기 관리형 Unicode 단일 파일 전송과 proxy 전달
   - [x] x64 Release 빌드 및 v1.1.0 ZIP 구성 검증
-  - [ ] Windows 7 SP1~11 Scrcpy 4.1 DeX/단일창 실행과 종료 UI 회귀
+  - [x] Windows 7 SP1~11 Scrcpy 4.1 DeX/단일창 실행과 종료 UI 회귀
   - [x] Windows 7/11 한글·Unicode 복수 파일과 폴더 전체 전송 확인
-  - [ ] 사용자 대상 경로, 파일·폴더 충돌 이름, 취소와 독립 상태창 확인
-  - [ ] 관리형 전송 끄기 후 새 창에서 Scrcpy 순정 동작 복귀
-  - [ ] 설정·진단의 실제 ADB `Version ...` 값 표시 확인
+  - [x] 사용자 대상 경로, 파일·폴더 충돌 이름, 취소와 독립 상태창 확인
+  - [x] 관리형 전송 끄기 후 새 창에서 Scrcpy 순정 동작 복귀
+  - [x] 설정·진단의 실제 ADB `Version ...` 값 표시 확인
 - [x] GitHub 첫 공개 Release 게시 및 저장소 public 전환
 - [x] DX Manager 자체 소스 라이선스를 MIT로 확정
 
-설치 프로그램은 방향이 정해질 때까지 보류한다.
-v1.1.0 공개 전 위 실기 회귀와 패키지 검증을 완료한다.
+별도 설치 프로그램은 보류하고 v1.2.0 공개 뒤 WinGet 등록을 검토한다.
 
 ## 독립 FAQ 반영 항목
 

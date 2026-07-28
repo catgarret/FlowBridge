@@ -1,13 +1,13 @@
 # Session Handoff
 
-마지막 갱신: 2026-07-26
+마지막 갱신: 2026-07-28
 
 ## Git
 
 - 저장소: `E:\vs\dex system`
 - 브랜치: `refactor/v1.2.0`
 - 마지막 공개 커밋: 이 문서를 포함한 최신 `main` (`git log -1`로 확인)
-- 현재 작업: v1.2.0 내부 구조 분리와 회귀 검증
+- 현재 작업: v1.2.0 문서·배포 패키지와 공개 릴리스 준비
 
 v1.2.0 구조 분리 전 기준은 공개 태그 `v1.1.0` (`7f7a59e`)이다.
 폼 분리 커밋은 `b0c88e2`, 파일 전송 구조 분리 커밋은 `4bc1c67`이다.
@@ -72,6 +72,13 @@ v1.1.0 작업 전 문서 커밋은 `f9d96fa`, 복구 태그는
   정리 버튼, 빠른 설정 타일, 홈 위젯, 한국어/영어 UI
 - Android 앱은 네트워크·임의 shell 없이 `WRITE_SECURE_SETTINGS` 하나만
   요청하며 package ID와 공개 서명 지문을 문서화
+- 각 DeX·단일창 HWND/PID를 따라가는 미니 컨트롤바와 왼쪽/오른쪽 위치,
+  툴팁, 접기/펴기, 활성화·최소화·앞뒤 순서 연동
+- Android 패키지별 단일창 해상도·DPI·스트리밍·실행 옵션 프로필 저장,
+  자동 적용, 덮어쓰기와 삭제
+- 휴대폰 폴더 탐색창의 마우스 휠 라우팅과 사용자 지정 해상도 UI 보완
+- Android 앱을 DX Companion 1.1.0으로 확장해 가상화면과 절전모드 해제를
+  각각 또는 함께 정리하고, 타일·2 × 1 위젯의 정리 범위를 설정 가능
 
 2026-07-25 DX Manager x64 Release를 .NET Framework 4.6.2 참조 어셈블리로
 재빌드해 오류 0을 확인했다. 설정창 경로/ADB와 진단 페이지를 실제 실행해
@@ -85,8 +92,9 @@ Release APK는 v2 서명, RSA 4096, package
 검증했다. 실제 Android 16 / One UI 8.x 휴대폰에서 APK 설치, 설치 APK 인증서
 검증, 권한 부여 전 `Ready`와 부여 후 `Granted` 상태를 확인했다. 휴대폰 폴더
 찾아보기는 `/sdcard/DCIM`에서 한글·영문 폴더를 정상 표시했다. 사용자가 앱
-본체의 활성 overlay 삭제와 삭제 후 상태 갱신을 확인했으며, 빠른 설정
-타일·위젯 동작 확인은 아직 남아 있다.
+본체의 가상화면·절전모드 해제 개별/동시 정리, 빠른 설정 타일과 2 × 1 위젯을
+실제 기기에서 확인했다. Windows 11 집 PC와 Windows 7 회사 PC에서도 v1.2.0
+핵심 기능과 새 UI가 정상 동작함을 확인했다.
 
 2026-07-22 .NET Framework 4.6.2 참조 어셈블리로 v1.1.0 x64 Debug와
 Release를 경고 0, 오류 0으로 재빌드했다. 실제 Android 16 기기에
@@ -97,7 +105,7 @@ proxy의 일반 ADB 명령 stdout/stderr/종료 코드 전달도 확인했다.
 `DXMAdbProxy.exe`가 포함된 것을 확인했다. ZIP SHA-256은
 `153D6001BD89B9E0BF5BED235F656C7E08689E09A13C27E21A2BBA1A3E4259EF`이다.
 
-Android 로컬 배포 후보 `DX-Display-Cleaner-v1.0.0.apk`의 SHA-256은
+Android 로컬 배포 후보 `DX-Companion-v1.1.0.apk`의 SHA-256은
 `2817913CC4987EBF46805B108E23F3EDF105AEF519BAAFA69324496B687F5592`,
 3개 항목 APK ZIP의 SHA-256은
 `9152DCC484B0078B515D9D9267582A6ECE6FA6A88BC3ADDEAC305ADEE4016C1D`다.
@@ -141,8 +149,9 @@ Debug/Release 재빌드가 모두 경고 0, 오류 0으로 통과했다. 패키�
 
 ## 다음 확인
 
-1. 빠른 설정 타일과 홈 위젯의 활성/비활성/권한 없음 표시 확인
-2. Windows 7 SP1~11의 남은 파일 충돌·취소·순정 전환 회귀 확인
+1. v1.2.0 공개 ZIP에 APK·개인 설정·로그·테스트 스크린샷이 없는지 검사
+2. VirusTotal 결과 확인 후 main 병합, 태그와 GitHub Release 게시
+3. GitHub Release URL을 사용하는 WinGet manifest 검증과 등록 검토
 3. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
 4. v1.1.0 최종 ZIP에서 helper, 문서, 라이선스와 런타임 데이터 제외 확인
 5. 공개 Release 사용 피드백과 새 이슈 확인

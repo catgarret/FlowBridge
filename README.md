@@ -66,7 +66,9 @@ distribution.
 - USB and wireless ADB connections
 - Wi-Fi address detection and Android 11+ pairing
 - Per-window resolution, DPI, bitrate, FPS, and app selection
+- Reusable single-window profiles that remember settings for each Android app
 - Shared history of successfully launched apps
+- Optional per-session mini control bars with common scrcpy actions and shortcuts
 - HID keyboard and mouse support
 - Korean/English key correction and Enter/Shift+Enter switching
 - Full scrcpy-window and selected-region capture
@@ -77,8 +79,9 @@ distribution.
 - Light, dark, and Windows-following themes
 - Automatic Korean/English UI selection
 - Session logs and environment diagnostics
-- Optional DX Display Cleaner companion with verified one-time permission grant,
-  on-phone cleanup, a Quick Settings tile, and a home-screen widget
+- Optional DX Companion with verified one-time permission grant, separate
+  virtual-display and Stay-awake recovery, a Quick Settings tile, and a compact
+  home-screen widget
 - 64-bit Windows 7 SP1 compatibility through .NET Framework 4.6.2
 
 ## Design Philosophy
@@ -132,7 +135,9 @@ network policies may block the connection.
 5. Wait for the connected-device status, then select **Start DeX**.
 
 > [!IMPORTANT]
-> Keep the phone connected and use **Stop DeX** or exit DX Manager normally.
+> Keep the phone connected and use **Stop DeX**, press `Left Alt+F8`, or
+> right-click the DX Manager tray icon and select **Exit**. Wait for cleanup
+> to finish before disconnecting USB or wireless ADB.
 > If USB/Wi-Fi is disconnected first, Android may leave the simulated display
 > visible on the phone.
 
@@ -146,11 +151,12 @@ To remove a display that remains on the phone:
 See the [English FAQ](docs/FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone)
 for screenshots.
 
-If the separately distributed **DX Display Cleaner** is installed, open
+If the separately distributed **DX Companion** is installed, open
 **Settings > Diagnostics > Phone virtual display cleanup**. DX Manager enables
 the permission button only after it verifies the connected phone, the exact
 package ID, and the official APK signing certificate. After the one-time grant,
-the companion app can remove a leftover display directly on the phone.
+the companion app can remove a leftover display and turn off Android Developer
+options **Stay awake** directly on the phone.
 
 Do not copy only `DXManager.exe`. The adjacent `tools`, DLL, license, and
 scrcpy server files are required.
@@ -221,16 +227,34 @@ scrcpy's original file-drop behavior. Existing windows keep the mode with
 which they were started, and scrcpy's original behavior may not preserve
 non-ASCII file names on every Windows environment.
 
-## Optional DX Display Cleaner
+## Mini Control Bar and Single-Window App Profiles
 
-The separately distributed **DX Display Cleaner** is a small Android recovery
-utility for removing a simulated secondary display left on the phone after an
-interrupted session. DX Manager grants its required permission only after
-verifying the connected device, exact package ID, and official signing
-certificate. The app can then clean the display from its main screen, Quick
-Settings tile, or home-screen widget. It has no Internet, data-collection, or
-arbitrary-shell feature. See the [English user guide](docs/USER_GUIDE_EN.md#12-dx-display-cleaner-optional)
-for installation, status indicators, and safety details.
+When enabled under **Settings > General**, a narrow mini control bar follows
+each DeX or single-app scrcpy window. It provides phone screen off/on, power,
+fullscreen, 1:1 window size, capture, and DX Manager-open actions. Hover over
+an icon to see its description and the matching scrcpy shortcut. The bar can
+be placed on the left or right and collapsed when it is not needed.
+
+Single-window mode can save one profile per selected Android app. Set the
+resolution, DPI, bitrate, FPS, run options, and additional arguments, then open
+**App profile** and select **Save current settings**. Selecting that app in any
+of the three single-window slots automatically applies the saved profile. The
+DeX mode settings are not affected.
+
+## Optional DX Companion
+
+The separately distributed **DX Companion 1.1.0** is a small Android recovery
+utility for removing a simulated secondary display or turning off Developer
+options **Stay awake** after an interrupted session. Its main screen provides
+separate actions. The Quick Settings tile and compact 2 × 1 home-screen widget
+clean both by default, and their scope can be changed in the app.
+
+DX Manager grants the required permission only after verifying the connected
+device, exact package ID, and official signing certificate. The companion has
+no Internet, data-collection, or arbitrary-shell feature and is not included
+in the public DX Manager ZIP. See the
+[English user guide](docs/USER_GUIDE_EN.md#12-dx-companion-optional) for
+installation, status indicators, and safety details.
 
 ## Keyboard Compatibility
 
@@ -355,7 +379,9 @@ DX Manager는 개인적으로 사용하던 Batch 스크립트, CMD 명령과 Aut
 - USB 및 무선 ADB 연결
 - Wi-Fi 주소 자동 감지와 Android 11 이상 무선 페어링
 - 창별 해상도, DPI, 비트레이트, FPS와 시작 앱 설정
+- Android 앱별 단일창 실행 설정을 저장하는 재사용 프로필
 - 성공적으로 실행한 앱을 공통 최근 목록으로 기억
+- 자주 쓰는 scrcpy 동작과 단축키를 제공하는 세션별 미니 컨트롤바
 - HID 키보드 및 마우스 지원
 - 한영키 보정과 Enter/Shift+Enter 전환
 - scrcpy 전체 화면 및 선택 영역 캡처
@@ -367,7 +393,7 @@ DX Manager는 개인적으로 사용하던 Batch 스크립트, CMD 명령과 Aut
 - Windows 언어에 따른 한국어·영어 UI 자동 선택
 - 실행 세션 로그와 환경 점검
 - 연결 기기·패키지명·공식 서명을 확인한 뒤 최초 1회 권한을 부여하는 선택형
-  DX Display Cleaner, 휴대폰 정리 버튼·빠른 설정 타일·홈 화면 위젯
+  DX Companion, 가상화면·절전모드 해제 복구, 빠른 설정 타일과 소형 위젯
 - .NET Framework 4.6.2를 통한 64비트 Windows 7 SP1 호환
 
 ## 개발 철학
@@ -421,9 +447,9 @@ DX Manager 빌드가 실행됩니다.
 5. 장치 연결 상태가 표시되면 **DeX 시작**을 선택합니다.
 
 > [!IMPORTANT]
-> 휴대폰을 연결한 상태에서 **DeX 중지**를 누르거나 DX Manager를 정상
-> 종료하십시오. USB 또는 무선 연결을 먼저 끊으면 Android의 가상 화면이
-> 휴대폰에 남을 수 있습니다.
+> 휴대폰을 연결한 상태에서 **DeX 중지**를 누르거나 `Left Alt+F8`을 누르거나,
+> 시스템 트레이의 DX Manager 아이콘을 마우스 오른쪽 버튼으로 눌러 **종료**를
+> 선택하십시오. 정리가 끝난 뒤 USB 또는 무선 연결을 끊으십시오.
 
 휴대폰에 남은 가상 화면은 다음 순서로 제거합니다.
 
@@ -436,10 +462,11 @@ DX Manager 빌드가 실행됩니다.
 화면을 포함한 설명은 [한국어 FAQ](docs/FAQ_KO.md#q1-휴대폰에-작은-화면보조-디스플레이이-남아-있습니다)를
 참조하십시오.
 
-별도로 제공되는 **DX Display Cleaner**를 설치한 경우 **설정 > 진단 > 휴대폰
+별도로 제공되는 **DX Companion**을 설치한 경우 **설정 > 진단 > 휴대폰
 가상화면 정리 도구**를 여십시오. DX Manager는 연결 기기, 정확한 패키지명과
 공식 APK 서명 인증서를 모두 확인한 경우에만 권한 버튼을 활성화합니다. 한 번
-권한을 부여하면 정리 앱에서 휴대폰에 남은 가상화면을 직접 제거할 수 있습니다.
+권한을 부여하면 앱에서 휴대폰에 남은 가상화면을 제거하고 개발자 옵션의
+**절전모드 해제**도 끌 수 있습니다.
 
 `DXManager.exe`만 따로 복사하면 안 됩니다. 함께 제공되는 `tools` 폴더,
 DLL, 라이선스 파일과 scrcpy 서버 파일이 모두 필요합니다.
@@ -508,15 +535,32 @@ Windows와 ADB 조합에서 정확한 전송 바이트를 얻을 수 없으므�
 이미 열린 창은 시작할 때 선택된 방식을 계속 사용하며, 순정 방식은 일부
 Windows 환경에서 비ASCII 파일명을 보존하지 못할 수 있습니다.
 
-## 선택형 DX Display Cleaner
+## 미니 컨트롤바와 단일창 앱 프로필
 
-별도로 제공되는 **DX Display Cleaner**는 비정상 종료나 연결 분리 뒤 휴대폰에
-남은 보조 디스플레이 시뮬레이션 화면을 제거하는 작은 Android 복구 도구입니다.
-DX Manager가 연결 기기, 정확한 패키지명과 공식 서명 인증서를 확인한 뒤에만
-필요한 권한을 한 번 부여합니다. 이후 앱 본체, 빠른 설정 타일 또는 홈 화면
-위젯에서 가상화면을 정리할 수 있습니다. 인터넷 연결, 데이터 수집과 임의
-shell 실행 기능은 없습니다. 설치 방법과 상태 표시, 주의사항은
-[한국어 사용 설명서](docs/USER_GUIDE_KO.md#12-선택형-dx-display-cleaner)를
+**설정 > 기본**에서 미니 컨트롤바를 켜면 각 DeX·단일창 scrcpy 창의 왼쪽 또는
+오른쪽에 좁은 도구 막대가 따라다닙니다. 휴대폰 화면 끄기·켜기, 전원 버튼,
+전체 화면, 1:1 창 크기, 캡처와 DX Manager 열기를 마우스로 실행할 수 있습니다.
+아이콘에 마우스를 올리면 기능 설명과 해당 scrcpy 단축키가 표시되며, 사용하지
+않을 때는 접을 수 있습니다.
+
+단일창 모드는 선택한 Android 앱마다 해상도, DPI, 비트레이트, FPS, 실행 옵션과
+추가 인자를 프로필로 저장할 수 있습니다. 원하는 설정을 만든 뒤 **앱 프로필 >
+현재 설정 저장**을 선택하십시오. 이후 세 단일창 중 어느 슬롯에서든 같은 앱을
+선택하면 저장된 프로필이 자동으로 적용됩니다. DeX 모드 설정에는 영향을 주지
+않습니다.
+
+## 선택형 DX Companion
+
+별도로 제공되는 **DX Companion 1.1.0**은 비정상 종료나 연결 분리 뒤 휴대폰에
+남은 보조 디스플레이 시뮬레이션 화면을 제거하거나 개발자 옵션의 **절전모드
+해제**를 끄는 작은 Android 복구 도구입니다. 앱 본체에서는 두 동작을 따로
+실행할 수 있습니다. 빠른 설정 타일과 2 × 1 홈 화면 위젯은 기본적으로 둘 다
+정리하며 앱 설정에서 범위를 바꿀 수 있습니다.
+
+DX Manager는 연결 기기, 정확한 패키지명과 공식 서명 인증서를 확인한 뒤에만
+필요한 권한을 한 번 부여합니다. 인터넷 연결, 데이터 수집과 임의 shell 실행
+기능은 없으며 공개 DX Manager ZIP에도 포함되지 않습니다. 설치 방법과 상태
+표시, 주의사항은 [한국어 사용 설명서](docs/USER_GUIDE_KO.md#12-선택형-dx-companion)를
 참조하십시오.
 
 ## 키보드 호환성

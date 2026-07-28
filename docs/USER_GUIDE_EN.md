@@ -65,7 +65,9 @@ including the `tools` directory, scrcpy DLLs, `scrcpy-server`, and license
 files. Version 1.2.0 bundles scrcpy 4.1.
 
 > [!IMPORTANT]
-> Keep the phone connected and use **Stop DeX** or exit DX Manager normally.
+> Keep the phone connected and use **Stop DeX**, press `Left Alt+F8`, or
+> right-click the DX Manager tray icon and select **Exit**. Wait for cleanup
+> to finish before disconnecting USB or wireless ADB.
 > If USB/Wi-Fi is disconnected first, Android may leave the simulated display
 > visible on the phone.
 
@@ -143,6 +145,19 @@ launching an app.
 Apps that were launched successfully are kept in a shared recent-app list.
 They can be selected in another slot or after restarting DX Manager without
 loading the complete device app list first.
+
+### App profiles
+
+Single-window mode can save one profile for each selected Android package.
+Configure the display and run options, open **App profile**, and select
+**Save current settings**. The profile stores resolution, DPI, bitrate, FPS,
+screen-off, Stay awake, HID input, force-stop, flex-display, and additional
+arguments. Selecting the same app in any of the three slots automatically
+applies the saved profile to that slot.
+
+Use the same menu to overwrite or delete a profile. Deleting a profile does
+not change the settings already loaded into the current slot, and DeX mode is
+never affected by single-window profiles.
 
 Single-window mode does not reuse the DeX overlay display. Each slot uses
 scrcpy's new virtual display feature, so DeX and three app windows can run at
@@ -311,6 +326,19 @@ Other [official scrcpy 4.1 shortcuts](https://github.com/Genymobile/scrcpy/blob/
 may work, but some Android system shortcuts can do nothing or act on the
 phone's primary display instead of the simulated DeX display.
 
+### Mini control bar
+
+When **Settings > General > Show a mini control bar beside scrcpy windows** is
+enabled, each DeX and single-app window has its own narrow control bar. It
+follows the associated scrcpy window and provides phone screen off/on, power,
+fullscreen, 1:1 window size, capture, and **Open DX Manager** actions. Hover
+over a button to see its description and matching shortcut.
+
+The control bar may be placed on the left or right under **Settings >
+General**, and its bottom button collapses or expands it. It follows the
+associated window's activation, minimization, and stacking order, so a bar
+from a background session should not cover the active session.
+
 ## 10. Automatic Hiding and System Tray
 
 When automatic hiding is enabled, DX Manager hides the running scrcpy windows
@@ -321,8 +349,9 @@ Keyboard or mouse activity does not automatically restore the windows. Click
 the scrcpy window on the Windows taskbar, double-click the tray icon, or select
 the open command from the tray menu to restore them.
 
-The window close button hides DX Manager to the tray. Use the exit shortcut
-or the tray menu to terminate it completely.
+The window close button hides DX Manager to the tray. To terminate it
+completely, press `Left Alt+F8`, or right-click the tray icon and select
+**Exit**. Keep the phone connected until session cleanup is complete.
 
 ## 11. Logs and Diagnostics
 
@@ -358,7 +387,7 @@ monitoring intervals, virtual-display detection timeout, ADB wake-up settings,
 process timeout, and capture selection timeout. These recovery and timing
 values normally do not need to be changed.
 
-If the separately distributed **DX Display Cleaner** is installed on the phone,
+If the separately distributed **DX Companion** is installed on the phone,
 use **Phone virtual display cleanup** on the Diagnostics page for its one-time
 permission grant. DX Manager enables **Grant cleanup permission** only after it
 verifies the connected phone, the exact package ID, and the official APK signing
@@ -385,17 +414,18 @@ An app that does not fully support multiple displays may open on the phone even
 when launched from DeX. Close it completely on the phone or enable **Force-stop
 selected app**, then try again.
 
-## 12. DX Display Cleaner (Optional)
+## 12. DX Companion (Optional)
 
-**DX Display Cleaner** is a separately distributed Android recovery utility for
-cases where a simulated secondary display remains on the phone after DX Manager
-is terminated unexpectedly or the device disconnects first. Normally, keep the
-phone connected and use **Stop DeX** or exit DX Manager normally. Use the
-companion when a leftover display must be removed without the PC.
+**DX Companion 1.1.0** is a separately distributed Android recovery utility
+for interrupted DX Manager sessions. It can remove a simulated secondary
+display left on the phone and turn off Developer options **Stay awake** when
+the PC could not restore it. Normally, keep the phone connected and use
+**Stop DeX**, `Left Alt+F8`, or the tray **Exit** command. Use the companion
+when recovery must be performed without reconnecting the PC.
 
 ### Installation and one-time permission grant
 
-1. Install the official `DX-Display-Cleaner-v1.0.0.apk` supplied separately. A
+1. Install the official `DX-Companion-v1.1.0.apk` supplied separately. A
    standalone APK dropped onto a running DeX or single-app scrcpy window keeps
    scrcpy's normal APK-install behavior. You may also open the APK on the phone.
 2. Enable USB debugging, approve this computer's RSA prompt, and connect the
@@ -420,18 +450,20 @@ runtime-permission dialog inside the app.
 
 ### Main app, Quick Settings tile, and home-screen widget
 
-- **Main app**: inspect the current `overlay_display_devices` setting, select
-  **Clean virtual display**, or refresh the status.
-- **Quick Settings tile**: add **DX Display Cleanup** from Quick Settings edit
-  mode to clean a leftover display from anywhere on the phone.
-- **Home-screen widget**: add the DX virtual-display widget to view status and
-  use **Clean** or refresh. If the state changed outside the app, select the
-  widget's refresh button.
+- **Main app**: inspect both states and run **Clean virtual display**, **Turn
+  off Stay awake**, or the combined cleanup action.
+- **Quick Settings tile**: add **DX Companion** from Quick Settings edit mode
+  for one-tap cleanup from anywhere on the phone.
+- **Home-screen widget**: add the compact 2 × 1 DX Companion widget for status,
+  cleanup, and refresh.
+- **Tile and widget settings**: both targets are enabled by default. In the
+  main app, choose whether the tile and widget clean the virtual display,
+  Stay awake, or both.
 
 The indicators mean:
 
-- Color DX icon: an overlay setting is active and can be cleaned
-- Grayscale DX icon: no overlay setting is present
+- Color DX icon: at least one configured cleanup target is active
+- Grayscale DX icon: the configured cleanup targets are already clear
 - Warning indicator: permission is missing or status inspection failed
 
 Cleanup deletes Android's global `overlay_display_devices` setting and reads it
@@ -442,7 +474,8 @@ simulated secondary display.
 
 The app requests only `WRITE_SECURE_SETTINGS` and contains no Internet
 permission, data collection, or arbitrary-shell feature. Its implemented
-settings access is limited to reading and deleting `overlay_display_devices`.
+settings access is limited to the simulated-display setting and Android's
+Stay-awake developer option.
 
 You can remove the same display without the app by following the
 [manual FAQ procedure](FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone).

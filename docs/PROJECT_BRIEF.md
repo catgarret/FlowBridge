@@ -35,6 +35,7 @@ GitHub 메인 README와 별도로 HTML이 없는 `docs\PACKAGE_README.md`를 배
 - DeX Scrcpy 실행/중지와 설정 적용
 - Scrcpy `--new-display` 기반 단일창 슬롯 3개
 - 슬롯별 해상도, DPI, 비트레이트, FPS, 앱과 옵션 저장
+- Android 패키지별 단일창 프로필 저장·자동 적용·삭제
 - 앱 목록, 표시 이름/패키지 저장, 자동 실행
 - 성공적으로 자동 실행한 앱의 공통 최근 목록 보존
 - Scrcpy 4.0 이상 `--flex-display`
@@ -47,6 +48,7 @@ GitHub 메인 README와 별도로 HTML이 없는 `docs\PACKAGE_README.md`를 배
 - Scrcpy 4.0/SDL3 오른쪽 Shift 호환 치환
 - F8 전체/영역 캡처와 스마트폰 전송
 - 미입력 자동 숨김과 시스템 트레이
+- DeX·단일창 HWND/PID별 미니 컨트롤바와 scrcpy 주요 동작
 - 다중 Scrcpy의 화면 끄기, 잠자기 방지, 종료 복구
 - 실행 세션 로그와 수동 저장
 - Windows 언어 자동 감지와 한국어/영어 UI 선택
@@ -66,20 +68,20 @@ GitHub 메인 README와 별도로 HTML이 없는 `docs\PACKAGE_README.md`를 배
   `WRITE_SECURE_SETTINGS` 권한을 한 번 부여하고 결과를 재확인
 - 캡처와 드롭 파일의 휴대폰 저장 위치를 ADB 폴더 탐색기로 선택
 
-별도 `DXDisplayCleanup` 앱은 휴대폰에 남은 `overlay_display_devices` 상태만
-확인·삭제하는 제한된 복구 도구다. 메인 버튼, 빠른 설정 타일과 홈 위젯을
-제공하고 네트워크나 임의 shell 기능은 포함하지 않는다. 실제 기기 검증과
-DX Manager의 package/서명 확인 기반 권한 부여 연동 및 앱 본체의 활성 overlay
-삭제를 실제 기기에서 확인했으며, 빠른 설정 타일·위젯의 나머지 실기 확인은
-남아 있다.
+별도 `DXDisplayCleanup` 프로젝트의 공개 이름은 **DX Companion 1.1.0**이다.
+휴대폰에 남은 `overlay_display_devices`를 제거하고 개발자 옵션의 절전모드
+해제를 끄는 제한된 복구 도구다. 앱 본체의 개별·동시 정리, 빠른 설정 타일과
+2 × 1 홈 위젯을 제공하고 네트워크나 임의 shell 기능은 포함하지 않는다.
+DX Manager의 package/서명 확인 기반 권한 부여와 모든 정리 경로를 실제
+Galaxy 기기에서 확인했다. APK는 공개 DX Manager ZIP에 포함하지 않는다.
 
 ## 현재 상태
 
-v1.0.0 핵심 기능은 공개 배포됐다. Windows 11에서 유선/무선 DeX와 단일창
+v1.1.0 핵심 기능은 공개 배포됐다. Windows 11에서 유선/무선 DeX와 단일창
 3개 동시 실행을 확인했고, 64비트 Windows 7 SP1/.NET 4.6.2에서 유선 핵심
-기능을 확인했다. 현재 v1.2.0에서는 번들 Scrcpy 4.1, 관리형 Unicode 파일
-전송과 실제 ADB 빌드 표시를 추가했으며 공개 전 Windows 7 SP1~11 회귀 확인이
-필요하다.
+기능을 확인했다. v1.2.0은 구조 분리, 미니 컨트롤바, 단일창 앱 프로필,
+DX Companion 확장과 UI 보완을 포함하며 Windows 11과 Windows 7 SP1 실기
+회귀 확인을 완료했다.
 
 휴대폰의 현재 정상 동작 확인 기준은 Android 16 / One UI 8.x다. One UI 7.x
 이하에서는 원활한 동작을 확인하지 못했으며 검은 DeX 창이 나타날 수 있다.
