@@ -26,7 +26,7 @@ public final class CleanupWidgetProvider extends AppWidgetProvider {
         super.onReceive(context, intent);
         String action = intent.getAction();
         if (ACTION_CLEANUP.equals(action)) {
-            OverlayDisplayRepository.cleanup(context);
+            CleanupCoordinator.cleanupSelected(context);
             CleanupTileService.requestRefresh(context);
             updateAll(context);
         } else if (ACTION_REFRESH.equals(action)) {
@@ -45,20 +45,20 @@ public final class CleanupWidgetProvider extends AppWidgetProvider {
     }
 
     private static RemoteViews buildViews(Context context) {
-        OverlayDisplayRepository.Snapshot snapshot =
-                OverlayDisplayRepository.inspect(context);
+        CleanupCoordinator.Snapshot snapshot = CleanupCoordinator.inspect(context);
+        CleanupPreferences.Targets targets = CleanupPreferences.load(context);
         RemoteViews views = new RemoteViews(
                 context.getPackageName(), R.layout.widget_cleanup);
 
-        if (snapshot.status == OverlayDisplayRepository.Status.PERMISSION_REQUIRED) {
+        if (snapshot.permissionRequired()) {
             views.setImageViewResource(R.id.widget_icon, R.drawable.ic_warning);
             views.setTextViewText(R.id.widget_status,
                     context.getString(R.string.widget_permission));
-        } else if (snapshot.status == OverlayDisplayRepository.Status.ERROR) {
+        } else if (snapshot.hasError()) {
             views.setImageViewResource(R.id.widget_icon, R.drawable.ic_warning);
             views.setTextViewText(R.id.widget_status,
                     context.getString(R.string.widget_error));
-        } else if (snapshot.overlayActive) {
+        } else if (snapshot.selectedActive(targets)) {
             views.setImageViewResource(R.id.widget_icon, R.drawable.dx_manager_icon);
             views.setTextViewText(R.id.widget_status,
                     context.getString(R.string.widget_active));
@@ -69,13 +69,7 @@ public final class CleanupWidgetProvider extends AppWidgetProvider {
         }
 
         views.setOnClickPendingIntent(
-                R.id.widget_icon,
-                broadcastIntent(context, ACTION_REFRESH, 100));
-        views.setOnClickPendingIntent(
-                R.id.widget_refresh,
-                broadcastIntent(context, ACTION_REFRESH, 101));
-        views.setOnClickPendingIntent(
-                R.id.widget_cleanup,
+                R.id.widget_root,
                 broadcastIntent(context, ACTION_CLEANUP, 102));
         return views;
     }

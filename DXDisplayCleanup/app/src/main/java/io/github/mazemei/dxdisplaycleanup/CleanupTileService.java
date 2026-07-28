@@ -19,14 +19,14 @@ public final class CleanupTileService extends TileService {
     @Override
     public void onClick() {
         super.onClick();
-        OverlayDisplayRepository.Snapshot before =
-                OverlayDisplayRepository.inspect(this);
-        if (before.status == OverlayDisplayRepository.Status.PERMISSION_REQUIRED) {
+        CleanupCoordinator.Snapshot before = CleanupCoordinator.inspect(this);
+        if (before.permissionRequired()) {
             openMainActivity();
             return;
         }
-        if (before.overlayActive) {
-            OverlayDisplayRepository.cleanup(this);
+        CleanupPreferences.Targets targets = CleanupPreferences.load(this);
+        if (before.selectedActive(targets)) {
+            CleanupCoordinator.cleanupSelected(this);
         }
         CleanupWidgetProvider.updateAll(this);
         refreshTile();
@@ -38,16 +38,16 @@ public final class CleanupTileService extends TileService {
             return;
         }
 
-        OverlayDisplayRepository.Snapshot snapshot =
-                OverlayDisplayRepository.inspect(this);
+        CleanupCoordinator.Snapshot snapshot = CleanupCoordinator.inspect(this);
+        CleanupPreferences.Targets targets = CleanupPreferences.load(this);
         tile.setLabel(getString(R.string.tile_label));
-        if (snapshot.status == OverlayDisplayRepository.Status.PERMISSION_REQUIRED) {
+        if (snapshot.permissionRequired()) {
             tile.setState(Tile.STATE_UNAVAILABLE);
             setSubtitle(tile, getString(R.string.widget_permission));
-        } else if (snapshot.status == OverlayDisplayRepository.Status.ERROR) {
+        } else if (snapshot.hasError()) {
             tile.setState(Tile.STATE_UNAVAILABLE);
             setSubtitle(tile, getString(R.string.widget_error));
-        } else if (snapshot.overlayActive) {
+        } else if (snapshot.selectedActive(targets)) {
             tile.setState(Tile.STATE_ACTIVE);
             setSubtitle(tile, getString(R.string.tile_active));
         } else {

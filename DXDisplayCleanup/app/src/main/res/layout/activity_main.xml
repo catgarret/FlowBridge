@@ -73,31 +73,129 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:text="@string/detected_setting_title"
+            android:layout_marginTop="24dp"
+            android:text="@string/cleanup_section_title"
             android:textColor="@color/text_primary"
-            android:textSize="14sp"
+            android:textSize="17sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/detected_value"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_code"
-            android:fontFamily="monospace"
-            android:padding="12dp"
-            android:textColor="@color/text_secondary"
-            android:textIsSelectable="true"
-            android:textSize="13sp" />
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/overlay_title"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/overlay_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/detected_setting_title"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/overlay_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/bg_code"
+                android:fontFamily="monospace"
+                android:padding="10dp"
+                android:textColor="@color/text_secondary"
+                android:textIsSelectable="true"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/cleanup_overlay_button"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/button_secondary"
+                android:text="@string/cleanup_overlay_button"
+                android:textAllCaps="false"
+                android:textColor="@color/text_primary" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/stay_awake_title"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/stay_awake_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/stay_awake_value_title"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/stay_awake_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/bg_code"
+                android:fontFamily="monospace"
+                android:padding="10dp"
+                android:textColor="@color/text_secondary"
+                android:textIsSelectable="true"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/cleanup_stay_awake_button"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/button_secondary"
+                android:text="@string/cleanup_stay_awake_button"
+                android:textAllCaps="false"
+                android:textColor="@color/text_primary" />
+        </LinearLayout>
 
         <Button
-            android:id="@+id/cleanup_button"
+            android:id="@+id/cleanup_both_button"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginTop="22dp"
+            android:layout_marginTop="14dp"
             android:backgroundTint="@color/accent"
-            android:text="@string/cleanup_button"
+            android:text="@string/cleanup_both_button"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textSize="16sp"
@@ -117,6 +215,40 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
+            android:text="@string/tile_widget_settings_title"
+            android:textColor="@color/text_primary"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="@string/tile_widget_settings_description"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <CheckBox
+            android:id="@+id/tile_widget_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:buttonTint="@color/accent"
+            android:text="@string/tile_widget_overlay"
+            android:textColor="@color/text_primary" />
+
+        <CheckBox
+            android:id="@+id/tile_widget_stay_awake"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:buttonTint="@color/accent"
+            android:text="@string/tile_widget_stay_awake"
+            android:textColor="@color/text_primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="@string/permission_title"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
@@ -131,21 +263,9 @@
             android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/permission_command"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_code"
-            android:fontFamily="monospace"
-            android:padding="12dp"
-            android:textColor="@color/text_secondary"
-            android:textIsSelectable="true"
-            android:textSize="12sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
+            android:layout_marginTop="18dp"
             android:text="@string/widget_tile_hint"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />

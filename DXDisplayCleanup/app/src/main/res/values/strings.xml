@@ -1,37 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DX Display Cleaner</string>
-    <string name="app_description">Checks and removes a simulated secondary display left on the phone by DX Manager.</string>
-    <string name="status_icon_description">Virtual display status</string>
-    <string name="status_active">Virtual display is active</string>
-    <string name="status_active_detail">Tap Clean up to remove the simulated display.</string>
-    <string name="status_inactive">No virtual display</string>
-    <string name="status_inactive_detail">There is nothing to clean up.</string>
+    <string name="app_name">DX Companion</string>
+    <string name="app_description">Checks and cleans up Android settings that may remain after an interrupted DX Manager session.</string>
+    <string name="status_icon_description">DX Manager cleanup status</string>
+    <string name="status_cleanup_needed">Cleanup is available</string>
+    <string name="status_both_active_detail">The virtual display and Stay awake setting are active.</string>
+    <string name="status_overlay_active_detail">A simulated secondary display is active.</string>
+    <string name="status_stay_awake_active_detail">Developer options &gt; Stay awake is enabled.</string>
+    <string name="status_clean">No cleanup needed</string>
+    <string name="status_clean_detail">The virtual display is absent and Stay awake is off.</string>
     <string name="status_permission_required">Permission required</string>
-    <string name="status_permission_required_active">A virtual display was found, but cleanup permission has not been granted.</string>
-    <string name="status_permission_required_detail">Grant permission once from DX Manager or ADB.</string>
-    <string name="status_error">Could not check the display</string>
+    <string name="status_permission_required_detail">Use the verified permission button in DX Manager.</string>
+    <string name="status_error">Could not check cleanup status</string>
     <string name="status_error_detail">Refresh and try again.</string>
+
+    <string name="cleanup_section_title">Cleanup items</string>
+    <string name="overlay_title">Simulated secondary display</string>
     <string name="detected_setting_title">Detected overlay setting</string>
     <string name="setting_not_present">Not set</string>
-    <string name="cleanup_button">Clean up virtual display</string>
+    <string name="stay_awake_title">Developer option: Stay awake</string>
+    <string name="stay_awake_value_title">Current setting value</string>
+    <string name="target_status_active">Active</string>
+    <string name="target_status_inactive">Inactive</string>
+    <string name="cleanup_overlay_button">Remove virtual display</string>
+    <string name="cleanup_stay_awake_button">Turn off Stay awake</string>
+    <string name="cleanup_both_button">Clean up both</string>
     <string name="refresh_button">Refresh status</string>
-    <string name="cleanup_success">The virtual display was removed.</string>
-    <string name="cleanup_failed">The virtual display could not be removed.</string>
+    <string name="cleanup_overlay_success">The virtual display was removed.</string>
+    <string name="cleanup_stay_awake_success">Stay awake was turned off.</string>
+    <string name="cleanup_both_success">The virtual display was removed and Stay awake was turned off.</string>
+    <string name="cleanup_failed">One or more cleanup items could not be changed.</string>
     <string name="permission_required_short">Cleanup permission is required.</string>
+
+    <string name="tile_widget_settings_title">Quick Settings tile and widget</string>
+    <string name="tile_widget_settings_description">Choose what a tap on the tile or widget cleans. Both items are selected by default.</string>
+    <string name="tile_widget_overlay">Remove the virtual display</string>
+    <string name="tile_widget_stay_awake">Turn off Stay awake</string>
+    <string name="cleanup_target_required">Select at least one cleanup item.</string>
     <string name="permission_title">One-time permission</string>
-    <string name="permission_description">This protected Android permission cannot be granted inside the app. Use the verified permission button in DX Manager or run this ADB command once:</string>
-    <string name="permission_command">adb shell pm grant %1$s %2$s</string>
-    <string name="widget_tile_hint">You can also add the DX Display Cleaner widget and Quick Settings tile. The widget refresh button checks changes made outside this app.</string>
-    <string name="tile_label">DX display cleanup</string>
+    <string name="permission_description">This protected Android permission cannot be granted inside the app. Use the verified permission button in DX Manager.</string>
+    <string name="widget_tile_hint">Add the DX Companion Quick Settings tile or compact 2 × 1 home-screen widget for one-tap cleanup. Their action follows the selections above.</string>
+
+    <string name="tile_label">DX Companion</string>
     <string name="tile_active">Tap to clean up</string>
-    <string name="tile_inactive">No virtual display</string>
-    <string name="widget_title">DX virtual display</string>
-    <string name="widget_active">Active</string>
-    <string name="widget_inactive">Inactive</string>
+    <string name="tile_inactive">Nothing selected is active</string>
+    <string name="widget_title">DX Companion</string>
+    <string name="widget_active">Tap to clean</string>
+    <string name="widget_inactive">All clear</string>
     <string name="widget_permission">Permission needed</string>
     <string name="widget_error">Check failed</string>
-    <string name="widget_cleanup">Clean</string>
-    <string name="widget_refresh">&#x21BB;</string>
-    <string name="widget_description">Shows and cleans up the DX Manager virtual display.</string>
+    <string name="widget_description">Checks and cleans up the selected DX Manager phone settings.</string>
 </resources>

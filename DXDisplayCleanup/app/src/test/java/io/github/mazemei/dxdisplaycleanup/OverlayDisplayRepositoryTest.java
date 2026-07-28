@@ -23,4 +23,19 @@ public class OverlayDisplayRepositoryTest {
         assertTrue(OverlayDisplayRepository.hasOverlayValue(
                 "1920x1080/240"));
     }
+
+    @Test
+    public void zeroOrMissingStayAwakeValuesAreInactive() {
+        assertFalse(StayAwakeRepository.isStayAwakeActive(null));
+        assertFalse(StayAwakeRepository.isStayAwakeActive(""));
+        assertFalse(StayAwakeRepository.isStayAwakeActive("  "));
+        assertFalse(StayAwakeRepository.isStayAwakeActive("0"));
+    }
+
+    @Test
+    public void nonZeroStayAwakeBitmasksAreActive() {
+        assertTrue(StayAwakeRepository.isStayAwakeActive("1"));
+        assertTrue(StayAwakeRepository.isStayAwakeActive("3"));
+        assertTrue(StayAwakeRepository.isStayAwakeActive("7"));
+    }
 }

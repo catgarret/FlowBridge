@@ -1,17 +1,22 @@
-# DX Display Cleaner
+# DX Companion
 
-Android companion utility for DX Manager. It reads and removes only the
-`overlay_display_devices` global setting used by Android's simulated secondary
-display feature.
+Private Android companion utility for DX Manager. It can inspect and clean up:
+
+- Android's simulated-secondary-display setting (`overlay_display_devices`)
+- Developer options **Stay awake** (`stay_on_while_plugged_in`)
+
+The app provides separate actions for both settings and a combined action. Its
+Quick Settings tile and compact 2 × 1 home-screen widget clean both by default;
+their targets can be changed inside the app.
 
 ## Safety boundary
 
 - Requests only `android.permission.WRITE_SECURE_SETTINGS`.
 - Does not provide a shell, execute arbitrary commands, use the network, or
   collect data.
-- The permission must be granted once through a verified DX Manager build or
-  ADB. Android cannot show a normal runtime-permission dialog for it.
-- Cleanup is verified by reading the setting again after deletion.
+- The permission is granted only through DX Manager after the exact package and
+  official signing certificate are verified.
+- Every cleanup operation is verified by reading the affected setting again.
 
 ## Local build
 
@@ -31,9 +36,3 @@ updates.
 Package ID: `io.github.mazemei.dxdisplaycleanup`
 
 The public signing certificate fingerprint is recorded in [SIGNING.md](SIGNING.md).
-
-Grant command:
-
-```text
-adb shell pm grant io.github.mazemei.dxdisplaycleanup android.permission.WRITE_SECURE_SETTINGS
-```
