@@ -183,6 +183,10 @@ if (Test-Path -LiteralPath $zipPath) {
     Remove-Item -LiteralPath $zipPath -Force
 }
 New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
+$packageConfig = Join-Path $packageRoot "config"
+New-Item -ItemType Directory -Path $packageConfig -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $repoRoot "DexManager\config\README.txt") `
+    -Destination $packageConfig
 
 foreach ($item in $requiredOutput) {
     Copy-Item -LiteralPath (Join-Path $releaseRoot $item) -Destination $packageRoot -Recurse -Force
