@@ -14,6 +14,8 @@ namespace DexManager.Forms
         private const int AnimationIntervalMs = 350;
         private const int AutoHideMilliseconds = 4000;
         private const int VisibleQueueRows = 5;
+        private const int ExpandedHeight = 286;
+        private const int CompactHeight = 184;
         private readonly FileTransferCoordinator _coordinator;
         private readonly Label _statusLabel;
         private readonly Label[] _queueLabels;
@@ -24,7 +26,6 @@ namespace DexManager.Forms
         private readonly ToolTip _toolTip;
         private FileTransferProgress _progress;
         private DateTime _hideAtUtc;
-        private bool _positionInitialized;
         private bool _cancelRequested;
         private int _animationFrame;
 
@@ -47,7 +48,7 @@ namespace DexManager.Forms
             ShowInTaskbar = false;
             TopMost = false;
             StartPosition = FormStartPosition.Manual;
-            ClientSize = new Size(430, 286);
+            ClientSize = new Size(430, ExpandedHeight);
 
             _statusLabel = new Label
             {
@@ -164,13 +165,31 @@ namespace DexManager.Forms
                 progress.QueuedCount);
             UpdateStageText();
             UpdateDetailText();
+            ApplyCompactLayout(
+                progress.Stage == FileTransferStage.Completed ||
+                progress.Stage == FileTransferStage.Failed ||
+                progress.Stage == FileTransferStage.Canceled);
+        }
 
-            if (!_positionInitialized)
+        private void ApplyCompactLayout(bool compact)
+        {
+            if (compact)
             {
-                SetInitialPosition(progress.SessionId);
-                _positionInitialized = true;
+                foreach (var label in _queueLabels)
+                    label.Visible = false;
+                _detailLabel.Location = new Point(18, 50);
+                _countLabel.Location = new Point(18, 78);
+                _countLabel.Size = new Size(286, 42);
+                _cancelButton.Location = new Point(328, 136);
+                ClientSize = new Size(430, CompactHeight);
+                return;
             }
-            if (!Visible) Show();
+
+            _detailLabel.Location = new Point(18, 180);
+            _countLabel.Location = new Point(18, 208);
+            _countLabel.Size = new Size(286, 32);
+            _cancelButton.Location = new Point(328, 238);
+            ClientSize = new Size(430, ExpandedHeight);
         }
 
         private void UpdateQueueRows(FileTransferProgress progress)
@@ -341,42 +360,6 @@ namespace DexManager.Forms
                 UpdateStageText();
                 UpdateDetailText();
             }
-        }
-
-        private void SetInitialPosition(string sessionId)
-        {
-            var handle = _coordinator.GetWindowHandle(sessionId);
-            NativeRect rect;
-            if (handle != IntPtr.Zero &&
-                NativeMethods.IsWindow(handle) &&
-                !NativeMethods.IsIconic(handle) &&
-                NativeMethods.GetWindowRect(handle, out rect))
-            {
-                var workingArea = Screen.FromHandle(handle).WorkingArea;
-                var x = rect.Right + 10;
-                var y = Math.Max(workingArea.Top, rect.Top);
-                if (x + Width > workingArea.Right)
-                    x = rect.Left - Width - 10;
-                if (x < workingArea.Left)
-                {
-                    x = Math.Max(
-                        workingArea.Left,
-                        Math.Min(rect.Left, workingArea.Right - Width));
-                    y = Math.Min(
-                        workingArea.Bottom - Height,
-                        rect.Bottom + 10);
-                }
-                y = Math.Max(
-                    workingArea.Top,
-                    Math.Min(y, workingArea.Bottom - Height));
-                Location = new Point(x, y);
-                return;
-            }
-
-            var fallback = Screen.PrimaryScreen.WorkingArea;
-            Location = new Point(
-                fallback.Right - Width - 16,
-                fallback.Bottom - Height - 16);
         }
 
         private static string FormatElapsed(TimeSpan elapsed)

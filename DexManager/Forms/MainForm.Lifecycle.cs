@@ -32,7 +32,19 @@ namespace DexManager.Forms
                         _fileTransferCoordinator,
                         _settings.Theme);
                 }
+                var shouldShow = !_fileTransferStatusForm.Visible;
                 _fileTransferStatusForm.UpdateProgress(e.Progress);
+                if (shouldShow)
+                {
+                    var target = PositionTransferStatusWindow(
+                        _fileTransferStatusForm,
+                        _phoneTransferStatusForm,
+                        _fileTransferCoordinator.GetWindowHandle(
+                            e.Progress.SessionId));
+                    ShowTransferStatusWindow(
+                        _fileTransferStatusForm,
+                        target);
+                }
             });
         }
 
@@ -56,9 +68,18 @@ namespace DexManager.Forms
                     _phoneTransferStatusForm =
                         new PhoneTransferStatusForm(_settings.Theme);
                 }
+                var shouldShow = !_phoneTransferStatusForm.Visible;
                 _phoneTransferStatusForm.UpdateProgress(e.Progress);
-                if (!_phoneTransferStatusForm.Visible)
-                    _phoneTransferStatusForm.Show();
+                if (shouldShow)
+                {
+                    var target = PositionTransferStatusWindow(
+                        _phoneTransferStatusForm,
+                        _fileTransferStatusForm,
+                        IntPtr.Zero);
+                    ShowTransferStatusWindow(
+                        _phoneTransferStatusForm,
+                        target);
+                }
             });
         }
 

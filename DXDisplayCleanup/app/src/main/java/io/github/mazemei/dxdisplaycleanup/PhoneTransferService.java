@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -33,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class PhoneTransferService extends Service {
+    private static final String TAG = "DXPhoneTransfer";
     private static final String ACTION_SEND =
             "io.github.mazemei.dxdisplaycleanup.SEND_TO_PC";
     private static final String ACTION_CANCEL =
@@ -52,12 +54,11 @@ public final class PhoneTransferService extends Service {
     private long lastNotificationAt;
     private int lastNotifiedCompleted = -1;
 
-    static void start(Context context, ArrayList<Uri> uris) {
+    static boolean start(Context context, ArrayList<Uri> uris) {
         Intent intent = new Intent(context, PhoneTransferService.class)
                 .setAction(ACTION_SEND)
                 .putParcelableArrayListExtra(EXTRA_URIS, uris)
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         if (uris != null && !uris.isEmpty()) {
             ClipData clipData = ClipData.newRawUri(
                     "DX Manager transfer", uris.get(0));
@@ -66,10 +67,16 @@ public final class PhoneTransferService extends Service {
             }
             intent.setClipData(clipData);
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent);
-        } else {
-            context.startService(intent);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent);
+            } else {
+                context.startService(intent);
+            }
+            return true;
+        } catch (SecurityException | IllegalStateException ex) {
+            Log.e(TAG, "Could not queue the selected content.", ex);
+            return false;
         }
     }
 
@@ -136,6 +143,7 @@ public final class PhoneTransferService extends Service {
             showTerminalNotification(
                     getString(R.string.transfer_complete), false);
         } catch (Exception exception) {
+            Log.e(TAG, "Phone-to-PC transfer failed.", exception);
             String message = canceled.get()
                     ? getString(R.string.transfer_canceled)
                     : getString(R.string.transfer_failed,

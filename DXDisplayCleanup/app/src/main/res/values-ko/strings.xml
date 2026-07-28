@@ -51,7 +51,7 @@
     <string name="widget_error">확인 실패</string>
     <string name="widget_description">선택한 DX Manager 휴대폰 설정을 확인하고 정리합니다.</string>
     <string name="phone_to_pc_section_title">PC로 파일 보내기</string>
-    <string name="phone_to_pc_description">갤러리나 내 파일의 공유 메뉴에서 ‘DX Manager로 보내기’를 선택하거나 여기에서 파일과 폴더를 고르십시오. 휴대폰에 임시 복사본을 만들지 않고 현재 ADB 연결을 통해 바로 전송합니다.</string>
+    <string name="phone_to_pc_description">파일은 갤러리나 내 파일의 공유 메뉴에서 ‘DX Manager로 보내기’를 선택하십시오. 폴더는 One UI의 공유 메뉴로 앱에 전달되지 않으므로 아래의 ‘폴더 선택’을 사용하십시오. 휴대폰에 임시 복사본을 만들지 않고 현재 ADB 연결을 통해 바로 전송합니다.</string>
     <string name="transfer_pc_ready">DX Manager가 연결되어 파일을 받을 준비가 되었습니다.</string>
     <string name="transfer_pc_not_ready_short">PC에서 DX Manager를 실행하고 이 휴대폰을 먼저 연결하십시오.</string>
     <string name="send_files_button">파일 선택</string>
@@ -60,6 +60,7 @@
     <string name="transfer_pc_not_ready">DX Manager가 준비되지 않았습니다. PC에서 DX Manager를 실행하고 이 휴대폰을 연결하십시오.</string>
     <string name="transfer_no_items">읽을 수 있는 파일 또는 폴더가 선택되지 않았습니다.</string>
     <string name="transfer_queued">전송 작업을 추가했습니다.</string>
+    <string name="transfer_queue_failed">전송을 시작하지 못했습니다. 파일이나 폴더를 다시 선택하십시오.</string>
     <string name="transfer_preparing">파일과 폴더를 준비하는 중…</string>
     <string name="transfer_notification_title">DX Manager로 보내기</string>
     <string name="transfer_channel_name">휴대폰→PC 파일 전송</string>

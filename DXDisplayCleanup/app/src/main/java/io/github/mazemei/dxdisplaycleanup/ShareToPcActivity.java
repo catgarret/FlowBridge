@@ -33,9 +33,13 @@ public final class ShareToPcActivity extends Activity {
             return;
         }
 
-        PhoneTransferService.start(this, uris);
-        Toast.makeText(this, R.string.transfer_queued,
-                Toast.LENGTH_SHORT).show();
+        if (PhoneTransferService.start(this, uris)) {
+            Toast.makeText(this, R.string.transfer_queued,
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, R.string.transfer_queue_failed,
+                    Toast.LENGTH_LONG).show();
+        }
         finish();
     }
 

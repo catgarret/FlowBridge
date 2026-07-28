@@ -76,6 +76,9 @@
     <Compile Include="Forms\MainForm.Sessions.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\MainForm.TransferWindows.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\CaptureHintOverlayForm.cs">
       <SubType>Form</SubType>
     </Compile>

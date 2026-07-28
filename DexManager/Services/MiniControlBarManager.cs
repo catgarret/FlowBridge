@@ -68,6 +68,55 @@ namespace DexManager.Services
             Synchronize();
         }
 
+        internal bool TryGetActiveBarBounds(out Rectangle bounds)
+        {
+            bounds = Rectangle.Empty;
+            if (_disposed) return false;
+
+            var foreground = NativeMethods.GetForegroundWindow();
+            foreach (var bar in _bars.Values)
+            {
+                if (!bar.IsDisposed && bar.Visible &&
+                    bar.TargetHandle == foreground)
+                {
+                    bounds = bar.Bounds;
+                    return true;
+                }
+            }
+
+            foreach (var bar in _bars.Values)
+            {
+                if (!bar.IsDisposed && bar.Visible)
+                {
+                    bounds = bar.Bounds;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        internal bool TryGetBarBounds(
+            IntPtr targetHandle,
+            out Rectangle bounds)
+        {
+            bounds = Rectangle.Empty;
+            if (_disposed || targetHandle == IntPtr.Zero) return false;
+
+            foreach (var bar in _bars.Values)
+            {
+                if (!bar.IsDisposed &&
+                    bar.TargetHandle == targetHandle &&
+                    !bar.Bounds.IsEmpty)
+                {
+                    // Keep the intended location even while the bar is
+                    // temporarily hidden because another window has focus.
+                    bounds = bar.Bounds;
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public void Dispose()
         {
             if (_disposed) return;

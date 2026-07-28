@@ -51,7 +51,7 @@
     <string name="widget_error">Check failed</string>
     <string name="widget_description">Checks and cleans up the selected DX Manager phone settings.</string>
     <string name="phone_to_pc_section_title">Send files to PC</string>
-    <string name="phone_to_pc_description">Share files from Gallery or My Files to “Send to DX Manager,” or select files and a folder here. Data is streamed directly through the current ADB connection without creating a temporary phone copy.</string>
+    <string name="phone_to_pc_description">For files, choose “Send to DX Manager” from the Gallery or My Files share menu. One UI does not pass shared folders to apps, so use “Select folder” below for folders. Data is streamed directly through the current ADB connection without creating a temporary phone copy.</string>
     <string name="transfer_pc_ready">DX Manager is connected and ready to receive.</string>
     <string name="transfer_pc_not_ready_short">Start DX Manager and connect this phone first.</string>
     <string name="send_files_button">Select files</string>
@@ -60,6 +60,7 @@
     <string name="transfer_pc_not_ready">DX Manager is not ready. Start DX Manager on the PC and connect this phone.</string>
     <string name="transfer_no_items">No readable files or folders were selected.</string>
     <string name="transfer_queued">The transfer was added to the queue.</string>
+    <string name="transfer_queue_failed">Could not start the transfer. Please select the file or folder again.</string>
     <string name="transfer_preparing">Preparing files and folders…</string>
     <string name="transfer_notification_title">Sending to DX Manager</string>
     <string name="transfer_channel_name">Phone-to-PC file transfer</string>

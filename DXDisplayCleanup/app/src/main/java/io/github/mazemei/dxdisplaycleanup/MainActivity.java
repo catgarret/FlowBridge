@@ -202,9 +202,13 @@ public final class MainActivity extends Activity {
             } catch (SecurityException ignored) {
             }
         }
-        PhoneTransferService.start(this, uris);
-        Toast.makeText(this, R.string.transfer_queued,
-                Toast.LENGTH_SHORT).show();
+        if (PhoneTransferService.start(this, uris)) {
+            Toast.makeText(this, R.string.transfer_queued,
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, R.string.transfer_queue_failed,
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     private void notifySurfaces() {

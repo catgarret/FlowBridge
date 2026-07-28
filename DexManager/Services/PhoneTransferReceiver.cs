@@ -122,6 +122,19 @@ namespace DexManager.Services
             await Task.Run(delegate
             {
                 DetachInternal(false);
+                try
+                {
+                    _adbService.RemoveReverseForSerial(
+                        serial,
+                        DevicePort,
+                        false);
+                }
+                catch (Exception)
+                {
+                    // A stale mapping may belong to a DX Manager process
+                    // that ended abnormally. Creating the new mapping below
+                    // remains the authoritative recovery step.
+                }
                 var reverse = _adbService.ReverseForSerial(
                     serial,
                     DevicePort,
@@ -241,10 +254,38 @@ namespace DexManager.Services
         {
             lock (_sync)
             {
-                if (_listener != null) return;
+                if (IsListenerHealthy()) return;
+                if (_listener != null)
+                {
+                    try { _listener.Stop(); }
+                    catch (SocketException) { }
+                    _listener = null;
+                }
                 _listener = new TcpListener(IPAddress.Loopback, 0);
                 _listener.Start();
                 _acceptTask = Task.Run((Func<Task>)AcceptLoopAsync);
+            }
+        }
+
+        private bool IsListenerHealthy()
+        {
+            if (_listener == null || _acceptTask == null ||
+                _acceptTask.IsCompleted)
+            {
+                return false;
+            }
+            try
+            {
+                return _listener.Server != null &&
+                    _listener.Server.IsBound;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
+            catch (SocketException)
+            {
+                return false;
             }
         }
 
