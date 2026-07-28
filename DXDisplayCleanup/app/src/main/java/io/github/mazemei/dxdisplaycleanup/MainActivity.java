@@ -1,6 +1,9 @@
 package io.github.mazemei.dxdisplaycleanup;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.graphics.Color;
 import android.net.Uri;
@@ -15,6 +18,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public final class MainActivity extends Activity {
+    private static final int REQUEST_FILES = 101;
+    private static final int REQUEST_FOLDER = 102;
+    private static final int REQUEST_NOTIFICATIONS = 103;
+
     private ImageView statusIcon;
     private TextView statusTitle;
     private TextView statusDetail;
@@ -27,6 +34,9 @@ public final class MainActivity extends Activity {
     private Button cleanupBothButton;
     private CheckBox tileWidgetOverlay;
     private CheckBox tileWidgetStayAwake;
+    private TextView pcTransferStatus;
+    private Button sendFilesButton;
+    private Button sendFolderButton;
     private ContentObserver settingObserver;
     private boolean updatingPreferences;
 
@@ -47,12 +57,17 @@ public final class MainActivity extends Activity {
         cleanupBothButton = findViewById(R.id.cleanup_both_button);
         tileWidgetOverlay = findViewById(R.id.tile_widget_overlay);
         tileWidgetStayAwake = findViewById(R.id.tile_widget_stay_awake);
+        pcTransferStatus = findViewById(R.id.pc_transfer_status);
+        sendFilesButton = findViewById(R.id.send_files_button);
+        sendFolderButton = findViewById(R.id.send_folder_button);
         Button refreshButton = findViewById(R.id.refresh_button);
 
         cleanupOverlayButton.setOnClickListener(view -> cleanup(true, false));
         cleanupStayAwakeButton.setOnClickListener(view -> cleanup(false, true));
         cleanupBothButton.setOnClickListener(view -> cleanup(true, true));
         refreshButton.setOnClickListener(view -> refresh());
+        sendFilesButton.setOnClickListener(view -> chooseFiles());
+        sendFolderButton.setOnClickListener(view -> chooseFolder());
 
         CleanupPreferences.Targets targets = CleanupPreferences.load(this);
         setPreferenceChecks(targets);
@@ -72,6 +87,7 @@ public final class MainActivity extends Activity {
                 refresh();
             }
         };
+        requestNotificationPermissionIfNeeded();
         refresh();
     }
 
@@ -120,7 +136,75 @@ public final class MainActivity extends Activity {
 
     private void refresh() {
         render(CleanupCoordinator.inspect(this));
+        renderTransferSession();
         notifySurfaces();
+    }
+
+    private void renderTransferSession() {
+        boolean ready = TransferSessionStore.load(this).isReady();
+        pcTransferStatus.setText(ready
+                ? R.string.transfer_pc_ready
+                : R.string.transfer_pc_not_ready_short);
+        sendFilesButton.setEnabled(ready);
+        sendFolderButton.setEnabled(ready);
+    }
+
+    private void chooseFiles() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("*/*")
+                .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(intent, REQUEST_FILES);
+    }
+
+    private void requestNotificationPermissionIfNeeded() {
+        if (android.os.Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    REQUEST_NOTIFICATIONS);
+        }
+    }
+
+    private void chooseFolder() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                        | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+        startActivityForResult(intent, REQUEST_FOLDER);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+            Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if ((requestCode != REQUEST_FILES && requestCode != REQUEST_FOLDER)
+                || resultCode != RESULT_OK || data == null) {
+            return;
+        }
+        java.util.ArrayList<Uri> uris =
+                ShareToPcActivity.collectUris(data);
+        if (data.getData() != null && !uris.contains(data.getData())) {
+            uris.add(data.getData());
+        }
+        if (uris.isEmpty()) {
+            Toast.makeText(this, R.string.transfer_no_items,
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        for (Uri uri : uris) {
+            try {
+                getContentResolver().takePersistableUriPermission(
+                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (SecurityException ignored) {
+            }
+        }
+        PhoneTransferService.start(this, uris);
+        Toast.makeText(this, R.string.transfer_queued,
+                Toast.LENGTH_SHORT).show();
     }
 
     private void notifySurfaces() {

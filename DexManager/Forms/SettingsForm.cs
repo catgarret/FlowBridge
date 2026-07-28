@@ -57,6 +57,8 @@ namespace DexManager.Forms
         private CheckBox _pushCaptureBox;
         private CheckBox _managedFileTransferBox;
         private ThemedTextControl _fileTransferTargetFolderBox;
+        private CheckBox _phoneToPcTransferBox;
+        private ThemedTextControl _phoneToPcReceiveFolderBox;
         private CheckBox _resetDisplayOnStopBox;
         private CheckBox _disableStayAwakeBox;
         private CheckBox _autoStartDexBox;

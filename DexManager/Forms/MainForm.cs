@@ -36,6 +36,7 @@ namespace DexManager.Forms
         private readonly EnvironmentCheckService _environmentCheckService;
         private readonly KeyMappingService _keyMappingService;
         private readonly FileTransferCoordinator _fileTransferCoordinator;
+        private readonly PhoneTransferReceiver _phoneTransferReceiver;
         private readonly MiniControlBarManager _miniControlBarManager;
         private readonly bool _isAutoRun;
         private readonly TrayService _trayService;
@@ -124,7 +125,9 @@ namespace DexManager.Forms
         private SettingsForm _settingsForm;
         private EnvironmentCheckForm _environmentCheckForm;
         private FileTransferStatusForm _fileTransferStatusForm;
+        private PhoneTransferStatusForm _phoneTransferStatusForm;
         private long _lastFileTransferProgressSequence;
+        private long _lastPhoneTransferProgressSequence;
 
         public MainForm(
             SettingsService settingsService,
@@ -144,6 +147,7 @@ namespace DexManager.Forms
             EnvironmentCheckService environmentCheckService,
             KeyMappingService keyMappingService,
             FileTransferCoordinator fileTransferCoordinator,
+            PhoneTransferReceiver phoneTransferReceiver,
             bool isAutoRun)
         {
             _settingsService = settingsService;
@@ -164,6 +168,8 @@ namespace DexManager.Forms
             _keyMappingService = keyMappingService;
             _fileTransferCoordinator = fileTransferCoordinator ??
                 throw new ArgumentNullException("fileTransferCoordinator");
+            _phoneTransferReceiver = phoneTransferReceiver ??
+                throw new ArgumentNullException("phoneTransferReceiver");
             _miniControlBarManager = new MiniControlBarManager(
                 _settings,
                 _scrcpyService,
@@ -438,6 +444,8 @@ namespace DexManager.Forms
             _autoHideService.IdleHideRequested += AutoHideService_IdleHideRequested;
             _fileTransferCoordinator.ProgressChanged +=
                 FileTransferCoordinator_ProgressChanged;
+            _phoneTransferReceiver.ProgressChanged +=
+                PhoneTransferReceiver_ProgressChanged;
             _trayService = new TrayService(
                 ShowMainWindow,
                 async delegate { await StartDexAsync(); },

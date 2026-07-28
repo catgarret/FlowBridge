@@ -149,6 +149,21 @@ namespace DexManager.Forms
                 string.Empty,
                 CreateHint(LocalizationService.Get(
                     "Settings.ManagedFileTransferHint")));
+            _phoneToPcTransferBox = AddCheck(
+                paths,
+                LocalizationService.Get(
+                    "Settings.PhoneToPcTransfer"));
+            _phoneToPcReceiveFolderBox = AddPath(
+                paths,
+                LocalizationService.Get(
+                    "Settings.PhoneToPcReceiveFolder"),
+                false);
+            _phoneToPcReceiveFolderBox.UseMiddleEllipsis = true;
+            AddRow(
+                paths,
+                string.Empty,
+                CreateHint(LocalizationService.Get(
+                    "Settings.PhoneToPcTransferHint")));
             _logFolderBox = AddPath(paths, LocalizationService.Get("Settings.LogFolder"), false);
             AddCard(page, LocalizationService.Get("Settings.GroupStorage"), paths);
             return page;

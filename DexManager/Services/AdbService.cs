@@ -270,6 +270,32 @@ namespace DexManager.Services
                 writeLog);
         }
 
+        public ProcessResult ReverseForSerial(
+            string serial,
+            int devicePort,
+            int localPort,
+            bool writeLog)
+        {
+            ValidatePort(devicePort, "devicePort");
+            ValidatePort(localPort, "localPort");
+            return RunForSerial(
+                serial,
+                "reverse tcp:" + devicePort + " tcp:" + localPort,
+                writeLog);
+        }
+
+        public ProcessResult RemoveReverseForSerial(
+            string serial,
+            int devicePort,
+            bool writeLog)
+        {
+            ValidatePort(devicePort, "devicePort");
+            return RunForSerial(
+                serial,
+                "reverse --remove tcp:" + devicePort,
+                writeLog);
+        }
+
         private static void ValidatePushPaths(
             string localPath,
             string remotePath)

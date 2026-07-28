@@ -10,7 +10,7 @@ namespace DexManager.Models
     [DataContract]
     public sealed class AppSettings
     {
-        public const int CurrentSchemaVersion = 22;
+        public const int CurrentSchemaVersion = 23;
 
         [DataMember(Order = 1)] public int SchemaVersion { get; set; }
         [DataMember(Order = 2)] public PathSettings Paths { get; set; }
@@ -48,7 +48,12 @@ namespace DexManager.Models
                     ScreenshotFolder = "screenshot",
                     DeviceScreenshotFolder = "/sdcard/DCIM/DeX Screenshots",
                     LogFolder = "logs",
-                    FileTransferTargetFolder = "/sdcard/Download/"
+                    FileTransferTargetFolder = "/sdcard/Download/",
+                    PhoneToPcReceiveFolder = System.IO.Path.Combine(
+                        System.Environment.GetFolderPath(
+                            System.Environment.SpecialFolder.UserProfile),
+                        "Downloads",
+                        "DX Manager")
                 },
                 VirtualDisplay = new VirtualDisplaySettings
                 {
@@ -99,7 +104,8 @@ namespace DexManager.Models
                     ShowConnectedDeviceInfo = true,
                     ManagedFileTransferEnabled = true,
                     MiniControlBarEnabled = true,
-                    MiniControlBarSide = MiniControlBarSide.Right
+                    MiniControlBarSide = MiniControlBarSide.Right,
+                    PhoneToPcTransferEnabled = true
                 },
                 KeyMappings = new KeyMappingSettings
                 {
@@ -331,6 +337,14 @@ namespace DexManager.Models
                     new List<SingleWindowAppProfile>();
                 SchemaVersion = defaults.SchemaVersion;
             }
+            if (oldSchemaVersion < 23)
+            {
+                Paths.PhoneToPcReceiveFolder =
+                    defaults.Paths.PhoneToPcReceiveFolder;
+                Features.PhoneToPcTransferEnabled =
+                    defaults.Features.PhoneToPcTransferEnabled;
+                SchemaVersion = defaults.SchemaVersion;
+            }
             VirtualDisplay.Width = NormalizeRange(
                 VirtualDisplay.Width,
                 320,
@@ -410,6 +424,11 @@ namespace DexManager.Models
             Paths.FileTransferTargetFolder = NormalizeSharedStorageFolder(
                 Paths.FileTransferTargetFolder,
                 defaults.Paths.FileTransferTargetFolder);
+            if (string.IsNullOrWhiteSpace(Paths.PhoneToPcReceiveFolder))
+            {
+                Paths.PhoneToPcReceiveFolder =
+                    defaults.Paths.PhoneToPcReceiveFolder;
+            }
             if (!System.Enum.IsDefined(
                 typeof(AdbSelectionMode),
                 Paths.AdbSelectionMode))
@@ -735,6 +754,7 @@ namespace DexManager.Models
         [DataMember(Order = 7)] public string DeviceScreenshotFolder { get; set; }
         [DataMember(Order = 8)] public string LogFolder { get; set; }
         [DataMember(Order = 9)] public string FileTransferTargetFolder { get; set; }
+        [DataMember(Order = 10)] public string PhoneToPcReceiveFolder { get; set; }
     }
 
     public enum AdbSelectionMode
@@ -885,6 +905,7 @@ namespace DexManager.Models
         [DataMember(Order = 11)] public bool ManagedFileTransferEnabled { get; set; }
         [DataMember(Order = 12)] public bool MiniControlBarEnabled { get; set; }
         [DataMember(Order = 13)] public MiniControlBarSide MiniControlBarSide { get; set; }
+        [DataMember(Order = 14)] public bool PhoneToPcTransferEnabled { get; set; }
     }
 
     [DataContract]

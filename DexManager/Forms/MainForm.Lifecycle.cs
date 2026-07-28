@@ -36,6 +36,32 @@ namespace DexManager.Forms
             });
         }
 
+        private void PhoneTransferReceiver_ProgressChanged(
+            object sender,
+            PhoneTransferProgressEventArgs e)
+        {
+            if (e == null || e.Progress == null) return;
+            RunOnUi(delegate
+            {
+                if (_exitInProgress || IsDisposed) return;
+                if (e.Progress.Sequence <=
+                    _lastPhoneTransferProgressSequence)
+                {
+                    return;
+                }
+                _lastPhoneTransferProgressSequence = e.Progress.Sequence;
+                if (_phoneTransferStatusForm == null ||
+                    _phoneTransferStatusForm.IsDisposed)
+                {
+                    _phoneTransferStatusForm =
+                        new PhoneTransferStatusForm(_settings.Theme);
+                }
+                _phoneTransferStatusForm.UpdateProgress(e.Progress);
+                if (!_phoneTransferStatusForm.Visible)
+                    _phoneTransferStatusForm.Show();
+            });
+        }
+
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             _deviceMonitor.StateChanged -= DeviceMonitor_StateChanged;
@@ -50,12 +76,15 @@ namespace DexManager.Forms
                 AutoHideService_IdleHideRequested;
             _fileTransferCoordinator.ProgressChanged -=
                 FileTransferCoordinator_ProgressChanged;
+            _phoneTransferReceiver.ProgressChanged -=
+                PhoneTransferReceiver_ProgressChanged;
             _phoneScreenWakeTimer.Tick -= PhoneScreenWakeTimer_Tick;
 
             _orchestrator.RequestShutdown();
             _singleWindowService.RequestShutdown();
             _screenOffService.RequestShutdown();
             _fileTransferCoordinator.RequestShutdown();
+            _phoneTransferReceiver.RequestShutdown();
             var cleanupStillRunning = _exitCleanupTask != null &&
                 !_exitCleanupTask.IsCompleted;
             if (!cleanupStillRunning)
@@ -72,6 +101,10 @@ namespace DexManager.Forms
                 TryCleanup(
                     "file transfer window",
                     _fileTransferStatusForm.Dispose);
+            if (_phoneTransferStatusForm != null)
+                TryCleanup(
+                    "phone transfer window",
+                    _phoneTransferStatusForm.Dispose);
             if (!cleanupStillRunning)
             {
                 TryCleanup("screen-off service", _screenOffService.Dispose);
@@ -82,6 +115,9 @@ namespace DexManager.Forms
                 TryCleanup(
                     "file transfer service",
                     _fileTransferCoordinator.Dispose);
+                TryCleanup(
+                    "phone transfer receiver",
+                    _phoneTransferReceiver.Dispose);
                 TryCleanup("DeX finalization", delegate
                 {
                     _orchestrator.ShutdownAsync()
@@ -116,6 +152,7 @@ namespace DexManager.Forms
             _singleWindowService.RequestShutdown();
             _screenOffService.RequestShutdown();
             _fileTransferCoordinator.RequestShutdown();
+            _phoneTransferReceiver.RequestShutdown();
             TryCleanup(
                 "mini control bar",
                 _miniControlBarManager.Dispose);

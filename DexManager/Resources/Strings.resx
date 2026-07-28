@@ -572,6 +572,18 @@
   <data name="Settings.ManagedFileTransfer" xml:space="preserve"><value>Use DX Manager file transfer (Unicode-compatible)</value></data>
   <data name="Settings.ManagedFileTransferHint" xml:space="preserve"><value>When enabled, DX Manager handles file transfer and preserves complete folders and Unicode names. Turn it off to use scrcpy's original file-drop behavior. Changes apply to newly opened DeX and single-app windows.</value></data>
   <data name="Settings.FileTransferTargetFolder" xml:space="preserve"><value>Dropped files destination on phone</value></data>
+  <data name="Settings.PhoneToPcTransfer" xml:space="preserve"><value>Receive shared files from DX Companion</value></data>
+  <data name="Settings.PhoneToPcReceiveFolder" xml:space="preserve"><value>Phone-to-PC destination folder</value></data>
+  <data name="Settings.PhoneToPcTransferHint" xml:space="preserve"><value>When the verified DX Companion is installed, files and folders shared to DX Manager are streamed directly to this PC through the current ADB connection. No temporary copy is created on the phone.</value></data>
+  <data name="Settings.PhoneToPcReceiveFolderRequired" xml:space="preserve"><value>Select a PC folder for files received from the phone.</value></data>
+  <data name="PhoneTransfer.WindowTitle" xml:space="preserve"><value>DX Manager · Receiving from phone</value></data>
+  <data name="PhoneTransfer.Receiving" xml:space="preserve"><value>Receiving from the phone</value></data>
+  <data name="PhoneTransfer.Completed" xml:space="preserve"><value>Transfer complete</value></data>
+  <data name="PhoneTransfer.Failed" xml:space="preserve"><value>Transfer failed</value></data>
+  <data name="PhoneTransfer.Items" xml:space="preserve"><value>{0} of {1} items</value></data>
+  <data name="PhoneTransfer.Bytes" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="PhoneTransfer.BytesUnknown" xml:space="preserve"><value>{0} received</value></data>
+  <data name="PhoneTransfer.OpenFolder" xml:space="preserve"><value>Open folder</value></data>
   <data name="Settings.GroupDisplayCleanup" xml:space="preserve"><value>Phone virtual display cleanup</value></data>
   <data name="Settings.DisplayCleanupGuide" xml:space="preserve"><value>Grants the separately distributed Android cleanup app permission to remove a virtual display left on the phone after an abnormal exit or disconnection. This will be available only when the official app is installed and its signature has been verified.</value></data>
   <data name="Settings.GrantDisplayCleanupPermission" xml:space="preserve"><value>Grant cleanup permission</value></data>

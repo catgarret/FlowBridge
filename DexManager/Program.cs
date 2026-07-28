@@ -80,6 +80,12 @@ namespace DexManager
                         adbPath,
                         settings,
                         logService);
+                var phoneTransferReceiver =
+                    new PhoneTransferReceiver(
+                        adbService,
+                        settingsService,
+                        settings,
+                        logService);
                 var wirelessAdbService = new WirelessAdbService(
                     adbService,
                     settingsService,
@@ -182,6 +188,7 @@ namespace DexManager
                     environmentCheckService,
                     keyMappingService,
                     fileTransferCoordinator,
+                    phoneTransferReceiver,
                     IsAutoRun(args)));
             }
             catch (Exception ex)

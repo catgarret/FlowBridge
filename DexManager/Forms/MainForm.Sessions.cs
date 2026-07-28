@@ -309,6 +309,7 @@ namespace DexManager.Forms
         {
             if (_exitInProgress) return;
             RecordDeviceConnected(e.Current.Serial);
+            ConfigurePhoneTransferReceiver(e.Current.Serial);
             var deviceSwitch = IsDeviceSwitch(e);
             RunOnUi(async delegate
             {
@@ -337,7 +338,10 @@ namespace DexManager.Forms
         {
             if (_exitInProgress) return;
             if (e != null && e.Previous != null)
+            {
                 _fileTransferCoordinator.CancelSerial(e.Previous.Serial);
+                var detachTask = _phoneTransferReceiver.DetachAsync(e.Previous.Serial);
+            }
             if (IsDeviceSwitch(e))
             {
                 ForgetDeviceConnectionTimestamp(e.Previous.Serial);
@@ -381,6 +385,24 @@ namespace DexManager.Forms
                     }
                 }
             });
+        }
+
+        private async void ConfigurePhoneTransferReceiver(string serial)
+        {
+            if (_exitInProgress ||
+                string.IsNullOrWhiteSpace(serial))
+            {
+                return;
+            }
+            try
+            {
+                await _phoneTransferReceiver.AttachAsync(serial);
+            }
+            catch (Exception ex)
+            {
+                _logService.Error(
+                    "Could not prepare phone-to-PC transfer.", ex);
+            }
         }
 
         private static bool IsDeviceSwitch(DeviceStateChangedEventArgs e)

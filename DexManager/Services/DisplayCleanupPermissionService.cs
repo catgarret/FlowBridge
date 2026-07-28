@@ -20,6 +20,7 @@ namespace DexManager.Services
         public DisplayCleanupPermissionState State { get; set; }
         public string Detail { get; set; }
         public string Serial { get; set; }
+        public int VersionCode { get; set; }
     }
 
     internal sealed class DisplayCleanupPermissionService
@@ -103,7 +104,8 @@ namespace DexManager.Services
                         ? DisplayCleanupPermissionState.Granted
                         : DisplayCleanupPermissionState.Ready,
                     string.Empty,
-                    serial);
+                    serial,
+                    ParseVersionCode(packageDump.StandardOutput));
             }
             catch (Exception ex)
             {
@@ -262,16 +264,33 @@ namespace DexManager.Services
                 RegexOptions.IgnoreCase);
         }
 
+        private static int ParseVersionCode(string packageDump)
+        {
+            if (string.IsNullOrWhiteSpace(packageDump)) return 0;
+            var match = Regex.Match(
+                packageDump,
+                @"\bversionCode=(\d+)\b",
+                RegexOptions.CultureInvariant |
+                RegexOptions.IgnoreCase);
+            int value;
+            return match.Success &&
+                int.TryParse(match.Groups[1].Value, out value)
+                ? value
+                : 0;
+        }
+
         private static DisplayCleanupPermissionStatus Status(
             DisplayCleanupPermissionState state,
             string detail,
-            string serial)
+            string serial,
+            int versionCode = 0)
         {
             return new DisplayCleanupPermissionStatus
             {
                 State = state,
                 Detail = detail ?? string.Empty,
-                Serial = serial ?? string.Empty
+                Serial = serial ?? string.Empty,
+                VersionCode = versionCode
             };
         }
 

@@ -133,6 +133,14 @@ namespace DexManager.Forms
                 _settings.Timing.AutoHideIdleSeconds);
             _wirelessAdbService.SynchronizeTargetWithSettings();
             _miniControlBarManager.ApplySettings();
+            _phoneTransferReceiver.ApplySettings();
+            if (_settings.Features.PhoneToPcTransferEnabled &&
+                _lastDeviceState != null &&
+                _lastDeviceState.Status == AdbDeviceStatus.Device)
+            {
+                ConfigurePhoneTransferReceiver(
+                    _lastDeviceState.Serial);
+            }
 
             try
             {
@@ -186,6 +194,7 @@ namespace DexManager.Forms
             _singleWindowService.RequestShutdown();
             _screenOffService.RequestShutdown();
             _fileTransferCoordinator.RequestShutdown();
+            _phoneTransferReceiver.RequestShutdown();
             var wakeSerials = CaptureWakeSerials();
             TryCleanup(
                 "mini control bar",
