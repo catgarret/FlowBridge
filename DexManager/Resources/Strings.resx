@@ -41,6 +41,16 @@
   <data name="Main.NoApp" xml:space="preserve"><value>None</value></data>
   <data name="Main.LoadApps" xml:space="preserve"><value>Load app list</value></data>
   <data name="Main.Loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="Main.AppProfile.SelectApp" xml:space="preserve"><value>App profile: select app ▼</value></data>
+  <data name="Main.AppProfile.NotSaved" xml:space="preserve"><value>App profile: none ▼</value></data>
+  <data name="Main.AppProfile.Saved" xml:space="preserve"><value>App profile: saved ▼</value></data>
+  <data name="Main.AppProfile.Save" xml:space="preserve"><value>Save current</value></data>
+  <data name="Main.AppProfile.Delete" xml:space="preserve"><value>Delete profile</value></data>
+  <data name="Main.AppProfile.OverwriteConfirm" xml:space="preserve"><value>A profile for {0} already exists. Overwrite it with the current settings?</value></data>
+  <data name="Main.AppProfile.DeleteConfirm" xml:space="preserve"><value>Delete the saved profile for {0}? The current window settings will not be changed.</value></data>
+  <data name="Main.AppProfile.ApplyFailed" xml:space="preserve"><value>Could not apply the saved app profile.{0}{0}{1}</value></data>
+  <data name="Main.AppProfile.SaveFailed" xml:space="preserve"><value>Could not save the app profile.{0}{0}{1}</value></data>
+  <data name="Main.AppProfile.DeleteFailed" xml:space="preserve"><value>Could not delete the app profile.{0}{0}{1}</value></data>
   <data name="Main.AdvancedClosed" xml:space="preserve"><value>▶  Advanced options (extra arguments)</value></data>
   <data name="Main.AdvancedOpen" xml:space="preserve"><value>▼  Advanced options (extra arguments)</value></data>
   <data name="Main.StartDex" xml:space="preserve"><value>Start DeX</value></data>
@@ -213,6 +223,12 @@
   <data name="Log.Main.RememberedAppSaveFailed" xml:space="preserve"><value>The session started, but the app could not be added to the remembered-app list.</value></data>
   <data name="Log.Main.DexSettingsSaved" xml:space="preserve"><value>Saved the DeX/scrcpy run settings from the main screen.</value></data>
   <data name="Log.Main.SingleWindowSettingsSaved" xml:space="preserve"><value>Saved the run settings for Single Window {0}.</value></data>
+  <data name="Log.Main.AppProfileApplied" xml:space="preserve"><value>Applied the saved profile for {0} to Single Window {1}.</value></data>
+  <data name="Log.Main.AppProfileSaved" xml:space="preserve"><value>Saved the Single Window app profile for {0}.</value></data>
+  <data name="Log.Main.AppProfileDeleted" xml:space="preserve"><value>Deleted the Single Window app profile for {0}.</value></data>
+  <data name="Log.Main.AppProfileApplyFailed" xml:space="preserve"><value>Could not apply the Single Window app profile.</value></data>
+  <data name="Log.Main.AppProfileSaveFailed" xml:space="preserve"><value>Could not save the Single Window app profile.</value></data>
+  <data name="Log.Main.AppProfileDeleteFailed" xml:space="preserve"><value>Could not delete the Single Window app profile.</value></data>
   <data name="Log.Main.ModeSwitchSaveFailed" xml:space="preserve"><value>Could not save the current run settings while switching modes: {0}</value></data>
   <data name="Log.AutoHide.Started" xml:space="preserve"><value>Started auto-hide: {0} second(s)</value></data>
   <data name="Log.AutoHide.ScrcpyMinimized" xml:space="preserve"><value>Minimized the running scrcpy windows because there was no user input.</value></data>

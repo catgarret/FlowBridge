@@ -86,9 +86,9 @@ namespace DexManager.Forms
             }
             MoveToCard(_startAppLabel, _optionsCard, 20, 168);
             MoveToCard(_startAppBox, _optionsCard, 20, 189);
-            _startAppBox.Size = new Size(470, 32);
             MoveToCard(_loadAppsButton, _optionsCard, 500, 189);
-            _loadAppsButton.Size = new Size(146, 32);
+            MoveToCard(_appProfileButton, _optionsCard, 490, 189);
+            LayoutStartAppControls(false);
             MoveToCard(_advancedToggle, _optionsCard, 20, 238);
             MoveToCard(_additionalArgumentsBox, _optionsCard, 190, 232);
             _additionalArgumentsBox.Size = new Size(456, 32);
@@ -101,6 +101,20 @@ namespace DexManager.Forms
             _sidebar.Location = new Point(14, 14);
             _sidebar.Size = new Size(188, 618);
             _sidebar.BringToFront();
+        }
+
+        private void LayoutStartAppControls(bool showAppProfile)
+        {
+            _startAppBox.Location = new Point(20, 189);
+            _startAppBox.Size = new Size(
+                showAppProfile ? 304 : 470,
+                32);
+            _loadAppsButton.Location = new Point(
+                showAppProfile ? 334 : 500,
+                189);
+            _loadAppsButton.Size = new Size(146, 32);
+            _appProfileButton.Location = new Point(490, 189);
+            _appProfileButton.Size = new Size(156, 32);
         }
 
         private RoundedPanel CreateCard(Point location, Size size)
@@ -219,6 +233,13 @@ namespace DexManager.Forms
             _startButton.Invalidate();
             _stopButton.Invalidate();
             _loadAppsButton.Invalidate();
+            _appProfileButton.Invalidate();
+            _appProfileMenu.BackColor = _theme.CardSoft;
+            _appProfileMenu.ForeColor = _theme.TextPrimary;
+            _saveAppProfileMenuItem.BackColor = _theme.CardSoft;
+            _saveAppProfileMenuItem.ForeColor = _theme.TextPrimary;
+            _deleteAppProfileMenuItem.BackColor = _theme.CardSoft;
+            _deleteAppProfileMenuItem.ForeColor = _theme.TextPrimary;
             Invalidate(true);
         }
 

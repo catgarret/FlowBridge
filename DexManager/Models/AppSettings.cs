@@ -10,7 +10,7 @@ namespace DexManager.Models
     [DataContract]
     public sealed class AppSettings
     {
-        public const int CurrentSchemaVersion = 21;
+        public const int CurrentSchemaVersion = 22;
 
         [DataMember(Order = 1)] public int SchemaVersion { get; set; }
         [DataMember(Order = 2)] public PathSettings Paths { get; set; }
@@ -26,6 +26,8 @@ namespace DexManager.Models
         [DataMember(Order = 12)] public AppTheme Theme { get; set; }
         [DataMember(Order = 13)]
         public List<RememberedAppSettings> RememberedApps { get; set; }
+        [DataMember(Order = 14)]
+        public List<SingleWindowAppProfile> SingleWindowAppProfiles { get; set; }
 
         public static AppSettings CreateDefault()
         {
@@ -35,6 +37,8 @@ namespace DexManager.Models
                 Language = AppLanguage.Auto,
                 Theme = AppTheme.Auto,
                 RememberedApps = new List<RememberedAppSettings>(),
+                SingleWindowAppProfiles =
+                    new List<SingleWindowAppProfile>(),
                 Paths = new PathSettings
                 {
                     AdbPath = string.Empty,
@@ -136,6 +140,9 @@ namespace DexManager.Models
             if (Connection == null) Connection = defaults.Connection;
             if (RememberedApps == null)
                 RememberedApps = new List<RememberedAppSettings>();
+            if (SingleWindowAppProfiles == null)
+                SingleWindowAppProfiles =
+                    new List<SingleWindowAppProfile>();
             if (SingleWindowSlots == null)
                 SingleWindowSlots = new List<SingleWindowSlotSettings>();
             while (SingleWindowSlots.Count < 3)
@@ -318,6 +325,12 @@ namespace DexManager.Models
                     defaults.Features.MiniControlBarSide;
                 SchemaVersion = defaults.SchemaVersion;
             }
+            if (oldSchemaVersion < 22)
+            {
+                SingleWindowAppProfiles =
+                    new List<SingleWindowAppProfile>();
+                SchemaVersion = defaults.SchemaVersion;
+            }
             VirtualDisplay.Width = NormalizeRange(
                 VirtualDisplay.Width,
                 320,
@@ -380,6 +393,9 @@ namespace DexManager.Models
                     120,
                     System.Math.Min(640, slot.Dpi));
             }
+            NormalizeSingleWindowAppProfiles(
+                SingleWindowAppProfiles,
+                defaults.SingleWindowSlots[0]);
             if (string.IsNullOrWhiteSpace(Paths.Win7AdbPath))
                 Paths.Win7AdbPath = defaults.Paths.Win7AdbPath;
             if (string.IsNullOrWhiteSpace(Paths.ScrcpyPath))
@@ -627,6 +643,53 @@ namespace DexManager.Models
             };
         }
 
+        private static void NormalizeSingleWindowAppProfiles(
+            List<SingleWindowAppProfile> profiles,
+            SingleWindowSlotSettings defaults)
+        {
+            var packages = new HashSet<string>(
+                System.StringComparer.OrdinalIgnoreCase);
+            for (var index = profiles.Count - 1; index >= 0; index--)
+            {
+                var profile = profiles[index];
+                if (profile == null)
+                {
+                    profiles.RemoveAt(index);
+                    continue;
+                }
+
+                profile.PackageName =
+                    (profile.PackageName ?? string.Empty).Trim();
+                if (profile.PackageName.Length == 0 ||
+                    !packages.Add(profile.PackageName))
+                {
+                    profiles.RemoveAt(index);
+                    continue;
+                }
+
+                profile.AppName = string.IsNullOrWhiteSpace(profile.AppName)
+                    ? profile.PackageName
+                    : profile.AppName.Trim();
+                profile.Width = NormalizeRange(
+                    profile.Width, 320, 4096, defaults.Width);
+                profile.Height = NormalizeRange(
+                    profile.Height, 240, 4096, defaults.Height);
+                profile.CustomWidth = NormalizeRange(
+                    profile.CustomWidth, 320, 4096, profile.Width);
+                profile.CustomHeight = NormalizeRange(
+                    profile.CustomHeight, 240, 4096, profile.Height);
+                profile.Dpi = System.Math.Max(
+                    120,
+                    System.Math.Min(640, profile.Dpi));
+                if (string.IsNullOrWhiteSpace(profile.BitRate))
+                    profile.BitRate = defaults.BitRate;
+                if (profile.MaxFps != 30 && profile.MaxFps != 60)
+                    profile.MaxFps = defaults.MaxFps;
+                profile.AdditionalArguments =
+                    (profile.AdditionalArguments ?? string.Empty).Trim();
+            }
+        }
+
         private static SingleWindowSlotSettings CreateDefaultSingleWindowSlot(
             int slot)
         {
@@ -767,6 +830,27 @@ namespace DexManager.Models
         [DataMember(Order = 15)] public int CustomWidth { get; set; }
         [DataMember(Order = 16)] public int CustomHeight { get; set; }
         [DataMember(Order = 17)] public bool FlexDisplay { get; set; }
+    }
+
+    [DataContract]
+    public sealed class SingleWindowAppProfile
+    {
+        [DataMember(Order = 1)] public string PackageName { get; set; }
+        [DataMember(Order = 2)] public string AppName { get; set; }
+        [DataMember(Order = 3)] public int Width { get; set; }
+        [DataMember(Order = 4)] public int Height { get; set; }
+        [DataMember(Order = 5)] public int Dpi { get; set; }
+        [DataMember(Order = 6)] public string BitRate { get; set; }
+        [DataMember(Order = 7)] public int MaxFps { get; set; }
+        [DataMember(Order = 8)] public bool TurnScreenOff { get; set; }
+        [DataMember(Order = 9)] public bool StayAwake { get; set; }
+        [DataMember(Order = 10)] public bool UseHidKeyboard { get; set; }
+        [DataMember(Order = 11)] public bool UseHidMouse { get; set; }
+        [DataMember(Order = 12)] public bool ForceStopStartApp { get; set; }
+        [DataMember(Order = 13)] public string AdditionalArguments { get; set; }
+        [DataMember(Order = 14)] public int CustomWidth { get; set; }
+        [DataMember(Order = 15)] public int CustomHeight { get; set; }
+        [DataMember(Order = 16)] public bool FlexDisplay { get; set; }
     }
 
     [DataContract]

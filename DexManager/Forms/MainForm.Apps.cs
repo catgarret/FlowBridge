@@ -61,7 +61,14 @@ namespace DexManager.Forms
             object sender,
             EventArgs e)
         {
+            if (_selectedMode > 0 &&
+                ApplySelectedAppProfileIfAvailable())
+            {
+                return;
+            }
+
             SaveSelectedAppIdentity();
+            UpdateAppProfileControls();
         }
 
         private void SaveSelectedAppIdentity()

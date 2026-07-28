@@ -24,6 +24,8 @@ namespace DexManager.Forms
             _flexDisplayBox.Visible = false;
             _flexDisplayBox.Enabled = false;
             _stayAwakeBox.Top = 84;
+            LayoutStartAppControls(false);
+            SetAppProfileControlsVisible(false);
             LoadRunSettings();
             UpdateRunningState();
         }
@@ -44,6 +46,8 @@ namespace DexManager.Forms
             _flexDisplayBox.Visible = true;
             _flexDisplayBox.Enabled = true;
             _stayAwakeBox.Top = 119;
+            LayoutStartAppControls(true);
+            SetAppProfileControlsVisible(true);
             LoadRunSettings();
             UpdateRunningState();
         }

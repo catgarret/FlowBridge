@@ -67,6 +67,7 @@ namespace DexManager.Forms
             TryCleanup("automatic hide", _autoHideService.Dispose);
             TryCleanup("key mapping", _keyMappingService.Dispose);
             TryCleanup("phone screen timer", _phoneScreenWakeTimer.Dispose);
+            TryCleanup("app profile menu", _appProfileMenu.Dispose);
             if (_fileTransferStatusForm != null)
                 TryCleanup(
                     "file transfer window",

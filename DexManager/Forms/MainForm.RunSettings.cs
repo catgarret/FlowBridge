@@ -61,16 +61,22 @@ namespace DexManager.Forms
 
             const int fieldTop = 72;
             const int labelGap = 6;
-            const int groupGap = 10;
-            const int dpiGap = 12;
+            const int numberWidth = 50;
+            const int widthGroupOffset = 50;
+            const int dpiGap = 22;
 
             _resolutionBox.Width = 110;
-            _heightBox.Left = _dpiBox.Left - dpiGap - _heightBox.Width;
+            _widthBox.Width = numberWidth;
+            _heightBox.Width = numberWidth;
+
+            // Keep the numeric fields on the same axes in every language.
+            // Only the translated labels move, right-aligned to their field.
+            _widthBox.Left = _resolutionBox.Right + widthGroupOffset;
+            _heightBox.Left = _dpiBox.Left - dpiGap - numberWidth;
+
             var heightLabelWidth = MeasureInlineLabel(_heightLabel);
             _heightLabel.Left =
                 _heightBox.Left - labelGap - heightLabelWidth;
-            _widthBox.Left =
-                _heightLabel.Left - groupGap - _widthBox.Width;
             var widthLabelWidth = MeasureInlineLabel(_widthLabel);
             _widthLabel.Left =
                 _widthBox.Left - labelGap - widthLabelWidth;
@@ -178,6 +184,7 @@ namespace DexManager.Forms
             ApplyResolutionSelection();
             _loadingRunSettings = false;
             UpdateApplySettingsLink();
+            UpdateAppProfileControls();
         }
 
         private int FindResolutionPresetIndex(int width, int height)

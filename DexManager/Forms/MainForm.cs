@@ -75,6 +75,10 @@ namespace DexManager.Forms
         private readonly ThemedTextControl _additionalArgumentsBox;
         private readonly ThemedSelectControl _startAppBox;
         private readonly Button _loadAppsButton;
+        private readonly Button _appProfileButton;
+        private readonly ContextMenuStrip _appProfileMenu;
+        private readonly ToolStripMenuItem _saveAppProfileMenuItem;
+        private readonly ToolStripMenuItem _deleteAppProfileMenuItem;
         private readonly LinkLabel _advancedToggle;
         private readonly Label _modeHintLabel;
         private readonly Label _displaySettingsTitle;
@@ -249,6 +253,8 @@ namespace DexManager.Forms
                 320, 4096, 285, 263, 55, false);
             _heightBox = CreateCustomNumber(
                 240, 4096, 395, 263, 55, false);
+            _widthBox.MaxLength = 4;
+            _heightBox.MaxLength = 4;
             _dpiBox = CreateCustomNumber(
                 120, 640, 490, 263, 90, true);
             _widthBox.RestorePreviousValueOnMaximumReject = true;
@@ -308,6 +314,30 @@ namespace DexManager.Forms
             _loadAppsButton.Click += LoadAppsButton_Click;
             _startAppLabel = AddFieldLabel(
                 LocalizationService.Get("Main.StartApp"), 32, 508);
+
+            _saveAppProfileMenuItem = new ToolStripMenuItem(
+                LocalizationService.Get("Main.AppProfile.Save"));
+            _saveAppProfileMenuItem.Click += SaveAppProfileButton_Click;
+            _deleteAppProfileMenuItem = new ToolStripMenuItem(
+                LocalizationService.Get("Main.AppProfile.Delete"));
+            _deleteAppProfileMenuItem.Click +=
+                DeleteAppProfileButton_Click;
+            _appProfileMenu = new ContextMenuStrip
+            {
+                ShowImageMargin = false,
+                Font = UiFonts.Create(9.5F)
+            };
+            _appProfileMenu.Items.Add(_saveAppProfileMenuItem);
+            _appProfileMenu.Items.Add(_deleteAppProfileMenuItem);
+            _appProfileButton = CreateThemedButton(
+                LocalizationService.Get("Main.AppProfile.SelectApp"),
+                false,
+                445,
+                471,
+                160);
+            _appProfileButton.Size = new Size(160, 27);
+            _appProfileButton.Visible = false;
+            _appProfileButton.Click += AppProfileButton_Click;
 
             _additionalArgumentsBox = CreateCustomText(32, 577, 440);
             _additionalArgumentsBox.Visible = false;
@@ -373,6 +403,7 @@ namespace DexManager.Forms
             Controls.Add(_stayAwakeBox);
             Controls.Add(_startAppBox);
             Controls.Add(_loadAppsButton);
+            Controls.Add(_appProfileButton);
             Controls.Add(_additionalArgumentsBox);
             Controls.Add(_startButton);
             Controls.Add(_stopButton);

@@ -490,6 +490,8 @@ namespace DexManager.Services
             target.Language = source.Language;
             target.Theme = source.Theme;
             target.RememberedApps = source.RememberedApps;
+            target.SingleWindowAppProfiles =
+                source.SingleWindowAppProfiles;
         }
     }
 }

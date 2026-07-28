@@ -41,6 +41,16 @@
   <data name="Main.NoApp" xml:space="preserve"><value>선택 안 함</value></data>
   <data name="Main.LoadApps" xml:space="preserve"><value>앱 목록 불러오기</value></data>
   <data name="Main.Loading" xml:space="preserve"><value>불러오는 중...</value></data>
+  <data name="Main.AppProfile.SelectApp" xml:space="preserve"><value>앱 프로필: 앱 선택 ▼</value></data>
+  <data name="Main.AppProfile.NotSaved" xml:space="preserve"><value>앱 프로필: 없음 ▼</value></data>
+  <data name="Main.AppProfile.Saved" xml:space="preserve"><value>앱 프로필: 저장됨 ▼</value></data>
+  <data name="Main.AppProfile.Save" xml:space="preserve"><value>현재 설정 저장</value></data>
+  <data name="Main.AppProfile.Delete" xml:space="preserve"><value>프로필 삭제</value></data>
+  <data name="Main.AppProfile.OverwriteConfirm" xml:space="preserve"><value>{0} 앱 프로필이 이미 있습니다. 현재 설정으로 덮어쓰시겠습니까?</value></data>
+  <data name="Main.AppProfile.DeleteConfirm" xml:space="preserve"><value>{0} 앱의 저장된 프로필을 삭제하시겠습니까? 현재 단일창 설정은 바뀌지 않습니다.</value></data>
+  <data name="Main.AppProfile.ApplyFailed" xml:space="preserve"><value>저장된 앱 프로필을 적용하지 못했습니다.{0}{0}{1}</value></data>
+  <data name="Main.AppProfile.SaveFailed" xml:space="preserve"><value>앱 프로필을 저장하지 못했습니다.{0}{0}{1}</value></data>
+  <data name="Main.AppProfile.DeleteFailed" xml:space="preserve"><value>앱 프로필을 삭제하지 못했습니다.{0}{0}{1}</value></data>
   <data name="Main.AdvancedClosed" xml:space="preserve"><value>▶  고급 옵션 (추가 인자)</value></data>
   <data name="Main.AdvancedOpen" xml:space="preserve"><value>▼  고급 옵션 (추가 인자)</value></data>
   <data name="Main.StartDex" xml:space="preserve"><value>DeX 시작</value></data>
@@ -213,6 +223,12 @@
   <data name="Log.Main.RememberedAppSaveFailed" xml:space="preserve"><value>세션은 시작했지만 앱을 기억된 앱 목록에 추가하지 못했습니다.</value></data>
   <data name="Log.Main.DexSettingsSaved" xml:space="preserve"><value>메인 화면의 DeX/Scrcpy 실행 설정을 저장했습니다.</value></data>
   <data name="Log.Main.SingleWindowSettingsSaved" xml:space="preserve"><value>단일창 {0} 실행 설정을 저장했습니다.</value></data>
+  <data name="Log.Main.AppProfileApplied" xml:space="preserve"><value>{0} 앱의 저장된 프로필을 단일창 {1}에 적용했습니다.</value></data>
+  <data name="Log.Main.AppProfileSaved" xml:space="preserve"><value>{0} 앱의 단일창 프로필을 저장했습니다.</value></data>
+  <data name="Log.Main.AppProfileDeleted" xml:space="preserve"><value>{0} 앱의 단일창 프로필을 삭제했습니다.</value></data>
+  <data name="Log.Main.AppProfileApplyFailed" xml:space="preserve"><value>단일창 앱 프로필을 적용하지 못했습니다.</value></data>
+  <data name="Log.Main.AppProfileSaveFailed" xml:space="preserve"><value>단일창 앱 프로필을 저장하지 못했습니다.</value></data>
+  <data name="Log.Main.AppProfileDeleteFailed" xml:space="preserve"><value>단일창 앱 프로필을 삭제하지 못했습니다.</value></data>
   <data name="Log.Main.ModeSwitchSaveFailed" xml:space="preserve"><value>모드 전환 중 현재 실행 설정을 저장하지 못했습니다: {0}</value></data>
   <data name="Log.AutoHide.Started" xml:space="preserve"><value>자동 숨김을 시작했습니다: {0}초</value></data>
   <data name="Log.AutoHide.ScrcpyMinimized" xml:space="preserve"><value>사용자 입력이 없어 실행 중인 Scrcpy 창을 최소화했습니다.</value></data>
