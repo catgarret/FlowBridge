@@ -52,20 +52,12 @@ public final class CleanupWidgetProvider extends AppWidgetProvider {
 
         if (snapshot.permissionRequired()) {
             views.setImageViewResource(R.id.widget_icon, R.drawable.ic_warning);
-            views.setTextViewText(R.id.widget_status,
-                    context.getString(R.string.widget_permission));
         } else if (snapshot.hasError()) {
             views.setImageViewResource(R.id.widget_icon, R.drawable.ic_warning);
-            views.setTextViewText(R.id.widget_status,
-                    context.getString(R.string.widget_error));
         } else if (snapshot.selectedActive(targets)) {
             views.setImageViewResource(R.id.widget_icon, R.drawable.dx_manager_icon);
-            views.setTextViewText(R.id.widget_status,
-                    context.getString(R.string.widget_active));
         } else {
             views.setImageViewResource(R.id.widget_icon, R.drawable.dx_manager_icon_mono);
-            views.setTextViewText(R.id.widget_status,
-                    context.getString(R.string.widget_inactive));
         }
 
         views.setOnClickPendingIntent(

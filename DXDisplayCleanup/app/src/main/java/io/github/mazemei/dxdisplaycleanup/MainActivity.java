@@ -6,11 +6,16 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowInsets;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
@@ -37,13 +42,44 @@ public final class MainActivity extends Activity {
     private TextView pcTransferStatus;
     private Button sendFilesButton;
     private Button sendFolderButton;
+    private View pageHome;
+    private View pageQuickSettings;
+    private View pageFileTransfer;
+    private TextView navHome;
+    private TextView navQuickSettings;
+    private TextView navFileTransfer;
+    private View pageContainer;
     private ContentObserver settingObserver;
     private boolean updatingPreferences;
+    private Page currentPage = Page.HOME;
+    private float swipeStartX;
+    private float swipeStartY;
+    private boolean pageDragging;
+    private Page dragTargetPage;
+    private View dragTargetView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        View rootLayout = findViewById(R.id.root_layout);
+        rootLayout.setOnApplyWindowInsetsListener((view, insets) -> {
+            int statusBarInset;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                statusBarInset = insets.getInsets(
+                        WindowInsets.Type.statusBars()).top;
+            } else {
+                statusBarInset = insets.getSystemWindowInsetTop();
+            }
+            view.setPadding(
+                    view.getPaddingLeft(),
+                    statusBarInset,
+                    view.getPaddingRight(),
+                    view.getPaddingBottom());
+            return insets;
+        });
+        rootLayout.requestApplyInsets();
 
         statusIcon = findViewById(R.id.status_icon);
         statusTitle = findViewById(R.id.status_title);
@@ -60,6 +96,13 @@ public final class MainActivity extends Activity {
         pcTransferStatus = findViewById(R.id.pc_transfer_status);
         sendFilesButton = findViewById(R.id.send_files_button);
         sendFolderButton = findViewById(R.id.send_folder_button);
+        pageHome = findViewById(R.id.page_home);
+        pageQuickSettings = findViewById(R.id.page_quick_settings);
+        pageFileTransfer = findViewById(R.id.page_file_transfer);
+        navHome = findViewById(R.id.nav_home);
+        navQuickSettings = findViewById(R.id.nav_quick_settings);
+        navFileTransfer = findViewById(R.id.nav_file_transfer);
+        pageContainer = findViewById(R.id.page_container);
         Button refreshButton = findViewById(R.id.refresh_button);
 
         cleanupOverlayButton.setOnClickListener(view -> cleanup(true, false));
@@ -68,6 +111,10 @@ public final class MainActivity extends Activity {
         refreshButton.setOnClickListener(view -> refresh());
         sendFilesButton.setOnClickListener(view -> chooseFiles());
         sendFolderButton.setOnClickListener(view -> chooseFolder());
+        navHome.setOnClickListener(view -> selectPage(Page.HOME));
+        navQuickSettings.setOnClickListener(view -> selectPage(Page.QUICK_SETTINGS));
+        navFileTransfer.setOnClickListener(view -> selectPage(Page.FILE_TRANSFER));
+        selectPage(Page.HOME);
 
         CleanupPreferences.Targets targets = CleanupPreferences.load(this);
         setPreferenceChecks(targets);
@@ -145,8 +192,211 @@ public final class MainActivity extends Activity {
         pcTransferStatus.setText(ready
                 ? R.string.transfer_pc_ready
                 : R.string.transfer_pc_not_ready_short);
+        pcTransferStatus.setBackgroundResource(ready
+                ? R.drawable.bg_connection_status
+                : R.drawable.bg_connection_pending);
         sendFilesButton.setEnabled(ready);
         sendFolderButton.setEnabled(ready);
+    }
+
+    private void selectPage(Page selectedPage) {
+        currentPage = selectedPage;
+        resetPageTransforms();
+        pageHome.setVisibility(selectedPage == Page.HOME ? View.VISIBLE : View.GONE);
+        pageQuickSettings.setVisibility(
+                selectedPage == Page.QUICK_SETTINGS ? View.VISIBLE : View.GONE);
+        pageFileTransfer.setVisibility(
+                selectedPage == Page.FILE_TRANSFER ? View.VISIBLE : View.GONE);
+
+        updateNavigationItem(navHome, selectedPage == Page.HOME);
+        updateNavigationItem(navQuickSettings,
+                selectedPage == Page.QUICK_SETTINGS);
+        updateNavigationItem(navFileTransfer,
+                selectedPage == Page.FILE_TRANSFER);
+    }
+
+    private void updateNavigationItem(TextView view, boolean selected) {
+        view.setBackgroundResource(selected
+                ? R.drawable.bg_nav_selected
+                : android.R.color.transparent);
+        view.setTextColor(getColor(selected
+                ? R.color.accent
+                : R.color.text_secondary));
+        view.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
+        view.setSelected(selected);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            swipeStartX = event.getX();
+            swipeStartY = event.getY();
+            pageDragging = false;
+            dragTargetPage = null;
+            dragTargetView = null;
+            return super.dispatchTouchEvent(event);
+        }
+
+        float deltaX = event.getX() - swipeStartX;
+        float deltaY = event.getY() - swipeStartY;
+        if (action == MotionEvent.ACTION_MOVE) {
+            float startThreshold = 10f * getResources().getDisplayMetrics().density;
+            if (!pageDragging
+                    && Math.abs(deltaX) >= startThreshold
+                    && Math.abs(deltaX) > Math.abs(deltaY) * 1.35f) {
+                beginPageDrag(deltaX);
+                MotionEvent cancel = MotionEvent.obtain(event);
+                cancel.setAction(MotionEvent.ACTION_CANCEL);
+                super.dispatchTouchEvent(cancel);
+                cancel.recycle();
+            }
+            if (pageDragging) {
+                updatePageDrag(deltaX);
+                return true;
+            }
+            return super.dispatchTouchEvent(event);
+        }
+
+        if (action == MotionEvent.ACTION_UP && pageDragging) {
+            finishPageDrag(deltaX, false);
+            return true;
+        }
+
+        if (action == MotionEvent.ACTION_CANCEL && pageDragging) {
+            finishPageDrag(deltaX, true);
+            return true;
+        }
+
+        return super.dispatchTouchEvent(event);
+    }
+
+    private void beginPageDrag(float deltaX) {
+        pageDragging = true;
+        configureDragTarget(deltaX);
+    }
+
+    private void updatePageDrag(float deltaX) {
+        Page desiredTarget = deltaX < 0f ? nextPage(currentPage) : previousPage(currentPage);
+        if (desiredTarget != dragTargetPage) {
+            if (dragTargetView != null) {
+                dragTargetView.setVisibility(View.GONE);
+                dragTargetView.setTranslationX(0f);
+            }
+            configureDragTarget(deltaX);
+        }
+
+        View currentView = pageView(currentPage);
+        int width = Math.max(1, pageContainer.getWidth());
+        if (dragTargetView == null) {
+            currentView.setTranslationX(deltaX * 0.18f);
+            return;
+        }
+
+        currentView.setTranslationX(deltaX);
+        float targetStart = deltaX < 0f ? width : -width;
+        dragTargetView.setTranslationX(targetStart + deltaX);
+    }
+
+    private void configureDragTarget(float deltaX) {
+        dragTargetPage = deltaX < 0f ? nextPage(currentPage) : previousPage(currentPage);
+        dragTargetView = pageView(dragTargetPage);
+        if (dragTargetView == null) {
+            return;
+        }
+
+        int width = Math.max(1, pageContainer.getWidth());
+        dragTargetView.setVisibility(View.VISIBLE);
+        dragTargetView.bringToFront();
+        pageView(currentPage).bringToFront();
+        dragTargetView.setTranslationX(deltaX < 0f ? width : -width);
+    }
+
+    private void finishPageDrag(float deltaX, boolean cancelled) {
+        final View currentView = pageView(currentPage);
+        final View targetView = dragTargetView;
+        final Page targetPage = dragTargetPage;
+        int width = Math.max(1, pageContainer.getWidth());
+        float completionThreshold = Math.min(
+                width * 0.22f,
+                96f * getResources().getDisplayMetrics().density);
+        boolean complete = !cancelled
+                && targetView != null
+                && Math.abs(deltaX) >= completionThreshold;
+
+        if (complete) {
+            float exitX = deltaX < 0f ? -width : width;
+            currentView.animate()
+                    .translationX(exitX)
+                    .setDuration(180L)
+                    .start();
+            targetView.animate()
+                    .translationX(0f)
+                    .setDuration(180L)
+                    .withEndAction(() -> selectPage(targetPage))
+                    .start();
+        } else {
+            float targetRest = deltaX < 0f ? width : -width;
+            currentView.animate()
+                    .translationX(0f)
+                    .setDuration(160L)
+                    .start();
+            if (targetView != null) {
+                targetView.animate()
+                        .translationX(targetRest)
+                        .setDuration(160L)
+                        .withEndAction(() -> {
+                            targetView.setVisibility(View.GONE);
+                            targetView.setTranslationX(0f);
+                        })
+                        .start();
+            }
+        }
+
+        pageDragging = false;
+        dragTargetPage = null;
+        dragTargetView = null;
+    }
+
+    private Page nextPage(Page page) {
+        if (page == Page.HOME) {
+            return Page.QUICK_SETTINGS;
+        }
+        if (page == Page.QUICK_SETTINGS) {
+            return Page.FILE_TRANSFER;
+        }
+        return null;
+    }
+
+    private Page previousPage(Page page) {
+        if (page == Page.FILE_TRANSFER) {
+            return Page.QUICK_SETTINGS;
+        }
+        if (page == Page.QUICK_SETTINGS) {
+            return Page.HOME;
+        }
+        return null;
+    }
+
+    private View pageView(Page page) {
+        if (page == null) {
+            return null;
+        }
+        if (page == Page.HOME) {
+            return pageHome;
+        }
+        if (page == Page.QUICK_SETTINGS) {
+            return pageQuickSettings;
+        }
+        return pageFileTransfer;
+    }
+
+    private void resetPageTransforms() {
+        View[] pages = {pageHome, pageQuickSettings, pageFileTransfer};
+        for (View page : pages) {
+            page.animate().cancel();
+            page.setTranslationX(0f);
+        }
     }
 
     private void chooseFiles() {
@@ -300,5 +550,11 @@ public final class MainActivity extends Activity {
 
         CleanupPreferences.save(this, overlay, stayAwake);
         notifySurfaces();
+    }
+
+    private enum Page {
+        HOME,
+        QUICK_SETTINGS,
+        FILE_TRANSFER
     }
 }

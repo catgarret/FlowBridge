@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true">
+        <shape android:shape="rectangle">
+            <gradient android:angle="0" android:startColor="#EEEAFE" android:endColor="#E8FAFD" />
+            <stroke android:width="1dp" android:color="#CFC7FF" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/card_background" />
+            <stroke android:width="1dp" android:color="@color/card_border" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+</selector>

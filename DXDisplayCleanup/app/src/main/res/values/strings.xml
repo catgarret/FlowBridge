@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">DX Companion</string>
     <string name="app_description">Checks and cleans up Android settings that may remain after an interrupted DX Manager session.</string>
+    <string name="app_tagline">Recovery and transfer companion for DX Manager</string>
     <string name="status_icon_description">DX Manager cleanup status</string>
     <string name="status_cleanup_needed">Cleanup is available</string>
     <string name="status_both_active_detail">The virtual display and Stay awake setting are active.</string>
@@ -23,7 +24,9 @@
     <string name="target_status_active">Active</string>
     <string name="target_status_inactive">Inactive</string>
     <string name="cleanup_overlay_button">Remove virtual display</string>
+    <string name="cleanup_overlay_button_short">Remove</string>
     <string name="cleanup_stay_awake_button">Turn off Stay awake</string>
+    <string name="cleanup_stay_awake_button_short">Turn off</string>
     <string name="cleanup_both_button">Clean up both</string>
     <string name="refresh_button">Refresh status</string>
     <string name="cleanup_overlay_success">The virtual display was removed.</string>
@@ -37,6 +40,7 @@
     <string name="tile_widget_overlay">Remove the virtual display</string>
     <string name="tile_widget_stay_awake">Turn off Stay awake</string>
     <string name="cleanup_target_required">Select at least one cleanup item.</string>
+    <string name="quick_surface_title">One-tap cleanup</string>
     <string name="permission_title">One-time permission</string>
     <string name="permission_description">This protected Android permission cannot be granted inside the app. Use the verified permission button in DX Manager.</string>
     <string name="widget_tile_hint">Add the DX Companion Quick Settings tile or compact 2 × 1 home-screen widget for one-tap cleanup. Their action follows the selections above.</string>
@@ -50,12 +54,20 @@
     <string name="widget_permission">Permission needed</string>
     <string name="widget_error">Check failed</string>
     <string name="widget_description">Checks and cleans up the selected DX Manager phone settings.</string>
+    <string name="widget_action">CLEAN</string>
     <string name="phone_to_pc_section_title">Send files to PC</string>
     <string name="phone_to_pc_description">For files, choose “Send to DX Manager” from the Gallery or My Files share menu. One UI does not pass shared folders to apps, so use “Select folder” below for folders. Data is streamed directly through the current ADB connection without creating a temporary phone copy.</string>
     <string name="transfer_pc_ready">DX Manager is connected and ready to receive.</string>
     <string name="transfer_pc_not_ready_short">Start DX Manager and connect this phone first.</string>
     <string name="send_files_button">Select files</string>
     <string name="send_folder_button">Select folder</string>
+    <string name="file_picker_title">Send files</string>
+    <string name="file_picker_description">Select one or more files and send them directly to the connected PC.</string>
+    <string name="folder_picker_title">Send a folder</string>
+    <string name="folder_picker_description">Select a folder when One UI cannot share the folder through the system share menu.</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_quick_settings">Quick settings</string>
+    <string name="nav_file_transfer">File transfer</string>
     <string name="share_target_label">Send to DX Manager</string>
     <string name="transfer_pc_not_ready">DX Manager is not ready. Start DX Manager on the PC and connect this phone.</string>
     <string name="transfer_no_items">No readable files or folders were selected.</string>
