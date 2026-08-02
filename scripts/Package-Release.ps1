@@ -13,7 +13,7 @@ $packageRoot = Join-Path $distRoot "DX Manager"
 $companionApkSource = Join-Path $repoRoot `
     "DXDisplayCleanup\app\build\outputs\apk\release\app-release.apk"
 $companionApkSha256 = `
-    "7797D200D0C23B9DE36E43A6E4CCA7218AEBFBCE8E349D6902936A5CFE5ABD7C"
+    "3876D4B7F0CCE6EC3C6CE9F930959757ED32668B3BDAE1D34F744A894039A452"
 
 function Assert-ChildPath([string]$Parent, [string]$Child) {
     $parentPath = [IO.Path]::GetFullPath($Parent).TrimEnd('\') + '\'

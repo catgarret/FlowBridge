@@ -22,10 +22,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public final class MainActivity extends Activity {
     private static final int REQUEST_FILES = 101;
     private static final int REQUEST_FOLDER = 102;
     private static final int REQUEST_NOTIFICATIONS = 103;
+    private static final int TRANSFER_PROBE_TIMEOUT_MS = 1000;
+    private static final long TRANSFER_PROBE_INTERVAL_MS = 2000L;
 
     private ImageView statusIcon;
     private TextView statusTitle;
@@ -57,6 +62,24 @@ public final class MainActivity extends Activity {
     private boolean pageDragging;
     private Page dragTargetPage;
     private View dragTargetView;
+    private final Handler transferStatusHandler =
+            new Handler(Looper.getMainLooper());
+    private final ExecutorService transferStatusExecutor =
+            Executors.newSingleThreadExecutor();
+    private boolean transferStatusMonitoring;
+    private boolean transferProbeRunning;
+    private int transferProbeGeneration;
+    private final Runnable transferStatusPoll = new Runnable() {
+        @Override
+        public void run() {
+            if (!transferStatusMonitoring) {
+                return;
+            }
+            requestTransferSessionProbe();
+            transferStatusHandler.postDelayed(
+                    this, TRANSFER_PROBE_INTERVAL_MS);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,6 +164,8 @@ public final class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        transferStatusMonitoring = true;
+        setTransferSessionReady(false);
         getContentResolver().registerContentObserver(
                 Settings.Global.getUriFor(OverlayDisplayRepository.SETTING_NAME),
                 false,
@@ -150,12 +175,23 @@ public final class MainActivity extends Activity {
                 false,
                 settingObserver);
         refresh();
+        transferStatusHandler.removeCallbacks(transferStatusPoll);
+        transferStatusHandler.post(transferStatusPoll);
     }
 
     @Override
     protected void onStop() {
+        transferStatusMonitoring = false;
+        transferProbeGeneration++;
+        transferStatusHandler.removeCallbacks(transferStatusPoll);
         getContentResolver().unregisterContentObserver(settingObserver);
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        transferStatusExecutor.shutdownNow();
+        super.onDestroy();
     }
 
     private void cleanup(boolean overlay, boolean stayAwake) {
@@ -188,7 +224,42 @@ public final class MainActivity extends Activity {
     }
 
     private void renderTransferSession() {
-        boolean ready = TransferSessionStore.load(this).isReady();
+        if (!TransferSessionStore.load(this).isReady()) {
+            setTransferSessionReady(false);
+        }
+        requestTransferSessionProbe();
+    }
+
+    private void requestTransferSessionProbe() {
+        if (!transferStatusMonitoring || transferProbeRunning) {
+            return;
+        }
+        TransferSessionStore.Session session =
+                TransferSessionStore.load(this);
+        if (!session.isReady()) {
+            setTransferSessionReady(false);
+            return;
+        }
+
+        transferProbeRunning = true;
+        int generation = ++transferProbeGeneration;
+        transferStatusExecutor.execute(() -> {
+            boolean ready = TransferSessionProbe.isReceiverReady(
+                    session, TRANSFER_PROBE_TIMEOUT_MS);
+            transferStatusHandler.post(() -> {
+                transferProbeRunning = false;
+                if (!transferStatusMonitoring
+                        || generation != transferProbeGeneration) {
+                    return;
+                }
+                TransferSessionStore.Session current =
+                        TransferSessionStore.load(this);
+                setTransferSessionReady(ready && session.matches(current));
+            });
+        });
+    }
+
+    private void setTransferSessionReady(boolean ready) {
         pcTransferStatus.setText(ready
                 ? R.string.transfer_pc_ready
                 : R.string.transfer_pc_not_ready_short);

@@ -23,6 +23,13 @@ final class TransferSessionStore {
             return enabled && port > 0 && port <= 65535
                     && !token.isEmpty();
         }
+
+        boolean matches(Session other) {
+            return other != null
+                    && enabled == other.enabled
+                    && port == other.port
+                    && token.equals(other.token);
+        }
     }
 
     private static final String PREFS = "pc_transfer_session";

@@ -53,7 +53,7 @@ namespace DexManager.Services
         internal const string ExpectedCertificateSha256 =
             "AD615803C63760439750C36801E8152AB8664C60EE481EF1473F1DF5E80733BE";
         private const string ExpectedBundledApkSha256 =
-            "7797D200D0C23B9DE36E43A6E4CCA7218AEBFBCE8E349D6902936A5CFE5ABD7C";
+            "3876D4B7F0CCE6EC3C6CE9F930959757ED32668B3BDAE1D34F744A894039A452";
         private const string BundledApkRelativePath =
             @"tools\companion\DX-Companion.apk";
 

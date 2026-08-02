@@ -354,6 +354,17 @@ namespace DexManager.Services
 
                     var batchText =
                         PhoneTransferProtocol.ReadString(stream);
+                    if (string.Equals(
+                        batchText,
+                        PhoneTransferProtocol.StatusProbeBatch,
+                        StringComparison.Ordinal))
+                    {
+                        PhoneTransferProtocol.WriteResponse(
+                            stream,
+                            true,
+                            "Ready");
+                        return;
+                    }
                     if (!Guid.TryParse(batchText, out batchId))
                         batchId = Guid.NewGuid();
                     var itemCount = PhoneTransferProtocol.ReadInt32(stream);

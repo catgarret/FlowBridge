@@ -10,8 +10,14 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class ShareToPcActivity extends Activity {
+    private static final int TRANSFER_PROBE_TIMEOUT_MS = 1500;
+    private final ExecutorService probeExecutor =
+            Executors.newSingleThreadExecutor();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,14 +39,29 @@ public final class ShareToPcActivity extends Activity {
             return;
         }
 
-        if (PhoneTransferService.start(this, uris)) {
-            Toast.makeText(this, R.string.transfer_queued,
-                    Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, R.string.transfer_queue_failed,
-                    Toast.LENGTH_LONG).show();
-        }
-        finish();
+        probeExecutor.execute(() -> {
+            boolean ready = TransferSessionProbe.isReceiverReady(
+                    session, TRANSFER_PROBE_TIMEOUT_MS);
+            runOnUiThread(() -> {
+                if (!ready) {
+                    Toast.makeText(this, R.string.transfer_pc_not_ready,
+                            Toast.LENGTH_LONG).show();
+                } else if (PhoneTransferService.start(this, uris)) {
+                    Toast.makeText(this, R.string.transfer_queued,
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, R.string.transfer_queue_failed,
+                            Toast.LENGTH_LONG).show();
+                }
+                finish();
+            });
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        probeExecutor.shutdownNow();
+        super.onDestroy();
     }
 
     static ArrayList<Uri> collectUris(Intent intent) {

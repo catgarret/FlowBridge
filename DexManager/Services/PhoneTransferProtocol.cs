@@ -11,6 +11,7 @@ namespace DexManager.Services
         public const int MaxItemCount = 100000;
         public const int MaxStringBytes = 1024 * 1024;
         public const int MaxChunkBytes = 1024 * 1024;
+        public const string StatusProbeBatch = "__DXM_STATUS_PROBE__";
 
         public static int ReadInt32(Stream stream)
         {

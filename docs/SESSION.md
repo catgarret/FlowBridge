@@ -88,13 +88,18 @@ SHA-256과 v2 인증서를 설치 전에 확인하고 설치 뒤 package·versio
 정리한다. .NET Framework 4.6.2 x64 Release 빌드는 경고 0, 오류 0으로 통과했다.
 진단 UI의 실제 설치·업데이트·재설치·삭제는 아직 실기 확인 전이다.
 
+Companion의 PC 수신 준비 표시는 저장된 세션 값만 신뢰하지 않고 ADB reverse를
+통해 DX Manager 수신기와 토큰 인증 상태를 주기적으로 확인한다. 휴대폰 연결이
+끊기거나 DX Manager가 비정상 종료되어 해제 broadcast를 받지 못해도 다음 확인
+때 연결 대기로 전환하며, 공유 메뉴 전송 직전에도 같은 확인을 수행한다.
+
 `Package-Release.ps1 -SkipBuild`로 만든 개발 후보 ZIP은 59개 항목이며
 `tools\companion\DX-Companion.apk`를 정확히 한 개 포함한다. PDB, settings.json,
 로그·스크린샷, signing.properties, keystore와 `.gitkeep`은 포함되지 않았다.
 Companion APK SHA-256은
-`7797D200D0C23B9DE36E43A6E4CCA7218AEBFBCE8E349D6902936A5CFE5ABD7C`,
+`3876D4B7F0CCE6EC3C6CE9F930959757ED32668B3BDAE1D34F744A894039A452`,
 후보 ZIP SHA-256은
-`DABA08653FF4902F659F9375D820DD8B38BDB36D7DF16E6FD225CA88CF810434`이다.
+`933C80BD10BCAD1180F57969B1EB7C1D84924E0D6BFD33A58F5AC5214ACA82AF`이다.
 
 2026-07-25 DX Manager x64 Release를 .NET Framework 4.6.2 참조 어셈블리로
 재빌드해 오류 0을 확인했다. 설정창 경로/ADB와 진단 페이지를 실제 실행해
@@ -165,13 +170,15 @@ Debug/Release 재빌드가 모두 경고 0, 오류 0으로 통과했다. 패키�
 
 ## 다음 확인
 
-1. 실제 기기에서 진단 페이지의 Companion 설치·업데이트·재설치·삭제 확인
-2. v1.3.0 공개 ZIP에 정확한 Companion APK가 포함되고 서명 비밀·개인 설정·
+1. 실제 기기에서 Companion 준비 상태가 USB/무선 분리와 DX Manager 정상·비정상
+   종료 시 연결 대기로 바뀌고 재연결 시 준비 상태로 복구되는지 확인
+2. 실제 기기에서 진단 페이지의 Companion 설치·업데이트·재설치·삭제 확인
+3. v1.3.0 공개 ZIP에 정확한 Companion APK가 포함되고 서명 비밀·개인 설정·
    로그·테스트 스크린샷이 없는지 검사
-3. VirusTotal 결과 확인 후 사용자 승인 시 커밋·공개 배포
-4. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
-5. 공개 Release 사용 피드백과 새 이슈 확인
-6. Scrcpy 4.0/SDL3 오른쪽 Shift 재현 내용을 upstream에 보고
+4. VirusTotal 결과 확인 후 사용자 승인 시 커밋·공개 배포
+5. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
+6. 공개 Release 사용 피드백과 새 이슈 확인
+7. Scrcpy 4.0/SDL3 오른쪽 Shift 재현 내용을 upstream에 보고
 
 빌드·커밋·배포 전 `bin\Debug`, `bin\Release`의 `logs`, `screenshot` 테스트
 파일을 비운다. 실기 확인하지 않은 흐름은 문서나 보고에서 확인 완료로 쓰지 않는다.
