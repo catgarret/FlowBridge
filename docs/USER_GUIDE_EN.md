@@ -387,12 +387,12 @@ monitoring intervals, virtual-display detection timeout, ADB wake-up settings,
 process timeout, and capture selection timeout. These recovery and timing
 values normally do not need to be changed.
 
-If the separately distributed **DX Companion** is installed on the phone,
-use **Phone virtual display cleanup** on the Diagnostics page for its one-time
-permission grant. DX Manager enables **Grant cleanup permission** only after it
-verifies the connected phone, the exact package ID, and the official APK signing
-certificate. It rechecks the app immediately before and after granting and does
-not grant the permission to another app.
+Use the **DX Companion** card on the Diagnostics page to install, update,
+reinstall, grant permission to, or uninstall the bundled companion on the
+currently selected phone. None of these actions starts automatically. Before
+installation DX Manager verifies the exact APK hash and official signing
+certificate. It rechecks the installed package, version, certificate, and
+permission afterward and never grants the permission to another app.
 
 The button remains disabled with a status explanation when no authorized phone
 is connected, the app is absent, or its signature does not match. It displays
@@ -416,24 +416,30 @@ selected app**, then try again.
 
 ## 12. DX Companion (Optional)
 
-**DX Companion 1.1.0** is a separately distributed Android recovery utility
-for interrupted DX Manager sessions. It can remove a simulated secondary
-display left on the phone and turn off Developer options **Stay awake** when
-the PC could not restore it. Normally, keep the phone connected and use
-**Stop DeX**, `Left Alt+F8`, or the tray **Exit** command. Use the companion
-when recovery must be performed without reconnecting the PC.
+**DX Companion 1.3.0** is an Android recovery and file-transfer utility. It can
+remove a simulated secondary display left on the phone, turn off Developer
+options **Stay awake**, and send selected files or folders from the phone to DX
+Manager. Normally, keep the phone connected and use **Stop DeX**, `Left Alt+F8`,
+or the tray **Exit** command. Use the recovery actions when cleanup must be
+performed without reconnecting the PC.
 
 ### Installation and one-time permission grant
 
-1. Install the official `DX-Companion-v1.1.0.apk` supplied separately. A
-   standalone APK dropped onto a running DeX or single-app scrcpy window keeps
-   scrcpy's normal APK-install behavior. You may also open the APK on the phone.
-2. Enable USB debugging, approve this computer's RSA prompt, and connect the
-   phone to DX Manager.
-3. Open **Settings > Diagnostics > Phone virtual display cleanup**.
-4. When the status says **Ready to grant**, select **Grant cleanup permission**
-   and approve the confirmation dialog.
-5. Confirm that the status changes to **Permission granted**.
+1. Enable USB debugging, approve this computer's RSA prompt, and connect the
+   target phone to DX Manager.
+2. Open **Settings > Diagnostics > DX Companion**.
+3. Select **Install DX Companion** and approve the confirmation. DX Manager
+   installs only on the currently selected phone and also grants the required
+   protected permission after verification.
+4. If the official app was installed manually, select **Grant permission**.
+   Use **Update** or **Reinstall** when shown for the bundled version.
+5. Confirm that the status shows the installed and bundled versions and
+   **Permission granted**.
+
+The signed APK remains visible as `tools\companion\DX-Companion.apk` in the
+portable folder. Copying or installing it separately is possible, but it cannot
+grant itself Android's protected permission. DX Manager does not install it
+until the user presses the installation button.
 
 DX Manager checks that the installed package ID is
 `io.github.mazemei.dxdisplaycleanup`, pulls the installed APK from the phone,
@@ -444,9 +450,10 @@ grant, and revokes the newly granted permission if post-grant verification
 fails. It never grants this permission to an app with another signature.
 
 The grant survives phone restarts and updates signed with the same certificate.
-Uninstalling the app removes its permission, so repeat these steps after a fresh
-installation. Android cannot present this protected permission as a normal
-runtime-permission dialog inside the app.
+**Uninstall DX Companion** first stops that selected phone's receiver, removes
+its ADB reverse connection, and uninstalls the app. Android then removes the
+permission and the app's tile, widget, and settings. Android cannot present this
+protected permission as a normal runtime-permission dialog inside the app.
 
 ### Main app, Quick Settings tile, and home-screen widget
 

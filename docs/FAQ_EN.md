@@ -24,10 +24,10 @@ Selecting **None** first may not clear a stale display. The resolution-then-None
 sequence forces Android to refresh the overlay setting, after which the
 remaining virtual screen disappears.
 
-If the separately distributed official **DX Companion** is installed and
-its one-time permission was granted under **Settings > Diagnostics > Phone
-virtual display cleanup**, the leftover display can also be removed from the
-main app, Quick Settings tile, or home-screen widget. DX Companion can also
+If the bundled official **DX Companion** is installed and verified under
+**Settings > Diagnostics > DX Companion**, the leftover display can also be
+removed from the main app, Quick Settings tile, or home-screen widget. DX
+Companion can also
 turn off Developer options **Stay awake** after an interrupted session. See the
 [English user guide](USER_GUIDE_EN.md#12-dx-companion-optional) for full
 installation and usage details.
@@ -340,11 +340,12 @@ Recent Apps and holding the left button may act as a touchscreen long press.
 
 ## Q23. Why is the cleanup permission button under Diagnostics disabled?
 
-The button is enabled only when the separately distributed official **DX
-Companion** is installed on the connected phone and its APK signing
-certificate matches. DX Manager does not grant the permission when ADB is not
-authorized, the app is absent, or another app uses the same package ID with a
-different signature. Check the status message below the button.
+**Grant permission** is enabled only when the official **DX Companion** is
+installed on the selected phone and its APK signing certificate matches. If it
+is absent, use **Install DX Companion**; the button remains disabled when the
+bundled APK is missing or altered. DX Manager does not grant the permission
+when ADB is not authorized or another app uses the same package ID with a
+different signature. Check the status message below the buttons.
 
 Select **Grant cleanup permission** to make DX Manager re-verify the app, grant
 `WRITE_SECURE_SETTINGS`, and confirm the resulting permission state. The button

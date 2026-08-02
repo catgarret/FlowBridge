@@ -584,20 +584,36 @@
   <data name="PhoneTransfer.Bytes" xml:space="preserve"><value>{0} of {1}</value></data>
   <data name="PhoneTransfer.BytesUnknown" xml:space="preserve"><value>{0} received</value></data>
   <data name="PhoneTransfer.OpenFolder" xml:space="preserve"><value>Open folder</value></data>
-  <data name="Settings.GroupDisplayCleanup" xml:space="preserve"><value>Phone virtual display cleanup</value></data>
-  <data name="Settings.DisplayCleanupGuide" xml:space="preserve"><value>Grants the separately distributed Android cleanup app permission to remove a virtual display left on the phone after an abnormal exit or disconnection. This will be available only when the official app is installed and its signature has been verified.</value></data>
-  <data name="Settings.GrantDisplayCleanupPermission" xml:space="preserve"><value>Grant cleanup permission</value></data>
-  <data name="Settings.DisplayCleanupChecking" xml:space="preserve"><value>Checking the connected phone and installed cleanup app…</value></data>
-  <data name="Settings.DisplayCleanupNoDevice" xml:space="preserve"><value>Connect and authorize a phone to check the cleanup app.</value></data>
-  <data name="Settings.DisplayCleanupNotInstalled" xml:space="preserve"><value>The DX Display Cleaner app is not installed on the connected phone.</value></data>
-  <data name="Settings.DisplayCleanupVerificationFailed" xml:space="preserve"><value>The installed app could not be verified as the official DX Display Cleaner. Permission was not granted.</value></data>
-  <data name="Settings.DisplayCleanupReady" xml:space="preserve"><value>The official cleanup app and its signing certificate were verified. Permission can now be granted.</value></data>
-  <data name="Settings.DisplayCleanupGranted" xml:space="preserve"><value>The official cleanup app is verified and already has the required permission.</value></data>
-  <data name="Settings.DisplayCleanupFailed" xml:space="preserve"><value>The cleanup app or permission status could not be checked.</value></data>
-  <data name="Settings.DisplayCleanupGrantConfirm" xml:space="preserve"><value>Grant the verified DX Display Cleaner permission to change only the Android virtual-display setting? The app does not receive arbitrary ADB command access.</value></data>
+  <data name="Settings.GroupDisplayCleanup" xml:space="preserve"><value>DX Companion</value></data>
+  <data name="Settings.DisplayCleanupGuide" xml:space="preserve"><value>Install, update, or remove the bundled DX Companion on the currently selected phone. DX Manager verifies the bundled APK and the installed app before granting its restricted Android settings permission. Nothing is installed automatically.</value></data>
+  <data name="Settings.InstallCompanion" xml:space="preserve"><value>Install Companion</value></data>
+  <data name="Settings.UpdateCompanion" xml:space="preserve"><value>Update Companion</value></data>
+  <data name="Settings.ReinstallCompanion" xml:space="preserve"><value>Reinstall Companion</value></data>
+  <data name="Settings.CompanionNewerInstalled" xml:space="preserve"><value>Newer version installed</value></data>
+  <data name="Settings.UninstallCompanion" xml:space="preserve"><value>Uninstall Companion</value></data>
+  <data name="Settings.GrantDisplayCleanupPermission" xml:space="preserve"><value>Grant permission</value></data>
+  <data name="Settings.DisplayCleanupChecking" xml:space="preserve"><value>Checking the selected phone and DX Companion…</value></data>
+  <data name="Settings.DisplayCleanupNoDevice" xml:space="preserve"><value>Connect and authorize a phone to manage DX Companion.</value></data>
+  <data name="Settings.DisplayCleanupNotInstalled" xml:space="preserve"><value>DX Companion is not installed on the selected phone.</value></data>
+  <data name="Settings.DisplayCleanupVerificationFailed" xml:space="preserve"><value>The installed app could not be verified as the official DX Companion. Permission was not granted. Remove it before installing the bundled app.</value></data>
+  <data name="Settings.DisplayCleanupReady" xml:space="preserve"><value>The installed DX Companion and its signing certificate were verified. Permission can now be granted.</value></data>
+  <data name="Settings.DisplayCleanupGranted" xml:space="preserve"><value>DX Companion is verified and already has the required permission.</value></data>
+  <data name="Settings.DisplayCleanupFailed" xml:space="preserve"><value>DX Companion or its permission status could not be checked.</value></data>
+  <data name="Settings.DisplayCleanupGrantConfirm" xml:space="preserve"><value>Grant the verified DX Companion permission to change only the Android settings needed for its cleanup functions? The app does not receive arbitrary ADB command access.</value></data>
   <data name="Settings.DisplayCleanupGranting" xml:space="preserve"><value>Re-verifying the installed app and granting permission…</value></data>
-  <data name="Settings.DisplayCleanupGrantSucceeded" xml:space="preserve"><value>Permission was granted successfully. DX Display Cleaner can now remove a leftover virtual display directly on the phone.</value></data>
+  <data name="Settings.DisplayCleanupGrantSucceeded" xml:space="preserve"><value>Permission was granted successfully. DX Companion cleanup and phone-to-PC transfer features are now ready.</value></data>
   <data name="Settings.DisplayCleanupPermissionGrantedButton" xml:space="preserve"><value>Permission granted</value></data>
+  <data name="Settings.CompanionInstalledVersion" xml:space="preserve"><value>Installed version code: {0}</value></data>
+  <data name="Settings.CompanionBundledVersion" xml:space="preserve"><value>Verified bundled version: {0}</value></data>
+  <data name="Settings.CompanionBundledMissing" xml:space="preserve"><value>The bundled APK is missing. Install and update are unavailable.</value></data>
+  <data name="Settings.CompanionBundledInvalid" xml:space="preserve"><value>The bundled APK failed integrity or signature verification. It will not be installed.</value></data>
+  <data name="Settings.CompanionInstallConfirm" xml:space="preserve"><value>Install the verified bundled DX Companion on the selected phone and grant its required restricted permission?</value></data>
+  <data name="Settings.CompanionUpdateConfirm" xml:space="preserve"><value>Update or reinstall DX Companion on the selected phone, verify it again, and grant its required restricted permission?</value></data>
+  <data name="Settings.CompanionInstalling" xml:space="preserve"><value>Verifying and installing DX Companion on the selected phone…</value></data>
+  <data name="Settings.CompanionInstallSucceeded" xml:space="preserve"><value>DX Companion was installed, verified, and granted permission successfully.</value></data>
+  <data name="Settings.CompanionUninstallConfirm" xml:space="preserve"><value>Uninstall DX Companion from the selected phone? Active phone-to-PC transfer will stop, and the app's settings, home widget, and Quick Settings tile will be removed.</value></data>
+  <data name="Settings.CompanionUninstalling" xml:space="preserve"><value>Stopping the selected phone's transfer session and uninstalling DX Companion…</value></data>
+  <data name="Settings.CompanionUninstallSucceeded" xml:space="preserve"><value>DX Companion was uninstalled from the selected phone.</value></data>
   <data name="DeviceFolder.Title" xml:space="preserve"><value>Browse phone folders</value></data>
   <data name="DeviceFolder.Heading" xml:space="preserve"><value>Select a folder on the phone</value></data>
   <data name="DeviceFolder.Up" xml:space="preserve"><value>Up</value></data>

@@ -1,13 +1,13 @@
 # Session Handoff
 
-마지막 갱신: 2026-07-28
+마지막 갱신: 2026-08-02
 
 ## Git
 
 - 저장소: `E:\vs\dex system`
-- 브랜치: `refactor/v1.2.0`
+- 브랜치: `feature/v1.3.0-phone-to-pc-transfer`
 - 마지막 공개 커밋: 이 문서를 포함한 최신 `main` (`git log -1`로 확인)
-- 현재 작업: v1.2.0 문서·배포 패키지와 공개 릴리스 준비
+- 현재 작업: v1.3.0 번들 DX Companion 설치·삭제 관리와 배포 패키지 준비
 
 v1.2.0 구조 분리 전 기준은 공개 태그 `v1.1.0` (`7f7a59e`)이다.
 폼 분리 커밋은 `b0c88e2`, 파일 전송 구조 분리 커밋은 `4bc1c67`이다.
@@ -77,8 +77,24 @@ v1.1.0 작업 전 문서 커밋은 `f9d96fa`, 복구 태그는
 - Android 패키지별 단일창 해상도·DPI·스트리밍·실행 옵션 프로필 저장,
   자동 적용, 덮어쓰기와 삭제
 - 휴대폰 폴더 탐색창의 마우스 휠 라우팅과 사용자 지정 해상도 UI 보완
-- Android 앱을 DX Companion 1.1.0으로 확장해 가상화면과 절전모드 해제를
+- Android 앱을 DX Companion으로 확장해 가상화면과 절전모드 해제를
   각각 또는 함께 정리하고, 타일·2 × 1 위젯의 정리 범위를 설정 가능
+
+2026-08-02 v1.3.0 작업에서 DX Companion의 휴대폰→PC 파일·폴더 전송과 UI를
+완성한 뒤, 서명된 APK를 포터블 ZIP에 포함하고 진단 페이지에서 현재 선택된
+기기에만 설치·업데이트·재설치·권한 부여·삭제하도록 구현했다. 번들 APK의
+SHA-256과 v2 인증서를 설치 전에 확인하고 설치 뒤 package·versionCode·서명과
+권한을 다시 확인한다. 삭제 전 해당 serial의 수신 세션과 ADB reverse를
+정리한다. .NET Framework 4.6.2 x64 Release 빌드는 경고 0, 오류 0으로 통과했다.
+진단 UI의 실제 설치·업데이트·재설치·삭제는 아직 실기 확인 전이다.
+
+`Package-Release.ps1 -SkipBuild`로 만든 개발 후보 ZIP은 59개 항목이며
+`tools\companion\DX-Companion.apk`를 정확히 한 개 포함한다. PDB, settings.json,
+로그·스크린샷, signing.properties, keystore와 `.gitkeep`은 포함되지 않았다.
+Companion APK SHA-256은
+`7797D200D0C23B9DE36E43A6E4CCA7218AEBFBCE8E349D6902936A5CFE5ABD7C`,
+후보 ZIP SHA-256은
+`DABA08653FF4902F659F9375D820DD8B38BDB36D7DF16E6FD225CA88CF810434`이다.
 
 2026-07-25 DX Manager x64 Release를 .NET Framework 4.6.2 참조 어셈블리로
 재빌드해 오류 0을 확인했다. 설정창 경로/ADB와 진단 페이지를 실제 실행해
@@ -149,11 +165,11 @@ Debug/Release 재빌드가 모두 경고 0, 오류 0으로 통과했다. 패키�
 
 ## 다음 확인
 
-1. v1.2.0 공개 ZIP에 APK·개인 설정·로그·테스트 스크린샷이 없는지 검사
-2. VirusTotal 결과 확인 후 main 병합, 태그와 GitHub Release 게시
-3. GitHub Release URL을 사용하는 WinGet manifest 검증과 등록 검토
-3. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
-4. v1.1.0 최종 ZIP에서 helper, 문서, 라이선스와 런타임 데이터 제외 확인
+1. 실제 기기에서 진단 페이지의 Companion 설치·업데이트·재설치·삭제 확인
+2. v1.3.0 공개 ZIP에 정확한 Companion APK가 포함되고 서명 비밀·개인 설정·
+   로그·테스트 스크린샷이 없는지 검사
+3. VirusTotal 결과 확인 후 사용자 승인 시 커밋·공개 배포
+4. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
 5. 공개 Release 사용 피드백과 새 이슈 확인
 6. Scrcpy 4.0/SDL3 오른쪽 Shift 재현 내용을 upstream에 보고
 

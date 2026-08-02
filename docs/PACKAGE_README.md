@@ -51,13 +51,12 @@ language, and documentation files together.
 > displays**, select any resolution once, open the menu again, and select
 > **None**. Selecting **None** first may not clear a stale display.
 
-If the separately distributed official **DX Companion** is installed,
-use **Settings > Diagnostics > Phone virtual display cleanup** for its one-time
-permission grant. The button is enabled only after the installed package and
-official signing certificate are verified. After setup, use the companion's
-main screen, Quick Settings tile, or home-screen widget to remove a leftover
-simulated display and turn off Developer options **Stay awake** without
-reconnecting the PC. DX Companion is not included in this ZIP.
+The signed **DX Companion** APK is included under `tools\companion` but is never
+installed automatically. Use **Settings > Diagnostics > DX Companion** to
+install, update, grant permission to, or uninstall it on the currently selected
+phone. DX Manager verifies the exact bundled APK hash and official signing
+certificate before installation and rechecks the installed package afterward.
+The companion provides recovery actions and phone-to-PC file/folder transfer.
 
 ### Default settings
 
@@ -195,12 +194,11 @@ Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. �
 > 선택하십시오. 처음부터 **없음**만 선택하면 남은 화면이 지워지지 않을 수
 > 있습니다.
 
-별도로 제공되는 공식 **DX Companion**을 설치했다면 **설정 > 진단 >
-휴대폰 가상화면 정리 도구**에서 권한을 한 번 부여할 수 있습니다. 설치된
-패키지와 공식 서명 인증서가 확인된 경우에만 버튼이 활성화됩니다. 설정을
-마치면 앱 본체, 빠른 설정 타일 또는 홈 화면 위젯으로 PC를 다시 연결하지 않고
-남은 가상화면을 제거하고 **절전모드 해제**를 끌 수 있습니다. DX Companion은
-이 ZIP에 포함되지 않습니다.
+서명된 **DX Companion** APK는 `tools\companion`에 포함되지만 자동으로 설치되지
+않습니다. **설정 > 진단 > DX Companion**에서 현재 선택된 휴대폰에 설치·업데이트,
+권한 부여 또는 삭제할 수 있습니다. DX Manager는 설치 전 정확한 번들 APK 해시와
+공식 서명을 확인하고 설치 후 패키지를 다시 검증합니다. Companion은 복구 기능과
+휴대폰에서 PC로 파일·폴더 전송 기능을 제공합니다.
 
 ### 기본 설정
 

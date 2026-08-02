@@ -79,8 +79,9 @@ distribution.
 - Light, dark, and Windows-following themes
 - Automatic Korean/English UI selection
 - Session logs and environment diagnostics
-- Optional DX Companion with verified one-time permission grant, separate
-  virtual-display and Stay-awake recovery, a Quick Settings tile, and a compact
+- Optional bundled DX Companion with verified install, update, removal, and
+  one-time permission grant; it provides virtual-display and Stay-awake
+  recovery, phone-to-PC file transfer, a Quick Settings tile, and a compact
   home-screen widget
 - 64-bit Windows 7 SP1 compatibility through .NET Framework 4.6.2
 
@@ -151,12 +152,13 @@ To remove a display that remains on the phone:
 See the [English FAQ](docs/FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone)
 for screenshots.
 
-If the separately distributed **DX Companion** is installed, open
-**Settings > Diagnostics > Phone virtual display cleanup**. DX Manager enables
-the permission button only after it verifies the connected phone, the exact
-package ID, and the official APK signing certificate. After the one-time grant,
-the companion app can remove a leftover display and turn off Android Developer
-options **Stay awake** directly on the phone.
+Open **Settings > Diagnostics > DX Companion** to install the bundled companion
+on the currently selected phone. Installation never starts automatically. DX
+Manager verifies the bundled APK hash and official signing certificate before
+installation, then rechecks the installed package, version, certificate, and
+permission afterward. The companion can remove a leftover display, turn off
+Android Developer options **Stay awake**, and send selected phone files or
+folders back to the PC.
 
 Do not copy only `DXManager.exe`. The adjacent `tools`, DLL, license, and
 scrcpy server files are required.
@@ -243,16 +245,22 @@ DeX mode settings are not affected.
 
 ## Optional DX Companion
 
-The separately distributed **DX Companion 1.1.0** is a small Android recovery
-utility for removing a simulated secondary display or turning off Developer
-options **Stay awake** after an interrupted session. Its main screen provides
-separate actions. The Quick Settings tile and compact 2 × 1 home-screen widget
-clean both by default, and their scope can be changed in the app.
+The signed **DX Companion 1.3.0** APK is included as an external file under
+`tools\companion`, but it is never installed automatically. In **Settings >
+Diagnostics > DX Companion**, the user can install, update, reinstall, grant
+the required permission, or uninstall it on the currently selected phone.
 
-DX Manager grants the required permission only after verifying the connected
-device, exact package ID, and official signing certificate. The companion has
-no Internet, data-collection, or arbitrary-shell feature and is not included
-in the public DX Manager ZIP. See the
+DX Manager verifies the exact bundled APK hash and official signing certificate
+before installation. It then verifies the installed package ID, version and
+certificate before granting `WRITE_SECURE_SETTINGS`. A copied APK cannot obtain
+this protected permission by itself. Uninstall first stops that phone's file
+receiver and removes its ADB reverse connection.
+
+The companion removes a leftover simulated display, turns off Developer options
+**Stay awake**, and sends selected phone files or folders to DX Manager. Its
+Quick Settings tile and compact 2 × 1 home-screen widget clean both recovery
+targets by default. It has no Internet, data-collection, or arbitrary-shell
+feature. See the
 [English user guide](docs/USER_GUIDE_EN.md#12-dx-companion-optional) for
 installation, status indicators, and safety details.
 
@@ -392,8 +400,9 @@ DX Manager는 개인적으로 사용하던 Batch 스크립트, CMD 명령과 Aut
 - 라이트, 다크 및 Windows 설정 연동 테마
 - Windows 언어에 따른 한국어·영어 UI 자동 선택
 - 실행 세션 로그와 환경 점검
-- 연결 기기·패키지명·공식 서명을 확인한 뒤 최초 1회 권한을 부여하는 선택형
-  DX Companion, 가상화면·절전모드 해제 복구, 빠른 설정 타일과 소형 위젯
+- 번들 APK와 연결 기기를 검증한 뒤 설치·업데이트·삭제와 최초 1회 권한 부여를
+  지원하는 선택형 DX Companion, 가상화면·절전모드 해제 복구, 휴대폰에서 PC로
+  파일 전송, 빠른 설정 타일과 소형 위젯
 - .NET Framework 4.6.2를 통한 64비트 Windows 7 SP1 호환
 
 ## 개발 철학
@@ -462,11 +471,11 @@ DX Manager 빌드가 실행됩니다.
 화면을 포함한 설명은 [한국어 FAQ](docs/FAQ_KO.md#q1-휴대폰에-작은-화면보조-디스플레이이-남아-있습니다)를
 참조하십시오.
 
-별도로 제공되는 **DX Companion**을 설치한 경우 **설정 > 진단 > 휴대폰
-가상화면 정리 도구**를 여십시오. DX Manager는 연결 기기, 정확한 패키지명과
-공식 APK 서명 인증서를 모두 확인한 경우에만 권한 버튼을 활성화합니다. 한 번
-권한을 부여하면 앱에서 휴대폰에 남은 가상화면을 제거하고 개발자 옵션의
-**절전모드 해제**도 끌 수 있습니다.
+**설정 > 진단 > DX Companion**에서 현재 선택된 휴대폰에 번들 Companion을
+설치할 수 있습니다. 설치는 자동으로 시작되지 않습니다. DX Manager는 설치 전
+번들 APK의 해시와 공식 서명을 확인하고, 설치 후에도 패키지명·버전·서명과 권한
+상태를 다시 검증합니다. Companion에서는 남은 가상화면 제거, 개발자 옵션의
+**절전모드 해제** 끄기와 휴대폰 파일·폴더의 PC 전송을 사용할 수 있습니다.
 
 `DXManager.exe`만 따로 복사하면 안 됩니다. 함께 제공되는 `tools` 폴더,
 DLL, 라이선스 파일과 scrcpy 서버 파일이 모두 필요합니다.
@@ -551,16 +560,21 @@ Windows 환경에서 비ASCII 파일명을 보존하지 못할 수 있습니다.
 
 ## 선택형 DX Companion
 
-별도로 제공되는 **DX Companion 1.1.0**은 비정상 종료나 연결 분리 뒤 휴대폰에
-남은 보조 디스플레이 시뮬레이션 화면을 제거하거나 개발자 옵션의 **절전모드
-해제**를 끄는 작은 Android 복구 도구입니다. 앱 본체에서는 두 동작을 따로
-실행할 수 있습니다. 빠른 설정 타일과 2 × 1 홈 화면 위젯은 기본적으로 둘 다
-정리하며 앱 설정에서 범위를 바꿀 수 있습니다.
+서명된 **DX Companion 1.3.0** APK는 공개 ZIP의 `tools\companion`에 외부 파일
+형태로 포함되지만 자동으로 설치되지 않습니다. **설정 > 진단 > DX Companion**에서
+사용자가 현재 선택된 휴대폰에 설치·업데이트·재설치하거나 권한을 부여하고 삭제할
+수 있습니다.
 
-DX Manager는 연결 기기, 정확한 패키지명과 공식 서명 인증서를 확인한 뒤에만
-필요한 권한을 한 번 부여합니다. 인터넷 연결, 데이터 수집과 임의 shell 실행
-기능은 없으며 공개 DX Manager ZIP에도 포함되지 않습니다. 설치 방법과 상태
-표시, 주의사항은 [한국어 사용 설명서](docs/USER_GUIDE_KO.md#12-선택형-dx-companion)를
+DX Manager는 설치 전 정확한 번들 APK 해시와 공식 서명을 확인합니다. 설치 후에도
+패키지명·버전·서명을 확인한 경우에만 `WRITE_SECURE_SETTINGS` 권한을 부여합니다.
+APK만 다른 휴대폰으로 복사해 설치해도 이 보호 권한은 저절로 생기지 않습니다.
+삭제할 때는 해당 휴대폰의 파일 수신과 ADB reverse 연결부터 정리합니다.
+
+Companion에서는 남은 가상화면 제거, 개발자 옵션의 **절전모드 해제** 끄기와
+휴대폰 파일·폴더의 PC 전송을 사용할 수 있습니다. 빠른 설정 타일과 2 × 1 홈
+화면 위젯은 기본적으로 두 복구 항목을 함께 정리합니다. 인터넷 연결, 데이터
+수집과 임의 shell 실행 기능은 없습니다. 설치 방법과 상태 표시, 주의사항은
+[한국어 사용 설명서](docs/USER_GUIDE_KO.md#12-선택형-dx-companion)를
 참조하십시오.
 
 ## 키보드 호환성

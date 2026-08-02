@@ -584,20 +584,36 @@
   <data name="PhoneTransfer.Bytes" xml:space="preserve"><value>{1} 중 {0}</value></data>
   <data name="PhoneTransfer.BytesUnknown" xml:space="preserve"><value>{0} 수신됨</value></data>
   <data name="PhoneTransfer.OpenFolder" xml:space="preserve"><value>폴더 열기</value></data>
-  <data name="Settings.GroupDisplayCleanup" xml:space="preserve"><value>휴대폰 가상화면 정리 도구</value></data>
-  <data name="Settings.DisplayCleanupGuide" xml:space="preserve"><value>DX Manager가 비정상 종료되거나 휴대폰 연결이 먼저 끊어져 가상화면이 남은 경우, 별도로 제공되는 Android 정리 앱에서 직접 제거할 수 있도록 권한을 부여합니다. 공식 정리 앱의 설치와 서명이 확인된 경우에만 사용할 수 있습니다.</value></data>
-  <data name="Settings.GrantDisplayCleanupPermission" xml:space="preserve"><value>정리 앱 권한 부여</value></data>
-  <data name="Settings.DisplayCleanupChecking" xml:space="preserve"><value>연결된 휴대폰과 설치된 정리 앱을 확인하는 중입니다…</value></data>
-  <data name="Settings.DisplayCleanupNoDevice" xml:space="preserve"><value>정리 앱을 확인하려면 승인된 휴대폰을 연결하십시오.</value></data>
-  <data name="Settings.DisplayCleanupNotInstalled" xml:space="preserve"><value>연결된 휴대폰에 DX Display Cleaner 앱이 설치되어 있지 않습니다.</value></data>
-  <data name="Settings.DisplayCleanupVerificationFailed" xml:space="preserve"><value>설치된 앱을 공식 DX Display Cleaner로 확인할 수 없어 권한을 부여하지 않았습니다.</value></data>
-  <data name="Settings.DisplayCleanupReady" xml:space="preserve"><value>공식 정리 앱과 서명 인증서를 확인했습니다. 이제 권한을 부여할 수 있습니다.</value></data>
-  <data name="Settings.DisplayCleanupGranted" xml:space="preserve"><value>공식 정리 앱이 확인되었으며 필요한 권한이 이미 부여되어 있습니다.</value></data>
-  <data name="Settings.DisplayCleanupFailed" xml:space="preserve"><value>정리 앱 또는 권한 상태를 확인하지 못했습니다.</value></data>
-  <data name="Settings.DisplayCleanupGrantConfirm" xml:space="preserve"><value>확인된 DX Display Cleaner에 Android 가상화면 설정만 변경할 수 있는 권한을 부여하시겠습니까? 임의의 ADB 명령 실행 권한은 제공되지 않습니다.</value></data>
+  <data name="Settings.GroupDisplayCleanup" xml:space="preserve"><value>DX Companion</value></data>
+  <data name="Settings.DisplayCleanupGuide" xml:space="preserve"><value>내장된 DX Companion을 현재 선택한 휴대폰에 설치·업데이트·삭제합니다. DX Manager는 내장 APK와 설치된 앱을 모두 검증한 뒤 제한된 Android 설정 권한만 부여합니다. 사용자 동의 없이 자동으로 설치하지 않습니다.</value></data>
+  <data name="Settings.InstallCompanion" xml:space="preserve"><value>Companion 설치</value></data>
+  <data name="Settings.UpdateCompanion" xml:space="preserve"><value>Companion 업데이트</value></data>
+  <data name="Settings.ReinstallCompanion" xml:space="preserve"><value>Companion 재설치</value></data>
+  <data name="Settings.CompanionNewerInstalled" xml:space="preserve"><value>최신 버전 설치됨</value></data>
+  <data name="Settings.UninstallCompanion" xml:space="preserve"><value>Companion 삭제</value></data>
+  <data name="Settings.GrantDisplayCleanupPermission" xml:space="preserve"><value>권한 부여</value></data>
+  <data name="Settings.DisplayCleanupChecking" xml:space="preserve"><value>선택한 휴대폰과 DX Companion을 확인하는 중입니다…</value></data>
+  <data name="Settings.DisplayCleanupNoDevice" xml:space="preserve"><value>DX Companion을 관리하려면 승인된 휴대폰을 연결하십시오.</value></data>
+  <data name="Settings.DisplayCleanupNotInstalled" xml:space="preserve"><value>선택한 휴대폰에 DX Companion이 설치되어 있지 않습니다.</value></data>
+  <data name="Settings.DisplayCleanupVerificationFailed" xml:space="preserve"><value>설치된 앱을 공식 DX Companion으로 확인할 수 없어 권한을 부여하지 않았습니다. 내장 앱을 설치하려면 먼저 삭제하십시오.</value></data>
+  <data name="Settings.DisplayCleanupReady" xml:space="preserve"><value>설치된 DX Companion과 서명 인증서를 확인했습니다. 이제 권한을 부여할 수 있습니다.</value></data>
+  <data name="Settings.DisplayCleanupGranted" xml:space="preserve"><value>DX Companion이 확인되었으며 필요한 권한이 이미 부여되어 있습니다.</value></data>
+  <data name="Settings.DisplayCleanupFailed" xml:space="preserve"><value>DX Companion 또는 권한 상태를 확인하지 못했습니다.</value></data>
+  <data name="Settings.DisplayCleanupGrantConfirm" xml:space="preserve"><value>확인된 DX Companion에 정리 기능에 필요한 제한된 Android 설정 권한을 부여하시겠습니까? 임의의 ADB 명령 실행 권한은 제공되지 않습니다.</value></data>
   <data name="Settings.DisplayCleanupGranting" xml:space="preserve"><value>설치된 앱을 다시 확인하고 권한을 부여하는 중입니다…</value></data>
-  <data name="Settings.DisplayCleanupGrantSucceeded" xml:space="preserve"><value>권한을 정상적으로 부여했습니다. 이제 DX Display Cleaner에서 휴대폰에 남은 가상화면을 직접 제거할 수 있습니다.</value></data>
+  <data name="Settings.DisplayCleanupGrantSucceeded" xml:space="preserve"><value>권한을 정상적으로 부여했습니다. 이제 DX Companion의 정리 및 휴대폰→PC 전송 기능을 사용할 수 있습니다.</value></data>
   <data name="Settings.DisplayCleanupPermissionGrantedButton" xml:space="preserve"><value>권한 부여됨</value></data>
+  <data name="Settings.CompanionInstalledVersion" xml:space="preserve"><value>설치된 버전 코드: {0}</value></data>
+  <data name="Settings.CompanionBundledVersion" xml:space="preserve"><value>검증된 내장 버전: {0}</value></data>
+  <data name="Settings.CompanionBundledMissing" xml:space="preserve"><value>내장 APK가 없어 설치와 업데이트를 사용할 수 없습니다.</value></data>
+  <data name="Settings.CompanionBundledInvalid" xml:space="preserve"><value>내장 APK의 무결성 또는 서명 검증에 실패해 설치하지 않습니다.</value></data>
+  <data name="Settings.CompanionInstallConfirm" xml:space="preserve"><value>검증된 내장 DX Companion을 선택한 휴대폰에 설치하고 필요한 제한 권한을 부여하시겠습니까?</value></data>
+  <data name="Settings.CompanionUpdateConfirm" xml:space="preserve"><value>선택한 휴대폰의 DX Companion을 업데이트 또는 재설치한 뒤 다시 검증하고 필요한 제한 권한을 부여하시겠습니까?</value></data>
+  <data name="Settings.CompanionInstalling" xml:space="preserve"><value>DX Companion을 검증하여 선택한 휴대폰에 설치하는 중입니다…</value></data>
+  <data name="Settings.CompanionInstallSucceeded" xml:space="preserve"><value>DX Companion 설치, 검증과 권한 부여를 완료했습니다.</value></data>
+  <data name="Settings.CompanionUninstallConfirm" xml:space="preserve"><value>선택한 휴대폰에서 DX Companion을 삭제하시겠습니까? 진행 중인 휴대폰→PC 전송이 중지되고 앱 설정, 홈 위젯과 빠른 설정 타일도 제거됩니다.</value></data>
+  <data name="Settings.CompanionUninstalling" xml:space="preserve"><value>선택한 휴대폰의 전송 세션을 정리하고 DX Companion을 삭제하는 중입니다…</value></data>
+  <data name="Settings.CompanionUninstallSucceeded" xml:space="preserve"><value>선택한 휴대폰에서 DX Companion을 삭제했습니다.</value></data>
   <data name="DeviceFolder.Title" xml:space="preserve"><value>휴대폰 폴더 찾아보기</value></data>
   <data name="DeviceFolder.Heading" xml:space="preserve"><value>휴대폰 저장 폴더 선택</value></data>
   <data name="DeviceFolder.Up" xml:space="preserve"><value>위로</value></data>

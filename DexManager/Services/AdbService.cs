@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using DexManager.Models;
 using DexManager.Utils;
 
@@ -268,6 +269,47 @@ namespace DexManager.Services
                 serial,
                 "pull " + Quote(remotePath) + " " + Quote(localPath),
                 writeLog);
+        }
+
+        public ProcessResult InstallPackageForSerial(
+            string serial,
+            string apkPath,
+            bool replaceExisting)
+        {
+            if (string.IsNullOrWhiteSpace(apkPath))
+                throw new ArgumentException(
+                    "APK path is empty.",
+                    "apkPath");
+            var fullPath = Path.GetFullPath(apkPath);
+            if (!File.Exists(fullPath))
+                throw new FileNotFoundException(
+                    "APK file was not found.",
+                    fullPath);
+            return RunForSerial(
+                serial,
+                "install " + (replaceExisting ? "-r " : string.Empty) +
+                Quote(fullPath),
+                true);
+        }
+
+        public ProcessResult UninstallPackageForSerial(
+            string serial,
+            string packageName)
+        {
+            if (string.IsNullOrWhiteSpace(packageName) ||
+                !Regex.IsMatch(
+                    packageName,
+                    @"^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$",
+                    RegexOptions.CultureInvariant))
+            {
+                throw new ArgumentException(
+                    "Android package name is invalid.",
+                    "packageName");
+            }
+            return RunForSerial(
+                serial,
+                "uninstall " + packageName,
+                true);
         }
 
         public ProcessResult ReverseForSerial(

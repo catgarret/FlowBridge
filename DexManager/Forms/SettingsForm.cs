@@ -32,6 +32,8 @@ namespace DexManager.Forms
         private readonly Action _showEnvironmentCheck;
         private readonly Action<AppTheme> _applyTheme;
         private readonly Action<bool> _settingsChanged;
+        private readonly Func<string, Task> _detachPhoneTransfer;
+        private readonly Action<string> _companionInstalled;
         private ThemePalette _theme;
         private readonly List<Control> _pages = new List<Control>();
         private readonly List<ThemedButton> _navigationButtons =
@@ -102,8 +104,11 @@ namespace DexManager.Forms
         private Timer _saveStatusTimer;
         private ThirdPartyLicensesForm _thirdPartyLicensesForm;
         private Button _displayCleanupPermissionButton;
+        private Button _companionInstallButton;
+        private Button _companionUninstallButton;
         private Label _displayCleanupStatusLabel;
         private DisplayCleanupPermissionStatus _displayCleanupStatus;
+        private BundledCompanionStatus _bundledCompanionStatus;
         private bool _displayCleanupOperationRunning;
 
         public SettingsForm(
@@ -114,7 +119,9 @@ namespace DexManager.Forms
             Action showLogs,
             Action showEnvironmentCheck,
             Action<AppTheme> applyTheme,
-            Action<bool> settingsChanged)
+            Action<bool> settingsChanged,
+            Func<string, Task> detachPhoneTransfer,
+            Action<string> companionInstalled)
         {
             _settingsService = settingsService;
             _settings = settings;
@@ -126,6 +133,8 @@ namespace DexManager.Forms
             _showEnvironmentCheck = showEnvironmentCheck;
             _applyTheme = applyTheme;
             _settingsChanged = settingsChanged;
+            _detachPhoneTransfer = detachPhoneTransfer;
+            _companionInstalled = companionInstalled;
             _theme = ThemeColors.Current;
 
             Text = LocalizationService.Get("Settings.Title");

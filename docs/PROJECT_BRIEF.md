@@ -15,7 +15,7 @@ Windows WinForms 프로그램이다. DeX 화면 한 개와 앱별 단일창 세 
 - .NET Framework 4.6.2
 - 외부 NuGet 패키지 없음
 - 번들 Scrcpy 4.1
-- 별도 Android companion: `DXDisplayCleanup` (Java 17, min SDK 24,
+- 번들 선택형 Android companion: `DXDisplayCleanup` (Java 17, min SDK 24,
   compile/target SDK 36)
 - 지원 목표: 64비트 Windows 7 SP1부터 Windows 11(32비트 Windows 제외)
 - 현재 휴대폰 확인 기준: Android 16 / One UI 8.x의 DeX 지원 Galaxy 기기
@@ -67,21 +67,24 @@ GitHub 메인 README와 별도로 HTML이 없는 `docs\PACKAGE_README.md`를 배
 - 진단 페이지에서 공식 Android 정리 앱의 package/v2 서명 인증서를 검증한 뒤
   `WRITE_SECURE_SETTINGS` 권한을 한 번 부여하고 결과를 재확인
 - 캡처와 드롭 파일의 휴대폰 저장 위치를 ADB 폴더 탐색기로 선택
+- 휴대폰의 공유 메뉴와 Companion 폴더 선택으로 파일·폴더를 PC에 전송
+- 선택 기기별 DX Companion 설치·업데이트·재설치·권한 부여·삭제
 
-별도 `DXDisplayCleanup` 프로젝트의 공개 이름은 **DX Companion 1.1.0**이다.
+`DXDisplayCleanup` 프로젝트의 공개 이름은 **DX Companion 1.3.0**이다.
 휴대폰에 남은 `overlay_display_devices`를 제거하고 개발자 옵션의 절전모드
 해제를 끄는 제한된 복구 도구다. 앱 본체의 개별·동시 정리, 빠른 설정 타일과
-2 × 1 홈 위젯을 제공하고 네트워크나 임의 shell 기능은 포함하지 않는다.
-DX Manager의 package/서명 확인 기반 권한 부여와 모든 정리 경로를 실제
-Galaxy 기기에서 확인했다. APK는 공개 DX Manager ZIP에 포함하지 않는다.
+2 × 1 홈 위젯, 휴대폰에서 PC로 파일·폴더 전송을 제공하며 인터넷이나 임의
+shell 기능은 포함하지 않는다. 서명된 APK는 공개 ZIP의 `tools\companion`에
+포함하지만 자동 설치하지 않는다. DX Manager는 설치 전 APK 해시·공식 서명,
+설치 후 package·버전·서명과 권한을 검증한다.
 
 ## 현재 상태
 
-v1.1.0 핵심 기능은 공개 배포됐다. Windows 11에서 유선/무선 DeX와 단일창
+v1.2.0까지 공개 배포됐다. Windows 11에서 유선/무선 DeX와 단일창
 3개 동시 실행을 확인했고, 64비트 Windows 7 SP1/.NET 4.6.2에서 유선 핵심
-기능을 확인했다. v1.2.0은 구조 분리, 미니 컨트롤바, 단일창 앱 프로필,
-DX Companion 확장과 UI 보완을 포함하며 Windows 11과 Windows 7 SP1 실기
-회귀 확인을 완료했다.
+기능을 확인했다. v1.2.0은 구조 분리, 미니 컨트롤바와 단일창 앱 프로필을
+포함하며 Windows 11과 Windows 7 SP1 실기 회귀 확인을 완료했다. v1.3.0은
+휴대폰에서 PC로 전송과 번들 Companion 관리 기능을 개발 중이다.
 
 휴대폰의 현재 정상 동작 확인 기준은 Android 16 / One UI 8.x다. One UI 7.x
 이하에서는 원활한 동작을 확인하지 못했으며 검은 DeX 창이 나타날 수 있다.

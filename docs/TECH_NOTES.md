@@ -130,14 +130,16 @@ DeX는 `overlay_display_devices`로 만든다. 생성 전후 `dumpsys display`
 
 ## Android 가상화면 정리 앱
 
-`DXDisplayCleanup`은 `io.github.mazemei.dxdisplaycleanup` 패키지의 별도 Android
-앱이다. `Settings.Global`의 `overlay_display_devices` 하나만 읽고 삭제하며,
-일반 앱에서 승인할 수 없는 `WRITE_SECURE_SETTINGS`를 ADB로 한 번 부여해야
-한다. 삭제는 Settings provider의 `DELETE_global` call을 사용하고 다시 읽어
-실제 제거 여부를 검증한다.
+`DXDisplayCleanup`은 `io.github.mazemei.dxdisplaycleanup` 패키지의 선택형 Android
+앱이다. 공개 이름은 DX Companion이다. 복구 기능은 `Settings.Global`의
+`overlay_display_devices`를 읽고 삭제하며 절전모드 해제를 끌 수 있다. 일반
+앱에서 승인할 수 없는 `WRITE_SECURE_SETTINGS`를 ADB로 한 번 부여해야 한다.
+삭제는 Settings provider의 `DELETE_global` call을 사용하고 다시 읽어 실제
+제거 여부를 검증한다.
 
-앱은 네트워크 권한, 임의 shell, 파일 수집과 상시 background service를
-포함하지 않는다. 메인 화면의 버튼 외에 Quick Settings `TileService`와
+앱은 인터넷 권한, 임의 shell과 상시 background service를 포함하지 않는다.
+파일은 사용자가 Android 공유 메뉴나 시스템 폴더 선택기에서 명시적으로 고른
+항목만 기기별 ADB reverse 수신 세션으로 전송한다. 메인 화면의 버튼 외에 Quick Settings `TileService`와
 `AppWidgetProvider`를 제공한다. 활성은 컬러 DX 아이콘, 비활성은 흑백,
 권한 없음/오류는 경고 상태로 구분한다.
 
@@ -145,12 +147,12 @@ DeX는 `overlay_display_devices`로 만든다. 생성 전후 `dumpsys display`
 수 없다. 정리 앱은 현재 값을 삭제한 뒤 다시 읽어 비활성을 확인하며, 앱을
 삭제했다가 다시 설치하면 package 권한도 사라져 ADB 권한 부여가 다시 필요하다.
 
-DX Manager는 정확한 package ID만 믿지 않는다. 휴대폰의 설치 `base.apk`를
-임시 폴더로 pull하고 APK Signature Scheme v2 블록에서 단일 X.509 인증서를
-읽어 SHA-256이 `DXDisplayCleanup/SIGNING.md`의 공식 값과 일치할 때만
-`pm grant`를 허용한다. 연결 serial을 고정한 채 부여 직전과 직후에 다시
-검증하고 사후 검증이 실패하면 즉시 `pm revoke`한다. 임시 APK는 검사 후
-삭제한다.
+DX Manager는 정확한 package ID만 믿지 않는다. 배포 폴더의 APK는 설치 전에
+고정된 파일 SHA-256과 APK Signature Scheme v2 인증서를 검사한다. 휴대폰에
+설치한 뒤 `base.apk`를 임시 폴더로 pull하고 단일 X.509 인증서, package와
+versionCode를 다시 확인한다. 연결 serial을 고정한 채 권한 부여 직전과 직후에
+재검증하고 사후 검증이 실패하면 즉시 `pm revoke`한다. 임시 APK는 검사 후
+삭제한다. 설치·업데이트·재설치·삭제는 사용자가 누른 현재 선택 기기에만 적용한다.
 
 휴대폰 폴더 탐색은 `/storage/emulated/0` 아래의 디렉터리 목록을 NUL 구분
 UTF-8 바이트로 만들고 Base64로 받아 한글·Unicode와 공백을 보존한다. UI와

@@ -408,14 +408,40 @@ namespace DexManager.Forms
                 Text = LocalizationService.Get(
                     "Settings.DisplayCleanupGuide")
             });
+            var companionButtons = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                Width = 620,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Margin = Padding.Empty,
+                BackColor = _theme.CardBackground
+            };
+            _companionInstallButton = CreateActionButton(
+                LocalizationService.Get(
+                    "Settings.InstallCompanion"),
+                198);
+            _companionInstallButton.Enabled = false;
+            _companionInstallButton.Click += CompanionInstallButton_Click;
             _displayCleanupPermissionButton = CreateActionButton(
                 LocalizationService.Get(
                     "Settings.GrantDisplayCleanupPermission"),
-                220);
+                198);
             _displayCleanupPermissionButton.Enabled = false;
             _displayCleanupPermissionButton.Click +=
                 DisplayCleanupPermissionButton_Click;
-            displayCleanup.Controls.Add(_displayCleanupPermissionButton);
+            _companionUninstallButton = CreateActionButton(
+                LocalizationService.Get(
+                    "Settings.UninstallCompanion"),
+                198);
+            _companionUninstallButton.Enabled = false;
+            _companionUninstallButton.Margin = Padding.Empty;
+            _companionUninstallButton.Click +=
+                CompanionUninstallButton_Click;
+            companionButtons.Controls.Add(_companionInstallButton);
+            companionButtons.Controls.Add(_displayCleanupPermissionButton);
+            companionButtons.Controls.Add(_companionUninstallButton);
+            displayCleanup.Controls.Add(companionButtons);
             _displayCleanupStatusLabel = new Label
             {
                 AutoSize = true,

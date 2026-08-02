@@ -134,17 +134,22 @@ overlay_display_devices`로 설정 항목을 삭제한 뒤 현재 설정으로 �
 
 ## Android 정리 앱 권한은 package와 인증서를 함께 검증
 
-같은 package ID만으로는 신뢰하지 않는다. DX Manager는 연결된 휴대폰의 설치
-`base.apk`를 임시로 가져와 APK Signature Scheme v2의 단일 인증서 SHA-256을
-공식 고정값과 비교한다. 모두 일치할 때만 `WRITE_SECURE_SETTINGS` 권한 버튼을
-활성화하며 부여 직전·직후에도 재검증한다. 사후 검증 실패 시 권한을 즉시
-회수한다. DX Manager는 APK를 자동 설치하지 않고 사용자가 별도로 받은 공식
-앱에만 권한을 부여한다.
+같은 package ID만으로는 신뢰하지 않는다. 번들 APK는 고정된 파일 SHA-256과
+APK Signature Scheme v2의 단일 인증서 SHA-256을 모두 검사한다. 설치는 자동으로
+실행하지 않고 사용자가 진단 페이지에서 명시적으로 눌렀을 때 현재 선택된 기기에만
+수행한다. 설치 후 휴대폰의 `base.apk`를 임시로 가져와 package·버전·공식 인증서를
+다시 검사한다. 모두 일치할 때만 `WRITE_SECURE_SETTINGS`를 부여하며 직전·직후에도
+재검증한다. 사후 검증 실패 시 권한을 즉시 회수한다.
 
-정리 앱은 복구 범위를 넓히는 범용 설정 편집기나 shell 도구로 만들지 않는다.
-`overlay_display_devices` 조회·삭제, 메인 화면, 빠른 설정 타일과 홈 위젯만
-제공한다. Android 전역 설정 하나를 다루므로 DX Manager 생성 화면과 사용자가
-직접 만든 시뮬레이션 화면을 구분하지 않고 현재 overlay 전체를 정리한다.
+서명이 다른 같은 package는 덮어쓰거나 권한을 부여하지 않는다. 번들보다 새 버전이
+설치된 경우도 자동으로 낮추지 않는다. 삭제는 사용자가 명시적으로 승인한 현재
+선택 기기에만 수행하며 해당 기기의 파일 수신 세션과 ADB reverse를 먼저 정리한다.
+
+Companion은 범용 설정 편집기나 shell 도구로 만들지 않는다. 복구는
+`overlay_display_devices` 조회·삭제와 절전모드 해제 끄기로 제한한다. 파일 전송은
+사용자가 Android 공유 메뉴나 폴더 선택기에서 고른 항목만 현재 DX Manager의
+기기별 수신 세션으로 보낸다. Android 전역 overlay 설정 하나를 다루므로 DX
+Manager 생성 화면과 사용자가 직접 만든 시뮬레이션 화면을 구분하지 않는다.
 
 ## 휴대폰 경로는 Android 표기 유지
 

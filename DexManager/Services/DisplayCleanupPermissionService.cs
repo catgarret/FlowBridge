@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using DexManager.Utils;
 
@@ -21,6 +22,23 @@ namespace DexManager.Services
         public string Detail { get; set; }
         public string Serial { get; set; }
         public int VersionCode { get; set; }
+        public bool PackageInstalled { get; set; }
+    }
+
+    internal enum BundledCompanionState
+    {
+        Missing,
+        VerificationFailed,
+        Ready
+    }
+
+    internal sealed class BundledCompanionStatus
+    {
+        public BundledCompanionState State { get; set; }
+        public string ApkPath { get; set; }
+        public string Detail { get; set; }
+        public int VersionCode { get; set; }
+        public string VersionName { get; set; }
     }
 
     internal sealed class DisplayCleanupPermissionService
@@ -29,9 +47,15 @@ namespace DexManager.Services
             "io.github.mazemei.dxdisplaycleanup";
         public const string PermissionName =
             "android.permission.WRITE_SECURE_SETTINGS";
+        public const int BundledVersionCode = 3;
+        public const string BundledVersionName = "1.3.0";
 
-        private const string ExpectedCertificateSha256 =
+        internal const string ExpectedCertificateSha256 =
             "AD615803C63760439750C36801E8152AB8664C60EE481EF1473F1DF5E80733BE";
+        private const string ExpectedBundledApkSha256 =
+            "7797D200D0C23B9DE36E43A6E4CCA7218AEBFBCE8E349D6902936A5CFE5ABD7C";
+        private const string BundledApkRelativePath =
+            @"tools\companion\DX-Companion.apk";
 
         private readonly AdbService _adbService;
 
@@ -42,7 +66,11 @@ namespace DexManager.Services
 
         public DisplayCleanupPermissionStatus Inspect()
         {
-            var serial = _adbService.TargetSerial;
+            return Inspect(_adbService.TargetSerial);
+        }
+
+        public DisplayCleanupPermissionStatus Inspect(string serial)
+        {
             if (string.IsNullOrWhiteSpace(serial) ||
                 !_adbService.IsAuthorizedDeviceConnected(serial))
             {
@@ -62,13 +90,24 @@ namespace DexManager.Services
                     serial,
                     "pm path " + PackageName,
                     false);
-                if (!packageDump.IsSuccess || !packagePath.IsSuccess ||
+                if (!packagePath.IsSuccess ||
                     string.IsNullOrWhiteSpace(packagePath.StandardOutput))
                 {
                     return Status(
                         DisplayCleanupPermissionState.NotInstalled,
                         CombineError(packageDump, packagePath),
-                        serial);
+                        serial,
+                        0,
+                        false);
+                }
+                if (!packageDump.IsSuccess)
+                {
+                    return Status(
+                        DisplayCleanupPermissionState.Error,
+                        CombineOutput(packageDump),
+                        serial,
+                        0,
+                        true);
                 }
 
                 var remoteApkPath = ParseBaseApkPath(
@@ -82,7 +121,9 @@ namespace DexManager.Services
                     return Status(
                         DisplayCleanupPermissionState.VerificationFailed,
                         "Installed package is not the expected v2-signed APK.",
-                        serial);
+                        serial,
+                        ParseVersionCode(packageDump.StandardOutput),
+                        true);
                 }
 
                 var certificate = ReadInstalledCertificate(
@@ -96,7 +137,9 @@ namespace DexManager.Services
                     return Status(
                         DisplayCleanupPermissionState.VerificationFailed,
                         "Installed APK signing certificate does not match.",
-                        serial);
+                        serial,
+                        ParseVersionCode(packageDump.StandardOutput),
+                        true);
                 }
 
                 return Status(
@@ -105,7 +148,8 @@ namespace DexManager.Services
                         : DisplayCleanupPermissionState.Ready,
                     string.Empty,
                     serial,
-                    ParseVersionCode(packageDump.StandardOutput));
+                    ParseVersionCode(packageDump.StandardOutput),
+                    true);
             }
             catch (Exception ex)
             {
@@ -114,6 +158,172 @@ namespace DexManager.Services
                     ex.Message,
                     serial);
             }
+        }
+
+        public BundledCompanionStatus InspectBundledApk()
+        {
+            var apkPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                BundledApkRelativePath);
+            if (!File.Exists(apkPath))
+            {
+                return BundledStatus(
+                    BundledCompanionState.Missing,
+                    apkPath,
+                    "The bundled DX Companion APK was not found.");
+            }
+
+            try
+            {
+                var hash = ComputeSha256(apkPath);
+                if (!string.Equals(
+                    hash,
+                    ExpectedBundledApkSha256,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return BundledStatus(
+                        BundledCompanionState.VerificationFailed,
+                        apkPath,
+                        "The bundled DX Companion APK hash does not match.");
+                }
+
+                var certificate = ApkSigningCertificateReader
+                    .ReadSingleV2CertificateSha256(apkPath);
+                if (!string.Equals(
+                    certificate,
+                    ExpectedCertificateSha256,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return BundledStatus(
+                        BundledCompanionState.VerificationFailed,
+                        apkPath,
+                        "The bundled DX Companion signing certificate does not match.");
+                }
+
+                return BundledStatus(
+                    BundledCompanionState.Ready,
+                    apkPath,
+                    string.Empty);
+            }
+            catch (Exception ex)
+            {
+                return BundledStatus(
+                    BundledCompanionState.VerificationFailed,
+                    apkPath,
+                    ex.Message);
+            }
+        }
+
+        public DisplayCleanupPermissionStatus InstallAndGrant(
+            string serial)
+        {
+            var bundled = InspectBundledApk();
+            if (bundled.State != BundledCompanionState.Ready)
+            {
+                return Status(
+                    DisplayCleanupPermissionState.Error,
+                    bundled.Detail,
+                    serial);
+            }
+            if (string.IsNullOrWhiteSpace(serial) ||
+                !_adbService.IsAuthorizedDeviceConnected(serial))
+            {
+                return Status(
+                    DisplayCleanupPermissionState.NoDevice,
+                    string.Empty,
+                    serial);
+            }
+
+            var current = Inspect(serial);
+            if (current.State ==
+                    DisplayCleanupPermissionState.VerificationFailed)
+            {
+                return current;
+            }
+            if (current.State != DisplayCleanupPermissionState.NotInstalled &&
+                current.State != DisplayCleanupPermissionState.Ready &&
+                current.State != DisplayCleanupPermissionState.Granted)
+            {
+                return current;
+            }
+            if (current.PackageInstalled &&
+                current.VersionCode > BundledVersionCode)
+            {
+                return Status(
+                    DisplayCleanupPermissionState.Error,
+                    "A newer DX Companion version is already installed.",
+                    serial,
+                    current.VersionCode,
+                    true);
+            }
+
+            var install = _adbService.InstallPackageForSerial(
+                serial,
+                bundled.ApkPath,
+                current.PackageInstalled);
+            if (!install.IsSuccess)
+            {
+                return Status(
+                    DisplayCleanupPermissionState.Error,
+                    CombineOutput(install),
+                    serial,
+                    current.VersionCode,
+                    current.PackageInstalled);
+            }
+
+            var installed = Inspect(serial);
+            if ((installed.State != DisplayCleanupPermissionState.Ready &&
+                 installed.State != DisplayCleanupPermissionState.Granted) ||
+                installed.VersionCode != BundledVersionCode)
+            {
+                return Status(
+                    DisplayCleanupPermissionState.Error,
+                    "Post-install package, version, or signing verification failed.",
+                    serial,
+                    installed.VersionCode,
+                    installed.PackageInstalled);
+            }
+            return installed.State == DisplayCleanupPermissionState.Granted
+                ? installed
+                : Grant(installed);
+        }
+
+        public DisplayCleanupPermissionStatus Uninstall(string serial)
+        {
+            if (string.IsNullOrWhiteSpace(serial) ||
+                !_adbService.IsAuthorizedDeviceConnected(serial))
+            {
+                return Status(
+                    DisplayCleanupPermissionState.NoDevice,
+                    string.Empty,
+                    serial);
+            }
+
+            var current = Inspect(serial);
+            if (!current.PackageInstalled)
+                return current;
+            var uninstall = _adbService.UninstallPackageForSerial(
+                serial,
+                PackageName);
+            if (!uninstall.IsSuccess)
+            {
+                return Status(
+                    DisplayCleanupPermissionState.Error,
+                    CombineOutput(uninstall),
+                    serial,
+                    current.VersionCode,
+                    true);
+            }
+
+            var verified = Inspect(serial);
+            return verified.State == DisplayCleanupPermissionState.NotInstalled
+                ? verified
+                : Status(
+                    DisplayCleanupPermissionState.Error,
+                    "DX Companion is still installed after the uninstall command.",
+                    serial,
+                    verified.VersionCode,
+                    verified.PackageInstalled);
         }
 
         public DisplayCleanupPermissionStatus Grant(
@@ -133,11 +343,7 @@ namespace DexManager.Services
             }
 
             var serial = verifiedStatus.Serial;
-            if (!string.Equals(
-                serial,
-                _adbService.TargetSerial,
-                StringComparison.OrdinalIgnoreCase) ||
-                !_adbService.IsAuthorizedDeviceConnected(serial))
+            if (!_adbService.IsAuthorizedDeviceConnected(serial))
             {
                 return Status(
                     DisplayCleanupPermissionState.NoDevice,
@@ -147,7 +353,7 @@ namespace DexManager.Services
 
             // Re-verify immediately before granting so a package replacement
             // or target-device change cannot reuse an earlier UI state.
-            var current = Inspect();
+            var current = Inspect(serial);
             if (current.State == DisplayCleanupPermissionState.Granted)
                 return current;
             if (current.State != DisplayCleanupPermissionState.Ready ||
@@ -168,10 +374,12 @@ namespace DexManager.Services
                 return Status(
                     DisplayCleanupPermissionState.Error,
                     CombineOutput(grantResult),
-                    serial);
+                    serial,
+                    current.VersionCode,
+                    true);
             }
 
-            var verified = Inspect();
+            var verified = Inspect(serial);
             if (verified.State != DisplayCleanupPermissionState.Granted)
             {
                 // Close the package-replacement race window: if the app no
@@ -184,7 +392,9 @@ namespace DexManager.Services
                 return Status(
                     DisplayCleanupPermissionState.Error,
                     "Post-grant verification failed. The permission was revoked.",
-                    serial);
+                    serial,
+                    verified.VersionCode,
+                    verified.PackageInstalled);
             }
             return verified;
         }
@@ -283,15 +493,46 @@ namespace DexManager.Services
             DisplayCleanupPermissionState state,
             string detail,
             string serial,
-            int versionCode = 0)
+            int versionCode = 0,
+            bool packageInstalled = false)
         {
             return new DisplayCleanupPermissionStatus
             {
                 State = state,
                 Detail = detail ?? string.Empty,
                 Serial = serial ?? string.Empty,
-                VersionCode = versionCode
+                VersionCode = versionCode,
+                PackageInstalled = packageInstalled
             };
+        }
+
+        private static BundledCompanionStatus BundledStatus(
+            BundledCompanionState state,
+            string apkPath,
+            string detail)
+        {
+            return new BundledCompanionStatus
+            {
+                State = state,
+                ApkPath = apkPath ?? string.Empty,
+                Detail = detail ?? string.Empty,
+                VersionCode = BundledVersionCode,
+                VersionName = BundledVersionName
+            };
+        }
+
+        private static string ComputeSha256(string path)
+        {
+            using (var stream = new FileStream(
+                path,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read))
+            using (var sha256 = SHA256.Create())
+            {
+                return BitConverter.ToString(
+                    sha256.ComputeHash(stream)).Replace("-", string.Empty);
+            }
         }
 
         private static string CombineError(params Models.ProcessResult[] results)

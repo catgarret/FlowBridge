@@ -81,7 +81,9 @@ namespace DexManager.Forms
                         ShowLogForm,
                         ShowEnvironmentCheck,
                         ApplyThemeSelection,
-                        ApplyGeneralSettingsChanges);
+                        ApplyGeneralSettingsChanges,
+                        _phoneTransferReceiver.DetachAsync,
+                        ConfigurePhoneTransferReceiver);
                     _settingsForm.FormClosed += delegate { _settingsForm = null; };
                 }
                 if (!_settingsForm.Visible) _settingsForm.Show();

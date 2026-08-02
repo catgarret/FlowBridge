@@ -56,9 +56,9 @@
     <string name="widget_description">Checks and cleans up the selected DX Manager phone settings.</string>
     <string name="widget_action">CLEAN</string>
     <string name="phone_to_pc_section_title">Send files to PC</string>
-    <string name="phone_to_pc_description">For files, choose “Send to DX Manager” from the Gallery or My Files share menu. One UI does not pass shared folders to apps, so use “Select folder” below for folders. Data is streamed directly through the current ADB connection without creating a temporary phone copy.</string>
+    <string name="phone_to_pc_description">For files, choose “Send to DX Manager” from the Gallery or My Files share menu. Folders cannot be sent through the share menu, so use “Select folder” in the app’s “Send a folder” section.</string>
     <string name="transfer_pc_ready">DX Manager is connected and ready to receive.</string>
-    <string name="transfer_pc_not_ready_short">Start DX Manager and connect this phone first.</string>
+    <string name="transfer_pc_not_ready_short">Start DX Manager on the PC and connect this phone before transferring files.</string>
     <string name="send_files_button">Select files</string>
     <string name="send_folder_button">Select folder</string>
     <string name="file_picker_title">Send files</string>

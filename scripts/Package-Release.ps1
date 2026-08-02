@@ -10,6 +10,10 @@ $solutionPath = Join-Path $repoRoot "DexManager.sln"
 $releaseRoot = Join-Path $repoRoot "DexManager\bin\Release"
 $distRoot = Join-Path $repoRoot "dist"
 $packageRoot = Join-Path $distRoot "DX Manager"
+$companionApkSource = Join-Path $repoRoot `
+    "DXDisplayCleanup\app\build\outputs\apk\release\app-release.apk"
+$companionApkSha256 = `
+    "7797D200D0C23B9DE36E43A6E4CCA7218AEBFBCE8E349D6902936A5CFE5ABD7C"
 
 function Assert-ChildPath([string]$Parent, [string]$Child) {
     $parentPath = [IO.Path]::GetFullPath($Parent).TrimEnd('\') + '\'
@@ -156,6 +160,19 @@ foreach ($item in $requiredFiles) {
     }
 }
 
+if (!(Test-Path -LiteralPath $companionApkSource -PathType Leaf)) {
+    throw "The signed DX Companion Release APK is missing: $companionApkSource"
+}
+$actualCompanionHash = (Get-FileHash `
+    -LiteralPath $companionApkSource `
+    -Algorithm SHA256).Hash
+if (![string]::Equals(
+    $actualCompanionHash,
+    $companionApkSha256,
+    [StringComparison]::OrdinalIgnoreCase)) {
+    throw "The signed DX Companion APK hash does not match the v1.3.0 release candidate."
+}
+
 if ([string]::IsNullOrWhiteSpace($Version)) {
     $assemblyInfo = Get-Content -LiteralPath (Join-Path $repoRoot "DexManager\Properties\AssemblyInfo.cs")
     $versionLine = $assemblyInfo | Where-Object {
@@ -191,6 +208,12 @@ Copy-Item -LiteralPath (Join-Path $repoRoot "DexManager\config\README.txt") `
 foreach ($item in $requiredOutput) {
     Copy-Item -LiteralPath (Join-Path $releaseRoot $item) -Destination $packageRoot -Recurse -Force
 }
+
+$packageCompanionDirectory = Join-Path $packageRoot "tools\companion"
+New-Item -ItemType Directory -Path $packageCompanionDirectory -Force |
+    Out-Null
+Copy-Item -LiteralPath $companionApkSource `
+    -Destination (Join-Path $packageCompanionDirectory "DX-Companion.apk")
 
 # Release builds create a PDB for the managed ADB helper under tools. Keep
 # debugging symbols out of the public portable package.

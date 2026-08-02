@@ -99,8 +99,8 @@ namespace DexManager.Services
             }
 
             var verification = await Task.Run(
-                (Func<DisplayCleanupPermissionStatus>)
-                    _companionVerifier.Inspect).ConfigureAwait(false);
+                () => _companionVerifier.Inspect(serial))
+                .ConfigureAwait(false);
             if (_shutdown.IsCancellationRequested) return;
             if ((verification.State != DisplayCleanupPermissionState.Ready &&
                  verification.State != DisplayCleanupPermissionState.Granted) ||

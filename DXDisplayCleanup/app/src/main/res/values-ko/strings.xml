@@ -40,10 +40,10 @@
     <string name="tile_widget_overlay">가상화면 제거</string>
     <string name="tile_widget_stay_awake">절전모드 해제 끄기</string>
     <string name="cleanup_target_required">정리 항목을 하나 이상 선택하십시오.</string>
-    <string name="quick_surface_title">한 번 눌러 정리</string>
+    <string name="quick_surface_title">한 번 눌러서 정리</string>
     <string name="permission_title">최초 1회 권한 부여</string>
     <string name="permission_description">이 Android 보호 권한은 앱 안에서 허용할 수 없습니다. DX Manager의 검증된 권한 부여 버튼을 사용하십시오.</string>
-    <string name="widget_tile_hint">DX Companion 빠른 설정 타일이나 2 × 1 홈 화면 위젯을 추가하면 한 번 눌러 정리할 수 있습니다. 위에서 선택한 항목에 적용됩니다.</string>
+    <string name="widget_tile_hint">DX Companion 빠른 설정 타일이나 2 × 1 홈 화면 위젯을 추가하면 한 번 눌러서 정리할 수 있습니다. 위에서 선택한 항목에 적용됩니다.</string>
 
     <string name="tile_label">DX Companion</string>
     <string name="tile_active">눌러서 정리</string>
@@ -56,9 +56,9 @@
     <string name="widget_description">선택한 DX Manager 휴대폰 설정을 확인하고 정리합니다.</string>
     <string name="widget_action">정리</string>
     <string name="phone_to_pc_section_title">PC로 파일 보내기</string>
-    <string name="phone_to_pc_description">파일은 갤러리나 내 파일의 공유 메뉴에서 ‘DX Manager로 보내기’를 선택하십시오. 폴더는 One UI의 공유 메뉴로 앱에 전달되지 않으므로 아래의 ‘폴더 선택’을 사용하십시오. 휴대폰에 임시 복사본을 만들지 않고 현재 ADB 연결을 통해 바로 전송합니다.</string>
+    <string name="phone_to_pc_description">파일은 갤러리나 내 파일의 공유 메뉴에서 ‘DX Manager로 보내기’를 선택하세요. 폴더는 공유 메뉴로 보낼 수 없으므로 이 앱의 ‘폴더 보내기’에서 ‘폴더 선택’을 눌러 전송하세요.</string>
     <string name="transfer_pc_ready">DX Manager가 연결되어 파일을 받을 준비가 되었습니다.</string>
-    <string name="transfer_pc_not_ready_short">PC에서 DX Manager를 실행하고 이 휴대폰을 먼저 연결하십시오.</string>
+    <string name="transfer_pc_not_ready_short">PC에서 DX Manager를 실행하고 휴대폰을 연결한 후 전송할 수 있습니다.</string>
     <string name="send_files_button">파일 선택</string>
     <string name="send_folder_button">폴더 선택</string>
     <string name="file_picker_title">파일 보내기</string>
