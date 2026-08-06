@@ -191,12 +191,12 @@ namespace DexManager.Services
         {
             NativeMethods.keybd_event(
                 NativeMethods.VkLMenu,
-                NativeMethods.LeftAltScanCode,
+                NativeMethods.AltScanCode,
                 NativeMethods.KeyeventfScancode,
                 UIntPtr.Zero);
             NativeMethods.keybd_event(
                 NativeMethods.VkLMenu,
-                NativeMethods.LeftAltScanCode,
+                NativeMethods.AltScanCode,
                 NativeMethods.KeyeventfScancode | NativeMethods.KeyeventfKeyup,
                 UIntPtr.Zero);
             NativeMethods.ReleaseCapture();

@@ -20,8 +20,11 @@ PATH 의존은 배포 환경 차이를 만들기 때문에 금지한다.
 
 ## 키 보정은 scan code 우선
 
-AHK의 `SC1F2::Send +{Space}`에 맞춰 한영키를 scan code로 감지하고
-SendInput scan-code 조합을 우선한다. 오른쪽 Alt를 분리하고 ADB는
+AHK의 `SC1F2::Send +{Space}`에 맞춰 전용 한영키는 scan code로 감지하고
+SendInput scan-code 조합을 우선한다. `VK_HANGUL`이 오른쪽 Alt 위치의
+extended `scan 0x38`로 들어오는 일부 한국어 노트북도 지원하되, scan 값만으로
+판정하지 않는다. 따라서 같은 scan을 사용하는 `VK_RMENU` 오른쪽 Alt/AltGr는
+브라질·유럽 키보드의 특수문자 입력을 위해 그대로 통과시킨다. ADB는
 fallback으로 남겼다.
 
 ## Scrcpy 4.0 오른쪽 Shift 호환

@@ -205,7 +205,10 @@ stay-awake 상태를 복구한다.
 ## 키 입력
 
 - LowLevelKeyboardHook은 Scrcpy 활성 상태에서만 보정한다.
-- 한영키는 `scanCode == 0xF2`로 감지한다.
+- 한영키는 전용 키의 `scanCode == 0xF2` 또는 일부 한국어 노트북의
+  `VK_HANGUL + scanCode 0x38 + extended` 조합으로 감지한다.
+- `scanCode 0x38`만으로는 한영키로 판정하지 않는다. 브라질·유럽 키보드의
+  오른쪽 Alt/AltGr 입력은 `VK_RMENU`인 상태로 그대로 통과시킨다.
 - SendInput scan-code Left Shift+Space를 우선 사용한다.
 - SC1F2 KeyUp이 오지 않는 환경을 위해 주입 작업 완료 후 반복 방지 상태를
   반드시 해제한다.

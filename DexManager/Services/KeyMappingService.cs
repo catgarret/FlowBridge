@@ -125,7 +125,7 @@ namespace DexManager.Services
             var keyUp = message == NativeMethods.WmKeyUp ||
                 message == NativeMethods.WmSysKeyUp;
 
-            if (Settings.LogKeyboardDiagnostics && IsHangulScanCode(data))
+            if (Settings.LogKeyboardDiagnostics && IsHangulKey(data))
                 LogKeyboardDiagnostic(data, message);
 
             if (keyUp && ReleaseOwnedKey(data)) return new IntPtr(1);
@@ -139,7 +139,7 @@ namespace DexManager.Services
                     lParam);
 
             if (Settings.LogKeyboardDiagnostics &&
-                !IsHangulScanCode(data) &&
+                !IsHangulKey(data) &&
                 IsKeyboardDiagnosticTarget(data))
             {
                 LogKeyboardDiagnostic(data, message);
@@ -193,7 +193,7 @@ namespace DexManager.Services
                 return new IntPtr(1);
             }
 
-            if (Settings.ConvertKoreanEnglishKey && IsHangulScanCode(data))
+            if (Settings.ConvertKoreanEnglishKey && IsHangulKey(data))
             {
                 if (keyDown && !_hangulHeld)
                 {
@@ -319,7 +319,7 @@ namespace DexManager.Services
                 return true;
             }
 
-            if (IsHangulScanCode(data) && _hangulHeld)
+            if (IsHangulKey(data) && _hangulHeld)
             {
                 _hangulHeld = false;
                 return true;
@@ -338,9 +338,19 @@ namespace DexManager.Services
             return (NativeMethods.GetKeyState(virtualKey) & 0x0001) != 0;
         }
 
-        private static bool IsHangulScanCode(LowLevelKeyboardInput data)
+        private static bool IsHangulKey(LowLevelKeyboardInput data)
         {
-            return data.ScanCode == NativeMethods.HangulScanCode;
+            if (data.ScanCode == NativeMethods.HangulScanCode)
+                return true;
+
+            // Some Korean laptop keyboards expose the physical Korean/English
+            // key as the extended right-Alt scan code, but Windows translates
+            // its virtual key to VK_HANGUL. Never match scan 0x38 alone: on
+            // Brazilian and many European layouts it is AltGr and is required
+            // for characters such as '?' and '@'.
+            return data.VirtualKey == NativeMethods.VkHangul &&
+                data.ScanCode == NativeMethods.AltScanCode &&
+                (data.Flags & NativeMethods.LlkhfExtended) != 0;
         }
 
         private static bool IsKeyboardDiagnosticTarget(LowLevelKeyboardInput data)
@@ -353,7 +363,7 @@ namespace DexManager.Services
                 data.VirtualKey == NativeMethods.VkReturn ||
                 data.VirtualKey == NativeMethods.VkRShift ||
                 data.ScanCode == NativeMethods.HangulScanCode ||
-                data.ScanCode == NativeMethods.LeftAltScanCode;
+                data.ScanCode == NativeMethods.AltScanCode;
         }
 
         private void LogKeyboardDiagnostic(LowLevelKeyboardInput data, int message)
