@@ -286,12 +286,12 @@ Open `DexManager.sln` and build the `Release` configuration. The output is
 written to `DexManager/bin/Release`. To create the public portable folder and
 ZIP, run `scripts/Package-Release.ps1`. It keeps the developer output in place
 and writes `dist/DX Manager` plus
-`dist/DX-Manager-v1.2.0-win-x64.zip`. See
+`dist/DX-Manager-v1.3.0-win-x64.zip`. See
 [DexManager/README.md](DexManager/README.md) for packaging notes.
 
 ## Project Status
 
-Version 1.2.0 bundles scrcpy 4.1. The current verification baseline includes:
+Version 1.3.0 bundles scrcpy 4.1. The current verification baseline includes:
 
 - Windows 11: USB and wireless DeX, plus three simultaneous single-app windows
 - 64-bit Windows 7 SP1 with .NET Framework 4.6.2: core USB workflow
@@ -599,12 +599,12 @@ DX Manager는 SDL3 기반 scrcpy 4.x 창과의 호환을 위해 물리 오른쪽
 `DexManager.sln`을 열고 `Release` 구성으로 빌드합니다. 결과물은
 `DexManager/bin/Release`에 생성됩니다. 공개용 포터블 폴더와 ZIP은
 `scripts/Package-Release.ps1`을 실행해 만듭니다. 개발 빌드 폴더는 유지하고
-`dist/DX Manager`와 `dist/DX-Manager-v1.2.0-win-x64.zip`을 생성합니다. 배포 파일 구성은
+`dist/DX Manager`와 `dist/DX-Manager-v1.3.0-win-x64.zip`을 생성합니다. 배포 파일 구성은
 [DexManager/README.md](DexManager/README.md)를 참조하십시오.
 
 ## 프로젝트 상태
 
-버전 1.2.0은 scrcpy 4.1을 포함합니다. 현재 확인 기준은 다음과 같습니다.
+버전 1.3.0은 scrcpy 4.1을 포함합니다. 현재 확인 기준은 다음과 같습니다.
 
 - Windows 11: USB 및 무선 DeX, 단일창 3개 동시 실행
 - 64비트 Windows 7 SP1 및 .NET Framework 4.6.2: USB 핵심 기능

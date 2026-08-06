@@ -16,6 +16,7 @@
 - `SESSION.md`: 다음 채팅을 위한 현재 상태
 - `AI_WORKFLOW.md`: Codex 작업 및 Git 규칙
 - `CHANGELOG.md`: 사용자 관점의 큰 이정표
+- `RELEASE_NOTES_v1.3.0.md`: v1.3.0 GitHub Release용 영어·한국어 설명
 - `PACKAGE_README.md`: 배포 ZIP 루트에 들어가는 HTML 없는 영어·한국어 안내
 - `../DXDisplayCleanup`: 번들 선택형 Android 복구·파일 전송 앱 소스와 빌드 문서
 

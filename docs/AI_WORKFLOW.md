@@ -51,8 +51,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package-Release.ps
 `dist\DX Manager`와 버전이 포함된 x64 ZIP으로 구분한다.
 스크립트는 DX Manager 실행 여부를 확인하고 번들 Release ADB 서버를 정리한
 뒤 Debug/Release의 로그와 스크린샷 테스트 파일을 비운다.
-v1.2.0 패키지는 Scrcpy 4.1 런타임과
-`tools\adb-proxy\DXMAdbProxy.exe`를 반드시 포함해야 한다.
+v1.3.0 패키지는 Scrcpy 4.1 런타임,
+`tools\adb-proxy\DXMAdbProxy.exe`와 서명이 검증된
+`tools\companion\DX-Companion.apk`를 반드시 포함해야 한다.
 
 Android 정리 앱은 다음 명령으로 단위 테스트, lint와 서명 Release 빌드를
 함께 실행한다.

@@ -62,7 +62,7 @@ scrcpy starts.
 
 Do not copy `DXManager.exe` by itself. Keep the complete distribution,
 including the `tools` directory, scrcpy DLLs, `scrcpy-server`, and license
-files. Version 1.2.0 bundles scrcpy 4.1.
+files. Version 1.3.0 bundles scrcpy 4.1.
 
 > [!IMPORTANT]
 > Keep the phone connected and use **Stop DeX**, press `Left Alt+F8`, or

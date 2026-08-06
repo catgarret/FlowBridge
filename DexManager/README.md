@@ -31,7 +31,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package-Release.ps
 ```
 
 The script rebuilds Release and writes `dist/DX Manager` and
-`dist/DX-Manager-v1.2.0-win-x64.zip`. Use `-SkipBuild` only when the current
+`dist/DX-Manager-v1.3.0-win-x64.zip`. Use `-SkipBuild` only when the current
 Release output has already been verified. `ExecutionPolicy Bypass` applies
 only to this process and does not change the system policy.
 
@@ -110,15 +110,18 @@ not require a downgrade.
 64-bit Windows 7 compatibility should be checked on real hardware before each public
 release.
 
-## Android cleanup companion
+## Android companion
 
-The repository also contains `DXDisplayCleanup`, a separately distributed
-Android recovery utility for removing a simulated secondary display left on
-the phone. DX Manager verifies the installed package's APK Signature Scheme v2
-certificate against the pinned release certificate before enabling the grant,
-re-verifies immediately before granting `WRITE_SECURE_SETTINGS`, and confirms
-the final permission state. Build and signing details are documented in
-`DXDisplayCleanup/README.md` and `DXDisplayCleanup/SIGNING.md`.
+The repository also contains `DXDisplayCleanup`, published as **DX Companion**.
+Its signed Release APK is bundled under `tools/companion` but is never installed
+automatically. From Diagnostics, the user may install, update, grant permission
+to, or uninstall it on the currently selected phone. DX Manager verifies the
+exact APK hash and APK Signature Scheme v2 certificate before installation,
+then rechecks the installed package, version, certificate, and permission.
+DX Companion removes a stale simulated display, turns off Developer options'
+stay-awake setting, and sends phone files or folders to DX Manager. Build and
+signing details are documented in `DXDisplayCleanup/README.md` and
+`DXDisplayCleanup/SIGNING.md`.
 
 ## Repository Documentation
 
