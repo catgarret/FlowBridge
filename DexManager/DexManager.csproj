@@ -143,6 +143,9 @@
     <Compile Include="Forms\ThemeColors.cs" />
     <Compile Include="Models\AppSettings.cs" />
     <Compile Include="Models\AdbDeviceInfo.cs" />
+    <Compile Include="Models\DeviceTransportInfo.cs" />
+    <Compile Include="Models\PhysicalDeviceInfo.cs" />
+    <Compile Include="Models\DeviceRegistrySnapshot.cs" />
     <Compile Include="Models\LastSuccessSettings.cs" />
     <Compile Include="Models\ProcessResult.cs" />
     <Compile Include="Models\DeviceState.cs" />
@@ -162,6 +165,7 @@
     <Compile Include="Services\CaptureCoordinator.cs" />
     <Compile Include="Services\CaptureService.cs" />
     <Compile Include="Services\DeviceMonitorService.cs" />
+    <Compile Include="Services\PhysicalDeviceRegistry.cs" />
     <Compile Include="Services\DeviceFolderService.cs" />
     <Compile Include="Services\DisplayCleanupPermissionService.cs" />
     <Compile Include="Services\EnvironmentCheckService.cs" />

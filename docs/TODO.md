@@ -2,6 +2,25 @@
 
 ## 다음 작업
 
+- [x] v2 1단계 물리 기기·ADB transport 기반
+  - [x] v1.3.0 기준 `feature/v2-multi-device` 분기
+  - [x] 물리 기기, transport, 방어적 복사 스냅샷 모델 추가
+  - [x] 동일 identity의 USB·무선 병합과 서로 다른 휴대폰 분리
+  - [x] transport별 상태, 기본 USB 우선과 명시적 transport 선택
+  - [x] identity 조회 실패 시 기존 serial 매핑 또는 임시 identity 사용
+  - [x] 상태 변화 세대 번호·이벤트와 방어적 복사
+  - [x] .NET Framework 4.6.2 x64 Release 및 독립 회귀 테스트
+- [ ] v2 2단계 전역 ADB 대상 제거
+  - [ ] `AdbService.TargetSerial`과 프로세스 전역 `ANDROID_SERIAL` 의존 위치 목록화
+  - [ ] 모든 기기별 ADB 명령에 명시적 serial 또는 기기 실행 컨텍스트 전달
+  - [ ] 한 기기의 명령·정리·취소가 다른 기기에 영향을 주지 않는 테스트 추가
+- [ ] v2 3단계 기기별 런타임 세션
+  - [ ] DeviceMonitor, DeX, 단일창, Scrcpy, 화면 전원 상태를 물리 기기별로 분리
+  - [ ] Companion reverse·수신 토큰과 PC↔폰 전송 큐를 기기별로 분리
+- [ ] v2 4단계 다중 기기 선택 UI와 실기 검증
+  - [ ] 메인 화면 상단 기기 탭과 연결 방식·상태 표시
+  - [ ] 두 휴대폰 동시 DeX·단일창·파일 전송·분리·종료 회귀 테스트
+
 - [x] v1.2.0 구조 분리
   - [x] MainForm·SettingsForm feature partial 분리
   - [x] 파일 전송 IPC·처리·ADB·원격 작업·진행 상태 분리

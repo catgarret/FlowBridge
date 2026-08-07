@@ -196,3 +196,21 @@ Debug/Release 재빌드가 모두 경고 0, 오류 0으로 통과했다. 패키�
 
 빌드·커밋·배포 전 `bin\Debug`, `bin\Release`의 `logs`, `screenshot` 테스트
 파일을 비운다. 실기 확인하지 않은 흐름은 문서나 보고에서 확인 완료로 쓰지 않는다.
+
+## 2026-08-07 v2 다중 기기 1단계
+
+공개 v1.3.0 기준에서 `feature/v2-multi-device` 브랜치를 만들었다. 아직 기존
+`DeviceMonitorService`, `AdbService.TargetSerial`, DeX·단일창 실행 흐름에는 연결하지
+않고 물리 기기와 ADB transport를 분리하는 모델 및 thread-safe 레지스트리만
+추가했다. 같은 identity의 USB·무선은 하나의 휴대폰으로 병합하고, 같은 모델명인
+서로 다른 identity는 분리한다. 알려진 transport가 잠시 offline이 되어 identity를
+조회하지 못해도 기존 관계를 유지한다.
+
+외부 테스트 패키지가 필요 없는 `DexManager.MultiDeviceTests`를 솔루션에 추가했다.
+병합·분리·transport 선택·임시 identity·상태 이벤트·transport 제거·방어적 복사·
+표시 이름과 identity 보존을 포함한 11개 검증이 통과했다. .NET Framework 4.6.2
+참조 어셈블리로 전체 x64 Release Rebuild도 경고 0, 오류 0으로 통과했다.
+
+다음 단계는 이 레지스트리를 바로 UI에 노출하는 것이 아니라, 먼저 전역
+`TargetSerial`과 프로세스 전역 `ANDROID_SERIAL` 의존을 제거하고 모든 기기별
+명령에 대상 serial을 명시하는 작업이다.

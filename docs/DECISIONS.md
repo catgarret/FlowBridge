@@ -192,3 +192,21 @@ Samsung의 DeX 구현은 Android, One UI, 기기 모델과 펌웨어에 따라 �
 현재 실기에서 정상 동작을 확인한 Android 16 / One UI 8.x를 기준으로 적는다.
 One UI 7.x 이하에서는 원활한 동작을 확인하지 못했고 검은 DeX 창이 나타날
 수 있음을 함께 알린다.
+
+## 2026-08 - v2는 물리 기기와 ADB transport를 분리
+
+v2의 관리 단위는 ADB serial 문자열이 아니라 물리 휴대폰이다. 한 물리 휴대폰은
+USB serial과 하나 이상의 무선 `IP:PORT` transport를 동시에 가질 수 있다.
+`ro.serialno`, `ro.boot.serialno`, 필요 시 Android ID로 얻은 안정적인 기기
+식별값이 같을 때만 같은 물리 휴대폰으로 병합한다. 모델명이나 표시 이름이 같다는
+이유로 서로 다른 휴대폰을 병합하지 않는다.
+
+각 transport는 serial, USB·무선·에뮬레이터 구분, ADB 상태를 별도로 보존한다.
+명시적으로 선택한 정상 transport가 있으면 이를 우선하고, 별도 선택이 없으면
+정상 USB, 정상 무선 순서로 선택한다. 일시적으로 identity를 조회할 수 없을 때는
+기존에 확인한 serial→identity 관계를 재사용하고, 한 번도 확인하지 못한 serial만
+`transport:<serial>` 임시 식별값으로 분리한다.
+
+이 레지스트리는 먼저 기존 v1 실행 흐름과 연결하지 않은 독립 기반으로 도입한다.
+다음 단계에서 모든 ADB·Scrcpy·Companion 명령이 대상 identity와 transport serial을
+명시하도록 전환한 뒤에 다중 기기 UI와 동시 세션을 연결한다.
