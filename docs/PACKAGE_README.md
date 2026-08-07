@@ -57,6 +57,10 @@ install, update, grant permission to, or uninstall it on the currently selected
 phone. DX Manager verifies the exact bundled APK hash and official signing
 certificate before installation and rechecks the installed package afterward.
 The companion provides recovery actions and phone-to-PC file/folder transfer.
+For files, use Gallery or My Files and choose **Send to DX Manager** from the
+Android Share menu. For folders, use **Send folder > Select folder** inside DX
+Companion. DX Manager must be running with the target phone connected. The PC
+destination can be changed under **Settings > Paths / ADB**.
 
 ### Default settings
 
@@ -199,6 +203,10 @@ Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. �
 권한 부여 또는 삭제할 수 있습니다. DX Manager는 설치 전 정확한 번들 APK 해시와
 공식 서명을 확인하고 설치 후 패키지를 다시 검증합니다. Companion은 복구 기능과
 휴대폰에서 PC로 파일·폴더 전송 기능을 제공합니다.
+파일은 갤러리나 내 파일의 Android 공유 메뉴에서 **DX Manager로 보내기**를
+선택하고, 폴더는 DX Companion의 **폴더 보내기 > 폴더 선택**을 사용하십시오.
+DX Manager가 실행 중이고 대상 휴대폰이 연결돼 있어야 하며, PC 저장 위치는
+**설정 > 경로 / ADB**에서 바꿀 수 있습니다.
 
 ### 기본 설정
 

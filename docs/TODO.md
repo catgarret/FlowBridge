@@ -68,9 +68,11 @@
   - [x] 관리형 전송 끄기 후 새 창에서 Scrcpy 순정 동작 복귀
   - [x] 설정·진단의 실제 ADB `Version ...` 값 표시 확인
 - [x] GitHub 첫 공개 Release 게시 및 저장소 public 전환
+- [x] v1.3.0 공개 Release 게시와 DX Companion 번들 배포
 - [x] DX Manager 자체 소스 라이선스를 MIT로 확정
 
-별도 설치 프로그램은 보류하고 v1.2.0 공개 뒤 WinGet 등록을 검토한다.
+별도 설치 프로그램은 보류한다. v1.2.0 WinGet manifest PR은 심사 대기 중이며,
+승인된 뒤 v1.3.0 manifest 업데이트를 제출한다.
 
 ## 독립 FAQ 반영 항목
 
@@ -93,3 +95,8 @@
 17. 관리형 드래그 앤 드롭 파일 전송, Unicode 이름, 충돌과 순정 전환
 18. One UI 7.x 이하에서 검은 DeX 창이 나타날 수 있는 이유
 19. ADB 공통 `1.0.41` 문구와 실제 `Version ...` 빌드 값의 차이
+20. 금융·게임·DRM 앱의 실행 거부 또는 검은 화면
+21. DeX에서 실행한 앱이 휴대폰 화면에서 열리는 경우
+22. HID 마우스 사용 중 포인터가 scrcpy 창에 잡히는 동작
+23. DX Companion 설치·서명 검증과 권한 버튼 비활성화
+24. DX Companion 휴대폰→PC 파일·폴더 전송 준비와 사용 방법

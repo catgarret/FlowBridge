@@ -1,13 +1,13 @@
 # Session Handoff
 
-마지막 갱신: 2026-08-06
+마지막 갱신: 2026-08-07
 
 ## Git
 
 - 저장소: `E:\vs\dex system`
-- 브랜치: `feature/v1.3.0-phone-to-pc-transfer`
+- 브랜치: `main`
 - 마지막 공개 커밋: 이 문서를 포함한 최신 `main` (`git log -1`로 확인)
-- 현재 작업: v1.3.0 Release 후보 패키지 검증 완료, 공개 배포 대기
+- 현재 작업: v1.3.0 공개 배포 완료, v2 다중 휴대폰 지원 설계 대기
 
 v1.2.0 구조 분리 전 기준은 공개 태그 `v1.1.0` (`7f7a59e`)이다.
 폼 분리 커밋은 `b0c88e2`, 파일 전송 구조 분리 커밋은 `4bc1c67`이다.
@@ -108,7 +108,7 @@ x64 Release 빌드는 경고 0, 오류 0으로 통과했다. 실제 노트북 �
 Companion APK SHA-256은
 `3876D4B7F0CCE6EC3C6CE9F930959757ED32668B3BDAE1D34F744A894039A452`,
 후보 ZIP SHA-256은
-`EFE33245862E1D1B57603DB7E64DFB02CED38CB0751B56155CC44F4D7C504848`이다.
+`528F10E22171C4EFCE9865B6810E8CCF02B447D4D45ED4B8B0F56322008B74BA`이다.
 
 2026-08-06 공개 후보를 다시 만들었다. DX Manager와 DXMAdbProxy는 모두
 x64, .NET Framework 4.6.2, 파일 버전 1.3.0.0이며 Release 재빌드는 경고 0,
@@ -189,11 +189,10 @@ Debug/Release 재빌드가 모두 경고 0, 오류 0으로 통과했다. 패키�
 1. 실제 기기에서 Companion 준비 상태가 USB/무선 분리와 DX Manager 정상·비정상
    종료 시 연결 대기로 바뀌고 재연결 시 준비 상태로 복구되는지 확인
 2. 실제 기기에서 진단 페이지의 Companion 설치·업데이트·재설치·삭제 확인
-3. 새 v1.3.0 실행 파일과 ZIP의 VirusTotal 결과 확인
-4. 사용자 승인 시 tag·push·GitHub Release 게시
-5. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
-6. 공개 Release 사용 피드백과 새 이슈 확인
-7. Scrcpy 4.0/SDL3 오른쪽 Shift 재현 내용을 upstream에 보고
+3. v2 다중 휴대폰의 물리 기기 identity, transport와 세션 모델 설계
+4. Scrcpy 4.1에서 오른쪽 Shift 호환 보정 필요 여부 확인
+5. 공개 Release 사용 피드백과 새 이슈 확인
+6. Scrcpy 4.0/SDL3 오른쪽 Shift 재현 내용을 upstream에 보고
 
 빌드·커밋·배포 전 `bin\Debug`, `bin\Release`의 `logs`, `screenshot` 테스트
 파일을 비운다. 실기 확인하지 않은 흐름은 문서나 보고에서 확인 완료로 쓰지 않는다.

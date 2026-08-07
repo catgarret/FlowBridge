@@ -487,6 +487,28 @@ Stay-awake developer option.
 You can remove the same display without the app by following the
 [manual FAQ procedure](FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone).
 
+### Sending files and folders from the phone to the PC
+
+1. Start DX Manager and connect the target phone through USB or wireless ADB.
+2. On DX Companion's **File transfer** tab, confirm that it says **DX Manager
+   is connected and ready to receive files**.
+3. For files, select them in Gallery or My Files and choose **Send to DX
+   Manager** from Android's Share menu.
+4. Android's Share menu does not provide folders. To send a folder, use DX
+   Companion's **Send folder > Select folder** action instead.
+
+Change the destination under **Settings > Paths / ADB > Phone-to-PC destination
+folder** in DX Manager. Data is streamed directly to the PC through an
+authenticated ADB reverse session for the currently selected phone; no
+temporary copy is created on the phone. If a name already exists at the PC
+destination, DX Manager preserves the existing item and saves the new one as
+`name (1)`, `name (2)`, and so on.
+
+The companion remains in the waiting state and does not start a transfer when
+DX Manager is not running, the selected phone is disconnected, or the verified
+companion is unavailable. Multiple shared files are supported, and folder
+transfer preserves subfolders and empty folders.
+
 ## 13. Language, Theme, and Reset
 
 <p align="center">

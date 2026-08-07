@@ -31,10 +31,18 @@ currently selected by DX Manager.
 
 - Windows executables: x64, .NET Framework 4.6.2, version 1.3.0
 - Bundled scrcpy: 4.1
+- DX Manager executable SHA-256:
+  `2F5A0EB46F141C56260A62B576531FA1E6933BBB067209380F21B2B698273753`
 - DX Companion APK SHA-256:
   `3876D4B7F0CCE6EC3C6CE9F930959757ED32668B3BDAE1D34F744A894039A452`
 - Windows ZIP SHA-256:
-  `EFE33245862E1D1B57603DB7E64DFB02CED38CB0751B56155CC44F4D7C504848`
+  `528F10E22171C4EFCE9865B6810E8CCF02B447D4D45ED4B8B0F56322008B74BA`
+
+Before publication, the Microsoft Defender cloud detection
+`Trojan:Win32/Wacatac.C!ml` for this exact executable was submitted to
+Microsoft as a false positive, reviewed, and cleared. The corresponding
+[VirusTotal report](https://www.virustotal.com/gui/file/2F5A0EB46F141C56260A62B576531FA1E6933BBB067209380F21B2B698273753)
+can be checked independently.
 
 ## 한국어
 
@@ -64,7 +72,15 @@ DX Companion은 자동으로 설치되지 않습니다. 설치와 권한 작업�
 
 - Windows 실행 파일: x64, .NET Framework 4.6.2, 버전 1.3.0
 - 포함된 scrcpy: 4.1
+- DX Manager 실행 파일 SHA-256:
+  `2F5A0EB46F141C56260A62B576531FA1E6933BBB067209380F21B2B698273753`
 - DX Companion APK SHA-256:
   `3876D4B7F0CCE6EC3C6CE9F930959757ED32668B3BDAE1D34F744A894039A452`
 - Windows ZIP SHA-256:
-  `EFE33245862E1D1B57603DB7E64DFB02CED38CB0751B56155CC44F4D7C504848`
+  `528F10E22171C4EFCE9865B6810E8CCF02B447D4D45ED4B8B0F56322008B74BA`
+
+공개 전에 이 실행 파일에서 발생한 Microsoft Defender 클라우드 탐지
+`Trojan:Win32/Wacatac.C!ml`을 Microsoft에 오탐으로 제출했으며 검토 후
+해제됐습니다. 같은 파일의
+[VirusTotal 검사 결과](https://www.virustotal.com/gui/file/2F5A0EB46F141C56260A62B576531FA1E6933BBB067209380F21B2B698273753)도
+직접 확인할 수 있습니다.

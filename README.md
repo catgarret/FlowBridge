@@ -19,6 +19,7 @@
   <a href="docs/USER_GUIDE_KO.md">한국어 사용 설명서</a> ·
   <a href="docs/FAQ_EN.md">FAQ</a> ·
   <a href="docs/FAQ_KO.md">Q&amp;A</a> ·
+  <a href="docs/RELEASE_NOTES_v1.3.0.md">v1.3.0 release notes</a> ·
   <a href="DexManager/licenses/THIRD_PARTY_NOTICES.md">Third-party notices</a>
 </p>
 

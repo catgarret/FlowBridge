@@ -362,3 +362,20 @@ changed in the app.
 Without the companion app, open **Developer options > Simulate secondary
 displays**, select any resolution once, open the menu again, and select
 **None**.
+
+## Q24. DX Companion cannot send a file or folder to the PC.
+
+Start DX Manager first, connect the target phone through USB or wireless ADB,
+and check that DX Companion's **File transfer** tab reports that the PC receiver
+is ready. If it does not, open **Settings > Diagnostics > DX Companion** in DX
+Manager and verify the installed version, official signature, permission, and
+device connection before trying again.
+
+For ordinary files, use Gallery or My Files and choose **Send to DX Manager**
+from Android's Share menu. Android does not pass folders through that menu, so
+use **Send folder > Select folder** inside DX Companion for a complete folder.
+
+The PC destination is configured under **Settings > Paths / ADB > Phone-to-PC
+destination folder**. Existing items are not overwritten; DX Manager adds
+`(1)`, `(2)`, and later suffixes. A disconnection during transfer is reported
+as a failure, and the transfer must be started again after reconnecting.
