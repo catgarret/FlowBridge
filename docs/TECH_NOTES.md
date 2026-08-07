@@ -5,7 +5,7 @@
 `Program.cs`가 설정을 읽고 서비스를 조립한다.
 
 - `PathService`: OS/설정별 ADB 선택
-- `AdbService`: target serial을 포함한 ADB 실행
+- `AdbService`: 전역 target 없이 명시적 serial 기반 ADB 실행
 - `WirelessAdbService`: USB 준비, TCP/IP, 페어링, 재연결
 - `VirtualDisplayService`: DeX overlay와 ID 탐색
 - `DexOrchestrator`: DeX 실행/정리
@@ -42,6 +42,18 @@ platform-tools 버전이 공통으로 출력하는 프로토콜 문구다. 설�
 현재는 ADB 상태와 기기 이름을 즉시 확인한 뒤, DeX/단일창 실제 시작 명령
 직전에 `ConnectedStartDelayMs`를 적용한다. 범위는 0~60초, 기본값은 1초다.
 화면 OFF 재적용용 Scrcpy에는 이 대기를 적용하지 않는다.
+
+기기별 ADB 명령은 `AdbCommandBuilder.ForDevice()`를 거쳐 반드시
+`-s "SERIAL"`을 포함한다. `AdbService`는 target serial을 저장하지 않고
+`ANDROID_SERIAL` 환경 변수도 사용하지 않는다. 무선 연결 계층은 기존 v1의
+현재 선택 기기를 `SelectedSerial`로 보존하지만, 각 UI·orchestrator 작업은
+시작 시 해당 값을 캡처한 뒤 명시적 매개변수로 전달한다.
+
+DeX overlay 정리, 화면 전원, 앱 목록, 캡처 전송, Companion 권한·reverse와
+단일창 재시작도 세션 또는 호출자가 전달한 serial만 사용한다. 파일 전송 취소와
+Companion detach는 `DeviceSerialScope`로 요청 serial이 해당 작업의 serial과
+같은 경우에만 수행한다. ADB 서버 관리와 기기 탐색 명령은 특정 기기 명령이
+아니므로 serial이 없다.
 
 ## 관리형 파일 전송
 

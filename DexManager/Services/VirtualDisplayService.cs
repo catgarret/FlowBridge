@@ -42,11 +42,6 @@ namespace DexManager.Services
             _logService = logService;
         }
 
-        public string GetOverlaySetting()
-        {
-            return GetOverlaySetting(_adbService.TargetSerial);
-        }
-
         public string GetOverlaySetting(string serial)
         {
             var result = ShellForSerial(
@@ -172,16 +167,6 @@ namespace DexManager.Services
             }
         }
 
-        public IList<int> GetVirtualDisplayIds()
-        {
-            return GetVirtualDisplays().Select(display => display.Id).ToList();
-        }
-
-        public IList<DisplayInfo> GetVirtualDisplays()
-        {
-            return GetVirtualDisplays(_adbService.TargetSerial);
-        }
-
         public IList<DisplayInfo> GetVirtualDisplays(string serial)
         {
             var result = ShellForSerial(serial, "dumpsys display");
@@ -199,11 +184,6 @@ namespace DexManager.Services
                     .First())
                 .OrderBy(display => display.Id)
                 .ToList();
-        }
-
-        public bool Reset()
-        {
-            return Reset(_adbService.TargetSerial);
         }
 
         public bool Reset(string serial)
@@ -268,9 +248,7 @@ namespace DexManager.Services
 
         private ProcessResult ShellForSerial(string serial, string command)
         {
-            return string.IsNullOrWhiteSpace(serial)
-                ? _adbService.Shell(command)
-                : _adbService.ShellForSerial(serial, command, true);
+            return _adbService.ShellForSerial(serial, command, true);
         }
 
         private static string BuildOverlaySetting(

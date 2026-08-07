@@ -23,7 +23,11 @@ namespace DexManager.MultiDeviceTests
                 ReturnsDefensiveSnapshots,
                 PrefersStableAuthorizedDuplicateObservation,
                 PreservesKnownDisplayName,
-                PreservesKnownIdentityWhenTransportCannotBeQueried
+                PreservesKnownIdentityWhenTransportCannotBeQueried,
+                RequiresExplicitSerialForDeviceCommands,
+                KeepsCleanupCommandsScopedToRequestedDevice,
+                InterleavedDeviceCommandsDoNotShareTarget,
+                DeviceCancellationMatchesOnlyRequestedSerial
             };
 
             try
@@ -248,6 +252,64 @@ namespace DexManager.MultiDeviceTests
                 "known device name must remain available while offline");
         }
 
+        private static void RequiresExplicitSerialForDeviceCommands()
+        {
+            Throws<ArgumentException>(delegate
+            {
+                AdbCommandBuilder.ForDevice(
+                    string.Empty,
+                    "shell get-state");
+            }, "device command without a serial must be rejected");
+        }
+
+        private static void KeepsCleanupCommandsScopedToRequestedDevice()
+        {
+            var first = AdbCommandBuilder.ForDevice(
+                "PHONE-A",
+                "shell settings delete global overlay_display_devices");
+            var second = AdbCommandBuilder.ForDevice(
+                "PHONE-B",
+                "shell settings delete global overlay_display_devices");
+
+            True(first.StartsWith("-s \"PHONE-A\" "),
+                "first cleanup must target PHONE-A");
+            True(first.IndexOf("PHONE-B", StringComparison.Ordinal) < 0,
+                "first cleanup must not contain PHONE-B");
+            True(second.StartsWith("-s \"PHONE-B\" "),
+                "second cleanup must target PHONE-B");
+            True(second.IndexOf("PHONE-A", StringComparison.Ordinal) < 0,
+                "second cleanup must not contain PHONE-A");
+        }
+
+        private static void InterleavedDeviceCommandsDoNotShareTarget()
+        {
+            for (var index = 0; index < 1000; index++)
+            {
+                var serial = index % 2 == 0 ? "PHONE-A" : "PHONE-B";
+                var other = index % 2 == 0 ? "PHONE-B" : "PHONE-A";
+                var command = AdbCommandBuilder.ForDevice(
+                    serial,
+                    "shell echo " + index);
+                True(command.StartsWith("-s \"" + serial + "\" "),
+                    "interleaved command changed its requested target");
+                True(command.IndexOf(other, StringComparison.Ordinal) < 0,
+                    "interleaved command leaked another target");
+            }
+        }
+
+        private static void DeviceCancellationMatchesOnlyRequestedSerial()
+        {
+            True(
+                DeviceSerialScope.Matches("PHONE-A", "phone-a"),
+                "requested device cancellation must match its own serial");
+            True(
+                !DeviceSerialScope.Matches("PHONE-A", "PHONE-B"),
+                "requested device cancellation must not match another serial");
+            True(
+                !DeviceSerialScope.Matches(string.Empty, "PHONE-A"),
+                "empty cancellation scope must not match a device");
+        }
+
         private static DiscoveredDeviceTransport Device(
             string identity,
             string name,
@@ -283,6 +345,20 @@ namespace DexManager.MultiDeviceTests
         private static void True(bool value, string message)
         {
             if (!value) throw new InvalidOperationException(message);
+        }
+
+        private static void Throws<T>(Action action, string message)
+            where T : Exception
+        {
+            try
+            {
+                action();
+            }
+            catch (T)
+            {
+                return;
+            }
+            throw new InvalidOperationException(message);
         }
     }
 }

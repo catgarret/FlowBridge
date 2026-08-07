@@ -210,3 +210,22 @@ USB serial과 하나 이상의 무선 `IP:PORT` transport를 동시에 가질 �
 이 레지스트리는 먼저 기존 v1 실행 흐름과 연결하지 않은 독립 기반으로 도입한다.
 다음 단계에서 모든 ADB·Scrcpy·Companion 명령이 대상 identity와 transport serial을
 명시하도록 전환한 뒤에 다중 기기 UI와 동시 세션을 연결한다.
+
+## 2026-08 - ADB 실행은 전역 대상 없이 명시적 serial만 사용
+
+`AdbService`는 선택된 기기를 보관하지 않는다. 기기별 명령은 호출 시점에 받은
+transport serial로 항상 `adb -s "SERIAL" ...`를 구성하며, 빈 serial을 전달하면
+실행 전에 거부한다. 프로세스 전역 `ANDROID_SERIAL`도 설정하지 않는다. 따라서
+동시에 서로 다른 기기의 명령이 만들어져도 마지막으로 선택한 기기나 환경 변수에
+의해 대상이 바뀌지 않는다.
+
+기기 탐색, `adb devices`, 서버 시작·종료, 무선 `connect`·`disconnect`·`pair`처럼
+특정 기기 shell에서 실행되지 않는 ADB 명령만 serial 없이 실행할 수 있다. 오래된
+Windows 7 ADB를 깨우기 위한 scrcpy 보조 실행도 아직 대상을 알 수 없는 탐색 상황에
+한해 serial 없는 실행을 허용한다.
+
+`WirelessAdbService.SelectedSerial`은 v1 호환 선택 정책이다. 이 값은 실행 서비스의
+전역 target이 아니며, UI 작업을 시작할 때 문자열을 캡처하여 이후 서비스 호출에
+명시적으로 넘긴다. DeX·단일창 세션과 종료 정리는 시작 시 캡처한 serial을 사용한다.
+파일 전송 취소와 Companion detach도 요청한 serial이 현재 작업 serial과 일치할 때만
+적용한다. 기기별 장기 수명 상태 자체는 다음 런타임 세션 단계에서 분리한다.

@@ -129,7 +129,7 @@ namespace DexManager.Services
                 var eligibleDevices = GetEligibleDevices(devices);
                 var preferred = _wirelessAdbService.FindPreferredDevice(
                     eligibleDevices,
-                    _adbService.TargetSerial);
+                    _wirelessAdbService.SelectedSerial);
                 if (preferred == null &&
                     _wirelessAdbService.TryReconnect(false))
                 {
@@ -142,7 +142,7 @@ namespace DexManager.Services
                     eligibleDevices = GetEligibleDevices(devices);
                     preferred = _wirelessAdbService.FindPreferredDevice(
                         eligibleDevices,
-                        _adbService.TargetSerial);
+                        _wirelessAdbService.SelectedSerial);
                 }
 
                 if (IsStopping) return;

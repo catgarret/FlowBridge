@@ -26,11 +26,6 @@ namespace DexManager.Services
             _logService = logService;
         }
 
-        public CaptureResult CaptureWindow(IntPtr windowHandle)
-        {
-            return CaptureWindow(windowHandle, _adbService.TargetSerial);
-        }
-
         public CaptureResult CaptureWindow(
             IntPtr windowHandle,
             string serial)
@@ -56,14 +51,6 @@ namespace DexManager.Services
                 clientRect.Right - clientRect.Left,
                 clientRect.Bottom - clientRect.Top);
             return CaptureRectangle(rectangle, "DeX_Full", serial);
-        }
-
-        public CaptureResult CaptureRectangle(Rectangle rectangle, string prefix)
-        {
-            return CaptureRectangle(
-                rectangle,
-                prefix,
-                _adbService.TargetSerial);
         }
 
         public CaptureResult CaptureRectangle(

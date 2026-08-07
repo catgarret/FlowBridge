@@ -335,14 +335,6 @@ namespace DexManager.Services
             }
         }
 
-        public string BuildArguments(ScrcpySettings settings, int displayId)
-        {
-            return BuildArguments(
-                settings,
-                displayId,
-                _adbService.TargetSerial);
-        }
-
         public string BuildArguments(
             ScrcpySettings settings,
             int displayId,
@@ -362,6 +354,10 @@ namespace DexManager.Services
             string pushTarget)
         {
             if (settings == null) throw new ArgumentNullException("settings");
+            if (string.IsNullOrWhiteSpace(serial))
+                throw new ArgumentException(
+                    LocalizationService.Get("Error.Adb.SerialEmpty"),
+                    "serial");
             ValidateAdditionalArguments(settings.AdditionalArguments);
 
             var arguments = new List<string>
@@ -500,7 +496,7 @@ namespace DexManager.Services
             return tokens;
         }
 
-        public IList<ScrcpyAppInfo> ListApps()
+        public IList<ScrcpyAppInfo> ListApps(string serial)
         {
             if (!File.Exists(_scrcpyPath))
                 throw new FileNotFoundException(
@@ -509,7 +505,7 @@ namespace DexManager.Services
                     _scrcpyPath);
 
             var arguments = new List<string>();
-            AddSerialArgument(arguments);
+            AddRequiredSerialArgument(arguments, serial);
             arguments.Add("--list-apps");
             var result = _launchCoordinator.RunExclusive(delegate
             {
@@ -541,11 +537,6 @@ namespace DexManager.Services
                 "Log.Scrcpy.AppListLoaded",
                 apps.Count));
             return apps;
-        }
-
-        public void Start(ScrcpySettings settings, int displayId)
-        {
-            Start(settings, displayId, _adbService.TargetSerial);
         }
 
         public void Start(
@@ -688,15 +679,15 @@ namespace DexManager.Services
             if (stopped) RaiseRunningChanged();
         }
 
-        public bool RunWakeUp(int delayMs)
+        public bool RunWakeUp(string serial, int delayMs)
         {
             return _launchCoordinator.RunExclusive(delegate
             {
-                return RunWakeUpCore(delayMs);
+                return RunWakeUpCore(serial, delayMs);
             });
         }
 
-        private bool RunWakeUpCore(int delayMs)
+        private bool RunWakeUpCore(string serial, int delayMs)
         {
             if (!File.Exists(_scrcpyPath))
             {
@@ -709,7 +700,7 @@ namespace DexManager.Services
             _logService.Info(LocalizationService.Get(
                 "Log.Scrcpy.WakeUpStarting"));
             var arguments = new List<string>();
-            AddSerialArgument(arguments);
+            AddSerialArgument(arguments, serial);
             arguments.Add("--no-audio");
             arguments.Add("--max-size=64");
             arguments.Add("--max-fps=1");
@@ -1150,11 +1141,6 @@ namespace DexManager.Services
             return "\"" + value.Replace("\"", "\\\"") + "\"";
         }
 
-        private void AddSerialArgument(ICollection<string> arguments)
-        {
-            AddSerialArgument(arguments, _adbService.TargetSerial);
-        }
-
         private static void AddSerialArgument(
             ICollection<string> arguments,
             string serial)
@@ -1162,6 +1148,17 @@ namespace DexManager.Services
             if (string.IsNullOrWhiteSpace(serial)) return;
             arguments.Add("--serial");
             arguments.Add(Quote(serial));
+        }
+
+        private static void AddRequiredSerialArgument(
+            ICollection<string> arguments,
+            string serial)
+        {
+            if (string.IsNullOrWhiteSpace(serial))
+                throw new ArgumentException(
+                    LocalizationService.Get("Error.Adb.SerialEmpty"),
+                    "serial");
+            AddSerialArgument(arguments, serial);
         }
 
         private static IList<ScrcpyAppInfo> ParseAppList(string output)

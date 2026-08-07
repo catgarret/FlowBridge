@@ -320,10 +320,9 @@ namespace DexManager.Services
             lock (_syncRoot)
             {
                 sessions = _sessions.Values
-                    .Where(item => string.Equals(
-                        item.Serial,
+                    .Where(item => DeviceSerialScope.Matches(
                         serial,
-                        StringComparison.OrdinalIgnoreCase))
+                        item.Serial))
                     .Select(item => item.Id)
                     .ToArray();
                 var sessionSet = new HashSet<string>(

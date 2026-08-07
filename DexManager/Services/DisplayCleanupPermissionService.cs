@@ -64,11 +64,6 @@ namespace DexManager.Services
             _adbService = adbService;
         }
 
-        public DisplayCleanupPermissionStatus Inspect()
-        {
-            return Inspect(_adbService.TargetSerial);
-        }
-
         public DisplayCleanupPermissionStatus Inspect(string serial)
         {
             if (string.IsNullOrWhiteSpace(serial) ||

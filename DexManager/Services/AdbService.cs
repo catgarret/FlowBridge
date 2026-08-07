@@ -15,8 +15,6 @@ namespace DexManager.Services
         private readonly int _defaultTimeoutMs;
         private readonly ProcessRunner _processRunner;
         private readonly LogService _logService;
-        private readonly object _targetSync = new object();
-        private string _targetSerial;
 
         public AdbService(
             string adbPath,
@@ -38,46 +36,6 @@ namespace DexManager.Services
         public string AdbPath
         {
             get { return _adbPath; }
-        }
-
-        public string TargetSerial
-        {
-            get
-            {
-                lock (_targetSync)
-                {
-                    return _targetSerial;
-                }
-            }
-        }
-
-        public void SetTargetSerial(string serial)
-        {
-            var normalized = string.IsNullOrWhiteSpace(serial)
-                ? string.Empty
-                : serial.Trim();
-            lock (_targetSync)
-            {
-                if (string.Equals(
-                    _targetSerial,
-                    normalized,
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
-                _targetSerial = normalized;
-                Environment.SetEnvironmentVariable(
-                    "ANDROID_SERIAL",
-                    normalized.Length == 0 ? null : normalized,
-                    EnvironmentVariableTarget.Process);
-            }
-            _logService.Info(
-                normalized.Length == 0
-                    ? LocalizationService.Get(
-                        "Log.Adb.TargetCleared")
-                    : LocalizationService.Format(
-                        "Log.Adb.TargetSelected",
-                        normalized));
         }
 
         public ProcessResult StartServer()
@@ -109,30 +67,9 @@ namespace DexManager.Services
             return Run("kill-server");
         }
 
-        public ProcessResult GetState()
-        {
-            return RunTargeted("get-state", true);
-        }
-
         public ProcessResult GetState(string serial)
         {
             return RunForSerial(serial, "get-state", true);
-        }
-
-        public ProcessResult Shell(string command)
-        {
-            if (string.IsNullOrWhiteSpace(command))
-                throw new ArgumentException(
-                    LocalizationService.Get("Error.Adb.ShellCommandEmpty"),
-                    "command");
-            return Shell(command, true);
-        }
-
-        public ProcessResult Shell(string command, bool writeLog)
-        {
-            if (string.IsNullOrWhiteSpace(command))
-                throw new ArgumentException("ADB shell command is empty.", "command");
-            return RunTargeted("shell " + command, writeLog);
         }
 
         public ProcessResult ShellForSerial(
@@ -229,14 +166,6 @@ namespace DexManager.Services
                        StringComparison.OrdinalIgnoreCase)
                 ? string.Empty
                 : value;
-        }
-
-        public ProcessResult Push(string localPath, string remotePath)
-        {
-            ValidatePushPaths(localPath, remotePath);
-            return RunTargeted(
-                "push " + Quote(localPath) + " " + Quote(remotePath),
-                true);
         }
 
         public ProcessResult PushForSerial(
@@ -442,16 +371,6 @@ namespace DexManager.Services
             return querySucceeded;
         }
 
-        public bool IsAuthorizedDeviceConnected()
-        {
-            var state = GetState();
-            return state.IsSuccess &&
-                string.Equals(
-                    state.StandardOutput.Trim(),
-                    "device",
-                    StringComparison.OrdinalIgnoreCase);
-        }
-
         public bool IsAuthorizedDeviceConnected(string serial)
         {
             if (string.IsNullOrWhiteSpace(serial)) return false;
@@ -463,16 +382,21 @@ namespace DexManager.Services
                     StringComparison.OrdinalIgnoreCase);
         }
 
-        public AdbWakeUpResult WakeUp(Func<bool> scrcpyWakeUp)
+        public AdbWakeUpResult WakeUp(
+            string targetSerial,
+            Func<string, bool> scrcpyWakeUp)
         {
             _logService.Info(
                 LocalizationService.Get("Log.Adb.WakeUpStarting"));
-            if (!IsTcpIpSerial(TargetSerial))
+            var normalizedTarget = string.IsNullOrWhiteSpace(targetSerial)
+                ? string.Empty
+                : targetSerial.Trim();
+            if (!IsTcpIpSerial(normalizedTarget))
                 KillServer();
             StartServer();
 
             var devicesBefore = GetDevices();
-            if (IsAuthorizedDeviceConnected())
+            if (ContainsAuthorizedDevice(devicesBefore, normalizedTarget))
             {
                 return new AdbWakeUpResult(true, false, devicesBefore);
             }
@@ -486,9 +410,10 @@ namespace DexManager.Services
 
             _logService.Warning(LocalizationService.Get(
                 "Log.Adb.WakeUpFallback"));
-            var scrcpyStarted = scrcpyWakeUp();
+            var scrcpyStarted = scrcpyWakeUp(normalizedTarget);
             var devicesAfter = GetDevices();
-            var success = scrcpyStarted && IsAuthorizedDeviceConnected();
+            var success = scrcpyStarted &&
+                ContainsAuthorizedDevice(devicesAfter, normalizedTarget);
 
             if (success)
                 _logService.Info(LocalizationService.Get(
@@ -554,27 +479,13 @@ namespace DexManager.Services
                 outputEncoding);
         }
 
-        private ProcessResult RunTargeted(
-            string arguments,
-            bool writeLog)
-        {
-            var serial = TargetSerial;
-            return string.IsNullOrWhiteSpace(serial)
-                ? Run(arguments, writeLog)
-                : RunForSerial(serial, arguments, writeLog);
-        }
-
         private ProcessResult RunForSerial(
             string serial,
             string arguments,
             bool writeLog)
         {
-            if (string.IsNullOrWhiteSpace(serial))
-                throw new ArgumentException(
-                    LocalizationService.Get("Error.Adb.SerialEmpty"),
-                    "serial");
             return Run(
-                "-s " + Quote(serial.Trim()) + " " + arguments,
+                AdbCommandBuilder.ForDevice(serial, arguments),
                 writeLog);
         }
 
@@ -591,6 +502,25 @@ namespace DexManager.Services
             return int.TryParse(value.Substring(separator + 1), out port) &&
                 port > 0 &&
                 port <= 65535;
+        }
+
+        private static bool ContainsAuthorizedDevice(
+            IEnumerable<AdbDeviceInfo> devices,
+            string serial)
+        {
+            foreach (var device in devices ?? Enumerable.Empty<AdbDeviceInfo>())
+            {
+                if (device == null || !device.IsAuthorized) continue;
+                if (string.IsNullOrWhiteSpace(serial) ||
+                    string.Equals(
+                        device.Serial,
+                        serial,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public static bool IsEmulatorSerial(string serial)

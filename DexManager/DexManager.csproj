@@ -160,11 +160,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\LogService.cs" />
     <Compile Include="Services\AdbService.cs" />
+    <Compile Include="Services\AdbCommandBuilder.cs" />
     <Compile Include="Services\AutoHideService.cs" />
     <Compile Include="Services\AutoStartService.cs" />
     <Compile Include="Services\CaptureCoordinator.cs" />
     <Compile Include="Services\CaptureService.cs" />
     <Compile Include="Services\DeviceMonitorService.cs" />
+    <Compile Include="Services\DeviceSerialScope.cs" />
     <Compile Include="Services\PhysicalDeviceRegistry.cs" />
     <Compile Include="Services\DeviceFolderService.cs" />
     <Compile Include="Services\DisplayCleanupPermissionService.cs" />

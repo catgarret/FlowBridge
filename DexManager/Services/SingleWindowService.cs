@@ -313,11 +313,6 @@ namespace DexManager.Services
             return false;
         }
 
-        public void Start(int slot, SingleWindowSlotSettings settings)
-        {
-            Start(slot, settings, _adbService.TargetSerial);
-        }
-
         public void Start(
             int slot,
             SingleWindowSlotSettings settings,
@@ -442,7 +437,9 @@ namespace DexManager.Services
                 lock (_syncRoot)
                 {
                     if (!_targetSerials.TryGetValue(slot, out serial))
-                        serial = _adbService.TargetSerial;
+                        throw new InvalidOperationException(
+                            LocalizationService.Get(
+                                "Error.Dex.NoAuthorizedDevice"));
                 }
                 Stop(slot);
                 Start(slot, settings, serial);
@@ -547,16 +544,6 @@ namespace DexManager.Services
 
         private string BuildArguments(
             int slot,
-            SingleWindowSlotSettings settings)
-        {
-            return BuildArguments(
-                slot,
-                settings,
-                _adbService.TargetSerial);
-        }
-
-        private string BuildArguments(
-            int slot,
             SingleWindowSlotSettings settings,
             string serial)
         {
@@ -573,14 +560,15 @@ namespace DexManager.Services
             string serial,
             string pushTarget)
         {
+            if (string.IsNullOrWhiteSpace(serial))
+                throw new ArgumentException(
+                    LocalizationService.Get("Error.Adb.SerialEmpty"),
+                    "serial");
             ScrcpyService.ValidateAdditionalArguments(
                 settings.AdditionalArguments);
             var arguments = new List<string>();
-            if (!string.IsNullOrWhiteSpace(serial))
-            {
-                arguments.Add("--serial");
-                arguments.Add(Quote(serial));
-            }
+            arguments.Add("--serial");
+            arguments.Add(Quote(serial.Trim()));
             arguments.Add(
                 "--new-display=" +
                 settings.Width.ToString(CultureInfo.InvariantCulture) +

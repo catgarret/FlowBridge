@@ -69,11 +69,6 @@ namespace DexManager.Services
             }
         }
 
-        public Task StartAsync()
-        {
-            return StartAsync(null);
-        }
-
         public Task StartAsync(string serial)
         {
             return Task.Run(delegate
@@ -106,7 +101,7 @@ namespace DexManager.Services
                 _shutdownSignal.Set();
         }
 
-        public Task ShutdownAsync()
+        public Task ShutdownAsync(string fallbackSerial)
         {
             RequestShutdown();
             lock (_shutdownTaskLock)
@@ -117,7 +112,8 @@ namespace DexManager.Services
                 {
                     _shutdownTask = Task.Run(delegate
                     {
-                        lock (_operationGate) ShutdownCore();
+                        lock (_operationGate)
+                            ShutdownCore(fallbackSerial);
                     });
                 }
                 return _shutdownTask;
@@ -133,11 +129,6 @@ namespace DexManager.Services
             });
         }
 
-        private void StartCore()
-        {
-            StartCore(null);
-        }
-
         private void StartCore(string requestedSerial)
         {
             if (IsShutdownRequested) return;
@@ -148,9 +139,7 @@ namespace DexManager.Services
                 return;
             }
 
-            var serial = string.IsNullOrWhiteSpace(requestedSerial)
-                ? _adbService.TargetSerial
-                : requestedSerial;
+            var serial = requestedSerial;
             if (string.IsNullOrWhiteSpace(serial) ||
                 !_adbService.IsAuthorizedDeviceConnected(serial))
             {
@@ -273,7 +262,7 @@ namespace DexManager.Services
             try
             {
                 var serial = _currentSession == null
-                    ? _adbService.TargetSerial
+                    ? string.Empty
                     : _currentSession.Serial;
                 if (string.IsNullOrWhiteSpace(serial) ||
                     !_adbService.IsAuthorizedDeviceConnected(serial))
@@ -313,7 +302,7 @@ namespace DexManager.Services
             }
         }
 
-        private void ShutdownCore()
+        private void ShutdownCore(string fallbackSerial)
         {
             var session = _currentSession;
             Exception stopException = null;
@@ -345,7 +334,7 @@ namespace DexManager.Services
             }
             else if (session == null)
             {
-                CleanupConnectedTargetOverlay();
+                CleanupConnectedTargetOverlay(fallbackSerial);
             }
             ClearSession(session);
             _logService.Info(LocalizationService.Get(
@@ -502,9 +491,8 @@ namespace DexManager.Services
             return _virtualDisplayService.Release(lease);
         }
 
-        private void CleanupConnectedTargetOverlay()
+        private void CleanupConnectedTargetOverlay(string serial)
         {
-            var serial = _adbService.TargetSerial;
             if (string.IsNullOrWhiteSpace(serial) ||
                 !_adbService.IsAuthorizedDeviceConnected(serial))
             {

@@ -15,6 +15,7 @@ namespace DexManager.Services
         private readonly LogService _logService;
         private readonly SettingsService _settingsService;
         private readonly AppSettings _settings;
+        private readonly Func<string> _targetSerialProvider;
 
         public EnvironmentCheckService(
             AdbService adbService,
@@ -22,7 +23,8 @@ namespace DexManager.Services
             PathService pathService,
             LogService logService,
             SettingsService settingsService,
-            AppSettings settings)
+            AppSettings settings,
+            Func<string> targetSerialProvider)
         {
             _adbService = adbService;
             _scrcpyService = scrcpyService;
@@ -30,6 +32,8 @@ namespace DexManager.Services
             _logService = logService;
             _settingsService = settingsService;
             _settings = settings;
+            _targetSerialProvider = targetSerialProvider ??
+                throw new ArgumentNullException("targetSerialProvider");
         }
 
         public IList<EnvironmentCheckItem> Run()
@@ -98,7 +102,10 @@ namespace DexManager.Services
             {
                 var devices = _adbService.GetDevices();
                 AddDeviceResult(results, devices);
-                AddDeviceScreenshotFolderCheck(results, devices);
+                AddDeviceScreenshotFolderCheck(
+                    results,
+                    devices,
+                    _targetSerialProvider());
             }
             catch (Exception ex)
             {
@@ -191,10 +198,16 @@ namespace DexManager.Services
 
         private void AddDeviceScreenshotFolderCheck(
             ICollection<EnvironmentCheckItem> results,
-            IList<AdbDeviceInfo> devices)
+            IList<AdbDeviceInfo> devices,
+            string serial)
         {
-            var authorized = devices.Any(
-                device => device.Status == AdbDeviceStatus.Device);
+            var authorized = !string.IsNullOrWhiteSpace(serial) &&
+                devices.Any(device =>
+                    device.Status == AdbDeviceStatus.Device &&
+                    string.Equals(
+                        device.Serial,
+                        serial,
+                        StringComparison.OrdinalIgnoreCase));
             if (!authorized)
             {
                 results.Add(new EnvironmentCheckItem
@@ -214,7 +227,10 @@ namespace DexManager.Services
             var command = "mkdir -p " + ShellQuote(folder) +
                 " && touch " + ShellQuote(testFile) +
                 " && rm -f " + ShellQuote(testFile);
-            var result = _adbService.Shell(command, false);
+            var result = _adbService.ShellForSerial(
+                serial,
+                command,
+                false);
             results.Add(new EnvironmentCheckItem
             {
                 Name = LocalizationService.Get(

@@ -52,6 +52,12 @@
     <Compile Include="..\DexManager\Services\PhysicalDeviceRegistry.cs">
       <Link>Services\PhysicalDeviceRegistry.cs</Link>
     </Compile>
+    <Compile Include="..\DexManager\Services\AdbCommandBuilder.cs">
+      <Link>Services\AdbCommandBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\DexManager\Services\DeviceSerialScope.cs">
+      <Link>Services\DeviceSerialScope.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

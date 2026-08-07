@@ -209,7 +209,9 @@ namespace DexManager.Forms
                     await ApplySingleWindowSettingsAsync(_selectedMode);
                     return;
                 }
-                if (!_adbService.IsAuthorizedDeviceConnected())
+                var serial = GetSelectedDeviceSerial();
+                if (string.IsNullOrWhiteSpace(serial) ||
+                    !_adbService.IsAuthorizedDeviceConnected(serial))
                 {
                     _logService.Info(LocalizationService.Get(
                         "Log.Main.SettingsDeferredNoDevice"));
@@ -293,7 +295,9 @@ namespace DexManager.Forms
 
         private async Task ApplySingleWindowSettingsAsync(int slot)
         {
-            if (!_adbService.IsAuthorizedDeviceConnected())
+            var serial = GetSelectedDeviceSerial();
+            if (string.IsNullOrWhiteSpace(serial) ||
+                !_adbService.IsAuthorizedDeviceConnected(serial))
             {
                 MessageBox.Show(
                     this,
@@ -364,7 +368,15 @@ namespace DexManager.Forms
                 _loadAppsButton.Text = LocalizationService.Get("Main.Loading");
             try
             {
-                var apps = await Task.Run(delegate { return _scrcpyService.ListApps(); });
+                var serial = GetSelectedDeviceSerial();
+                if (string.IsNullOrWhiteSpace(serial))
+                    throw new InvalidOperationException(
+                        LocalizationService.Get(
+                            "Error.Dex.NoAuthorizedDevice"));
+                var apps = await Task.Run(delegate
+                {
+                    return _scrcpyService.ListApps(serial);
+                });
                 var selectedPackage = GetSelectedAppPackage();
                 var selectedName = GetSelectedAppName(selectedPackage);
 

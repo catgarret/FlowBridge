@@ -10,10 +10,11 @@
   - [x] identity 조회 실패 시 기존 serial 매핑 또는 임시 identity 사용
   - [x] 상태 변화 세대 번호·이벤트와 방어적 복사
   - [x] .NET Framework 4.6.2 x64 Release 및 독립 회귀 테스트
-- [ ] v2 2단계 전역 ADB 대상 제거
-  - [ ] `AdbService.TargetSerial`과 프로세스 전역 `ANDROID_SERIAL` 의존 위치 목록화
-  - [ ] 모든 기기별 ADB 명령에 명시적 serial 또는 기기 실행 컨텍스트 전달
-  - [ ] 한 기기의 명령·정리·취소가 다른 기기에 영향을 주지 않는 테스트 추가
+- [x] v2 2단계 전역 ADB 대상 제거
+  - [x] `AdbService.TargetSerial`과 프로세스 전역 `ANDROID_SERIAL` 의존 위치 목록화 및 제거
+  - [x] 모든 기기별 ADB·Scrcpy 명령에 명시적 serial 전달
+  - [x] 기기 선택 상태와 명령 실행 대상을 분리하고 시작·정리 시 serial을 캡처
+  - [x] 한 기기의 명령·정리·취소 범위가 다른 기기와 섞이지 않는 독립 회귀 테스트
 - [ ] v2 3단계 기기별 런타임 세션
   - [ ] DeviceMonitor, DeX, 단일창, Scrcpy, 화면 전원 상태를 물리 기기별로 분리
   - [ ] Companion reverse·수신 토큰과 PC↔폰 전송 큐를 기기별로 분리

@@ -22,7 +22,7 @@ namespace DexManager.Forms
             SetCompanionBusy("Settings.DisplayCleanupChecking");
             try
             {
-                var serial = _adbService.TargetSerial;
+                var serial = _wirelessAdbService.SelectedSerial;
                 var status = await Task.Run(
                     () => _displayCleanupPermissionService.Inspect(serial));
                 var bundled = await Task.Run(

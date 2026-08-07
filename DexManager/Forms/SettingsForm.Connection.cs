@@ -151,7 +151,7 @@ namespace DexManager.Forms
 
         private void UpdateWirelessStatus()
         {
-            var target = _adbService.TargetSerial;
+            var target = _wirelessAdbService.SelectedSerial;
             if (string.IsNullOrWhiteSpace(target))
             {
                 _wirelessStatusLabel.Text =

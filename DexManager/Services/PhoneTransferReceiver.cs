@@ -191,10 +191,7 @@ namespace DexManager.Services
                     lock (_sync)
                     {
                         if (!string.IsNullOrWhiteSpace(serial) &&
-                            !string.Equals(
-                                serial,
-                                _serial,
-                                StringComparison.OrdinalIgnoreCase))
+                            !DeviceSerialScope.Matches(serial, _serial))
                         {
                             return;
                         }

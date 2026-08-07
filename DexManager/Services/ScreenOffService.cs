@@ -54,13 +54,12 @@ namespace DexManager.Services
                 throw new ArgumentNullException("logService");
         }
 
-        public bool Reapply(Func<bool> shouldRun)
-        {
-            return Reapply(_adbService.TargetSerial, shouldRun);
-        }
-
         public bool Reapply(string serial, Func<bool> shouldRun)
         {
+            if (string.IsNullOrWhiteSpace(serial))
+                throw new ArgumentException(
+                    LocalizationService.Get("Error.Adb.SerialEmpty"),
+                    "serial");
             if (shouldRun == null)
                 throw new ArgumentNullException("shouldRun");
 
@@ -158,9 +157,7 @@ namespace DexManager.Services
                     _scrcpyPath);
 
             var arguments =
-                (string.IsNullOrWhiteSpace(serial)
-                    ? string.Empty
-                    : "--serial " + Quote(serial) + " ") +
+                "--serial " + Quote(serial.Trim()) + " " +
                 "--no-video --no-audio --no-window -S --no-power-on " +
                 "--no-cleanup";
             using (var confirmation = new ManualResetEventSlim(false))

@@ -198,6 +198,7 @@ namespace DexManager.Forms
             _fileTransferCoordinator.RequestShutdown();
             _phoneTransferReceiver.RequestShutdown();
             var wakeSerials = CaptureWakeSerials();
+            var cleanupSerial = GetSelectedDeviceSerial();
             TryCleanup(
                 "mini control bar",
                 _miniControlBarManager.Dispose);
@@ -211,7 +212,9 @@ namespace DexManager.Forms
 
             try
             {
-                _exitCleanupTask = RunExitCleanupAsync(wakeSerials);
+                _exitCleanupTask = RunExitCleanupAsync(
+                    wakeSerials,
+                    cleanupSerial);
                 await _exitCleanupTask;
             }
             finally
@@ -229,11 +232,16 @@ namespace DexManager.Forms
             return serials;
         }
 
-        private async Task RunExitCleanupAsync(IList<string> wakeSerials)
+        private async Task RunExitCleanupAsync(
+            IList<string> wakeSerials,
+            string cleanupSerial)
         {
             await TryCleanupAsync(
                 "DeX session",
-                _orchestrator.ShutdownAsync).ConfigureAwait(false);
+                delegate
+                {
+                    return _orchestrator.ShutdownAsync(cleanupSerial);
+                }).ConfigureAwait(false);
             await TryCleanupAsync(
                 "single-window sessions",
                 delegate

@@ -16,6 +16,7 @@ namespace DexManager.Services
         private readonly object _reconnectSync = new object();
         private DateTime _lastReconnectAttemptUtc = DateTime.MinValue;
         private long _transitionGeneration;
+        private string _selectedSerial = string.Empty;
 
         public WirelessAdbService(
             AdbService adbService,
@@ -55,6 +56,15 @@ namespace DexManager.Services
             }
         }
 
+        public string SelectedSerial
+        {
+            get
+            {
+                lock (_reconnectSync)
+                    return _selectedSerial;
+            }
+        }
+
         public void InitializeTarget()
         {
             SynchronizeTargetWithSettings();
@@ -68,15 +78,15 @@ namespace DexManager.Services
                 _transitionGeneration++;
                 if (connection.Mode == AdbConnectionMode.Wireless)
                 {
-                    _adbService.SetTargetSerial(connection.Endpoint);
+                    SetSelectedSerial(connection.Endpoint);
                     return;
                 }
 
-                var current = _adbService.TargetSerial;
+                var current = _selectedSerial;
                 if (AdbService.IsTcpIpSerial(current) ||
                     AdbService.IsEmulatorSerial(current))
                 {
-                    _adbService.SetTargetSerial(string.Empty);
+                    SetSelectedSerial(string.Empty);
                 }
             }
         }
@@ -104,7 +114,7 @@ namespace DexManager.Services
                 var connection = GetConnectionSnapshot();
                 var preferred = FindPreferredDeviceCore(
                     devices,
-                    _adbService.TargetSerial,
+                    _selectedSerial,
                     connection);
                 var unavailableTarget = string.IsNullOrWhiteSpace(
                     targetWhenUnavailable)
@@ -117,7 +127,7 @@ namespace DexManager.Services
                         ? connection.Endpoint
                         : string.Empty)
                     : preferred.Serial;
-                _adbService.SetTargetSerial(target);
+                SetSelectedSerial(target);
                 return new WirelessDeviceSelection(
                     preferred,
                     _transitionGeneration);
@@ -164,7 +174,7 @@ namespace DexManager.Services
 
                 var endpoint = connection.Endpoint;
                 _transitionGeneration++;
-                _adbService.SetTargetSerial(endpoint);
+                SetSelectedSerial(endpoint);
                 if (IsConnected(endpoint)) return true;
 
                 if (writeLog)
@@ -203,7 +213,7 @@ namespace DexManager.Services
 
                 _adbService.StartServer();
                 var wasConnected = IsConnected(endpoint);
-                var previousTarget = _adbService.TargetSerial;
+                var previousTarget = _selectedSerial;
                 var result = _adbService.Connect(endpoint, true);
                 if (!result.IsSuccess || !WaitForConnection(endpoint, 3000))
                 {
@@ -235,7 +245,7 @@ namespace DexManager.Services
                         previousTarget);
                     throw;
                 }
-                _adbService.SetTargetSerial(endpoint);
+                SetSelectedSerial(endpoint);
                 _logService.Info(LocalizationService.Format(
                     "Log.Wireless.ConnectSucceeded",
                     endpoint));
@@ -347,7 +357,7 @@ namespace DexManager.Services
                 ProcessResult disconnectResult = null;
                 if (!string.IsNullOrWhiteSpace(endpoint))
                     disconnectResult = _adbService.Disconnect(endpoint);
-                _adbService.SetTargetSerial(string.Empty);
+                SetSelectedSerial(string.Empty);
                 if (disconnectResult != null && !disconnectResult.IsSuccess)
                 {
                     _logService.Warning(LocalizationService.Format(
@@ -372,7 +382,7 @@ namespace DexManager.Services
                 {
                     settings.Connection.Mode = AdbConnectionMode.Usb;
                 });
-                _adbService.SetTargetSerial(string.Empty);
+                SetSelectedSerial(string.Empty);
             }
         }
 
@@ -437,8 +447,30 @@ namespace DexManager.Services
             }
             finally
             {
-                _adbService.SetTargetSerial(previousTarget);
+                SetSelectedSerial(previousTarget);
             }
+        }
+
+        private void SetSelectedSerial(string serial)
+        {
+            var normalized = string.IsNullOrWhiteSpace(serial)
+                ? string.Empty
+                : serial.Trim();
+            if (string.Equals(
+                _selectedSerial,
+                normalized,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _selectedSerial = normalized;
+            _logService.Info(
+                normalized.Length == 0
+                    ? LocalizationService.Get("Log.Adb.TargetCleared")
+                    : LocalizationService.Format(
+                        "Log.Adb.TargetSelected",
+                        normalized));
         }
 
         private ConnectionSnapshot GetConnectionSnapshot()

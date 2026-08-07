@@ -7,6 +7,11 @@
 - 물리 휴대폰 identity와 USB·무선 ADB transport를 분리한 모델 추가
 - 동일 휴대폰의 여러 transport 병합, 서로 다른 휴대폰 분리 및 transport 선택 규칙 추가
 - 상태 스냅샷·변경 이벤트와 알려진 serial의 identity·표시 이름 보존 레지스트리 추가
+- `AdbService.TargetSerial`과 프로세스 전역 `ANDROID_SERIAL`을 제거하고 모든
+  기기별 ADB·Scrcpy 명령을 명시적 transport serial 방식으로 전환
+- DeX·단일창 시작과 종료 정리, 화면 전원, 캡처, Companion, 앱 목록 등에서
+  작업 시작 시 캡처한 serial 또는 세션 serial만 사용
+- 파일 전송 취소와 Companion detach가 요청한 기기에서만 수행되도록 범위 고정
 - 기존 v1 런타임에 연결하기 전 핵심 규칙을 고정하는 독립 회귀 테스트 추가
 
 ## 2026-08 - v1.3.0

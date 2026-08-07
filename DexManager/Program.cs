@@ -161,7 +161,8 @@ namespace DexManager
                     pathService,
                     logService,
                     settingsService,
-                    settings);
+                    settings,
+                    () => wirelessAdbService.SelectedSerial);
                 var keyMappingService = new KeyMappingService(
                     scrcpyService,
                     singleWindowService,

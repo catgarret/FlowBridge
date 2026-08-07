@@ -141,7 +141,8 @@ namespace DexManager.Forms
                     _phoneTransferReceiver.Dispose);
                 TryCleanup("DeX finalization", delegate
                 {
-                    _orchestrator.ShutdownAsync()
+                    _orchestrator.ShutdownAsync(
+                            GetSelectedDeviceSerial())
                         .GetAwaiter()
                         .GetResult();
                 });
@@ -185,7 +186,10 @@ namespace DexManager.Forms
             if (_exitCleanupTask == null)
             {
                 var wakeSerials = CaptureWakeSerials();
-                _exitCleanupTask = RunExitCleanupAsync(wakeSerials);
+                var cleanupSerial = GetSelectedDeviceSerial();
+                _exitCleanupTask = RunExitCleanupAsync(
+                    wakeSerials,
+                    cleanupSerial);
             }
             try
             {

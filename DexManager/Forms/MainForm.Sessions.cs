@@ -34,13 +34,25 @@ namespace DexManager.Forms
                     _wirelessAdbService.SelectPreferredDevice(devices);
                     if (_settings.Features.ScrcpyWakeUpMode == ScrcpyWakeUpMode.AlwaysOnStartup)
                     {
-                        _adbService.WakeUp(delegate { return _scrcpyService.RunWakeUp(_settings.Timing.AdbWakeUpDelayMs); });
+                        var target = GetSelectedDeviceSerial();
+                        _adbService.WakeUp(
+                            target,
+                            serial => _scrcpyService.RunWakeUp(
+                                serial,
+                                _settings.Timing.AdbWakeUpDelayMs));
                     }
                     else
                     {
-                        if (_settings.Features.ScrcpyWakeUpMode == ScrcpyWakeUpMode.OnAdbFailure && !_adbService.IsAuthorizedDeviceConnected())
+                        var target = GetSelectedDeviceSerial();
+                        if (_settings.Features.ScrcpyWakeUpMode == ScrcpyWakeUpMode.OnAdbFailure &&
+                            (string.IsNullOrWhiteSpace(target) ||
+                             !_adbService.IsAuthorizedDeviceConnected(target)))
                         {
-                            _adbService.WakeUp(delegate { return _scrcpyService.RunWakeUp(_settings.Timing.AdbWakeUpDelayMs); });
+                            _adbService.WakeUp(
+                                target,
+                                serial => _scrcpyService.RunWakeUp(
+                                    serial,
+                                    _settings.Timing.AdbWakeUpDelayMs));
                         }
                     }
                 });
@@ -116,7 +128,7 @@ namespace DexManager.Forms
                 LocalizationService.Get("Main.DexPreparing"));
             try
             {
-                var serial = _adbService.TargetSerial;
+                var serial = GetSelectedDeviceSerial();
                 if (string.IsNullOrWhiteSpace(serial))
                 {
                     throw new InvalidOperationException(
@@ -198,7 +210,7 @@ namespace DexManager.Forms
             try
             {
                 var settings = GetSingleWindowSettings(slot);
-                var serial = _adbService.TargetSerial;
+                var serial = GetSelectedDeviceSerial();
                 if (string.IsNullOrWhiteSpace(serial))
                 {
                     throw new InvalidOperationException(
@@ -479,7 +491,7 @@ namespace DexManager.Forms
             if (_exitInProgress || IsDisposed ||
                 IsSerialMarkedDisconnected(serial) ||
                 !string.Equals(
-                    _adbService.TargetSerial,
+                    GetSelectedDeviceSerial(),
                     serial,
                     StringComparison.OrdinalIgnoreCase))
             {
@@ -505,9 +517,22 @@ namespace DexManager.Forms
                 !_exitInProgress &&
                 !IsSerialMarkedDisconnected(serial) &&
                 string.Equals(
-                    _adbService.TargetSerial,
+                    GetSelectedDeviceSerial(),
                     serial,
                     StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string GetSelectedDeviceSerial()
+        {
+            var current = _deviceMonitor.CurrentState;
+            if (current != null &&
+                current.IsConnected &&
+                current.Status == AdbDeviceStatus.Device &&
+                !string.IsNullOrWhiteSpace(current.Serial))
+            {
+                return current.Serial;
+            }
+            return _wirelessAdbService.SelectedSerial;
         }
 
         private void MarkSerialDisconnected(string serial)
