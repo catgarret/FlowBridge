@@ -37,6 +37,8 @@ namespace DexManager.Forms
         private readonly KeyMappingService _keyMappingService;
         private readonly FileTransferCoordinator _fileTransferCoordinator;
         private readonly PhoneTransferReceiver _phoneTransferReceiver;
+        private readonly DeviceRuntimeSessionRegistry _runtimeSessions;
+        private readonly DeviceRuntimeServiceSet _activeRuntime;
         private readonly MiniControlBarManager _miniControlBarManager;
         private readonly bool _isAutoRun;
         private readonly TrayService _trayService;
@@ -148,6 +150,8 @@ namespace DexManager.Forms
             KeyMappingService keyMappingService,
             FileTransferCoordinator fileTransferCoordinator,
             PhoneTransferReceiver phoneTransferReceiver,
+            DeviceRuntimeSessionRegistry runtimeSessions,
+            DeviceRuntimeServiceSet activeRuntime,
             bool isAutoRun)
         {
             _settingsService = settingsService;
@@ -170,6 +174,10 @@ namespace DexManager.Forms
                 throw new ArgumentNullException("fileTransferCoordinator");
             _phoneTransferReceiver = phoneTransferReceiver ??
                 throw new ArgumentNullException("phoneTransferReceiver");
+            _runtimeSessions = runtimeSessions ??
+                throw new ArgumentNullException("runtimeSessions");
+            _activeRuntime = activeRuntime ??
+                throw new ArgumentNullException("activeRuntime");
             _miniControlBarManager = new MiniControlBarManager(
                 _settings,
                 _scrcpyService,

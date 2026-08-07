@@ -49,8 +49,23 @@
     <Compile Include="..\DexManager\Models\DeviceRegistrySnapshot.cs">
       <Link>Models\DeviceRegistrySnapshot.cs</Link>
     </Compile>
+    <Compile Include="..\DexManager\Models\ManagedDisplaySession.cs">
+      <Link>Models\ManagedDisplaySession.cs</Link>
+    </Compile>
+    <Compile Include="..\DexManager\Models\VirtualDisplayLease.cs">
+      <Link>Models\VirtualDisplayLease.cs</Link>
+    </Compile>
+    <Compile Include="..\DexManager\Models\DeviceRuntimeSessionSnapshot.cs">
+      <Link>Models\DeviceRuntimeSessionSnapshot.cs</Link>
+    </Compile>
+    <Compile Include="..\DexManager\Models\DeviceRuntimeRegistrySnapshot.cs">
+      <Link>Models\DeviceRuntimeRegistrySnapshot.cs</Link>
+    </Compile>
     <Compile Include="..\DexManager\Services\PhysicalDeviceRegistry.cs">
       <Link>Services\PhysicalDeviceRegistry.cs</Link>
+    </Compile>
+    <Compile Include="..\DexManager\Services\DeviceRuntimeSessionRegistry.cs">
+      <Link>Services\DeviceRuntimeSessionRegistry.cs</Link>
     </Compile>
     <Compile Include="..\DexManager\Services\AdbCommandBuilder.cs">
       <Link>Services\AdbCommandBuilder.cs</Link>

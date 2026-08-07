@@ -15,6 +15,7 @@ namespace DexManager.Services
         private readonly SettingsService _settingsService;
         private readonly LogService _logService;
         private readonly AppSettings _settings;
+        private readonly DeviceRuntimeSessionRegistry _runtimeSessions;
         private readonly object _operationGate = new object();
         private readonly object _shutdownTaskLock = new object();
         private readonly ManualResetEvent _shutdownSignal =
@@ -35,7 +36,8 @@ namespace DexManager.Services
             ScrcpyLaunchCoordinator launchCoordinator,
             SettingsService settingsService,
             LogService logService,
-            AppSettings settings)
+            AppSettings settings,
+            DeviceRuntimeSessionRegistry runtimeSessions)
         {
             _adbService = adbService;
             _virtualDisplayService = virtualDisplayService;
@@ -44,6 +46,8 @@ namespace DexManager.Services
             _settingsService = settingsService;
             _logService = logService;
             _settings = settings;
+            _runtimeSessions = runtimeSessions ??
+                throw new ArgumentNullException("runtimeSessions");
             _scrcpyService.RunningChanged +=
                 ScrcpyService_RunningChanged;
         }
@@ -571,6 +575,7 @@ namespace DexManager.Services
                 CreatedAtUtc = DateTime.UtcNow.ToString("o"),
                 DisplayLease = lease
             };
+            _runtimeSessions.SetDexSession(serial, _currentSession);
             _logService.Info(LocalizationService.Format(
                 "Log.Dex.SessionStarted",
                 _currentSession));
@@ -583,6 +588,7 @@ namespace DexManager.Services
             _logService.Info(LocalizationService.Format(
                 "Log.Dex.SessionEnded",
                 session));
+            _runtimeSessions.SetDexSession(session.Serial, null);
             _currentSession = null;
         }
     }

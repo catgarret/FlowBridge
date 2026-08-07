@@ -27,7 +27,14 @@ namespace DexManager.MultiDeviceTests
                 RequiresExplicitSerialForDeviceCommands,
                 KeepsCleanupCommandsScopedToRequestedDevice,
                 InterleavedDeviceCommandsDoNotShareTarget,
-                DeviceCancellationMatchesOnlyRequestedSerial
+                DeviceCancellationMatchesOnlyRequestedSerial,
+                CreatesIndependentRuntimeSessions,
+                KeepsRuntimeUpdatesScopedToOnePhysicalDevice,
+                SharesRuntimeAcrossUsbAndWirelessTransports,
+                MigratesTemporaryRuntimeIdentity,
+                PreservesRuntimeStateAcrossDisconnect,
+                IgnoresUnchangedRuntimeReconciles,
+                BindsOneServiceInstancePerPhysicalDevice
             };
 
             try
@@ -308,6 +315,183 @@ namespace DexManager.MultiDeviceTests
             True(
                 !DeviceSerialScope.Matches(string.Empty, "PHONE-A"),
                 "empty cancellation scope must not match a device");
+        }
+
+        private static void CreatesIndependentRuntimeSessions()
+        {
+            var registry = CreateRuntimeRegistry();
+            var snapshot = registry.Current;
+            Equal(2, snapshot.Sessions.Count,
+                "each physical device needs its own runtime session");
+            NotNull(snapshot.FindByIdentity("phone-a"),
+                "phone-a runtime missing");
+            NotNull(snapshot.FindByIdentity("phone-b"),
+                "phone-b runtime missing");
+        }
+
+        private static void KeepsRuntimeUpdatesScopedToOnePhysicalDevice()
+        {
+            var registry = CreateRuntimeRegistry();
+            registry.SetDexSession("USB-A", new ManagedDisplaySession
+            {
+                Serial = "USB-A",
+                DisplayId = 12,
+                ScrcpyProcessId = 101,
+                DisplayLease = new VirtualDisplayLease
+                {
+                    Serial = "USB-A",
+                    DisplayId = 12,
+                    OwnsOverlaySetting = true
+                }
+            });
+            registry.SetSingleWindow(
+                "USB-B", 1, 21, 202, new IntPtr(303), true, false);
+            registry.SetCompanionAttached("USB-B", true);
+            registry.SetPcToPhoneTransferState("USB-B", 1, 4);
+            registry.SetPhonePowerState(
+                "USB-A", true, true, "0", true);
+
+            var snapshot = registry.Current;
+            var first = snapshot.FindByIdentity("phone-a");
+            var second = snapshot.FindByIdentity("phone-b");
+            True(first.Dex.IsRunning, "phone-a DeX state missing");
+            Equal(0, first.SingleWindows.Count,
+                "phone-b single window leaked into phone-a");
+            True(first.PhonePower.ScreenOffRequested,
+                "phone-a power state missing");
+            True(!second.Dex.IsRunning,
+                "phone-a DeX state leaked into phone-b");
+            Equal(1, second.SingleWindows.Count,
+                "phone-b single window state missing");
+            True(second.Companion.IsAttached,
+                "phone-b companion state missing");
+            Equal(4, second.Transfers.QueuedPcToPhoneItems,
+                "phone-b transfer queue state missing");
+        }
+
+        private static void SharesRuntimeAcrossUsbAndWirelessTransports()
+        {
+            var physical = new PhysicalDeviceRegistry();
+            var runtime = new DeviceRuntimeSessionRegistry();
+            runtime.Reconcile(physical.Reconcile(new[]
+            {
+                Device("phone-a", "Galaxy A", "USB-A", DeviceTransportKind.Usb),
+                Device("phone-a", "Galaxy A", "10.0.0.2:5555", DeviceTransportKind.Wireless)
+            }));
+            runtime.SetCompanionAttached("10.0.0.2:5555", true);
+
+            var snapshot = runtime.Current;
+            Equal(1, snapshot.Sessions.Count,
+                "USB and wireless transports must share one runtime");
+            True(snapshot.FindByTransportSerial("USB-A")
+                    .Companion.IsAttached,
+                "wireless update must be visible through USB alias");
+        }
+
+        private static void MigratesTemporaryRuntimeIdentity()
+        {
+            var runtime = new DeviceRuntimeSessionRegistry();
+            runtime.SetPhonePowerState(
+                "USB-A", true, false, string.Empty, true);
+            var physical = new PhysicalDeviceRegistry();
+            runtime.Reconcile(physical.Reconcile(new[]
+            {
+                Device("phone-a", "Galaxy A", "USB-A", DeviceTransportKind.Usb)
+            }));
+
+            var snapshot = runtime.Current;
+            Equal(1, snapshot.Sessions.Count,
+                "temporary runtime must migrate, not duplicate");
+            var migrated = snapshot.FindByIdentity("phone-a");
+            NotNull(migrated, "stable runtime identity missing");
+            True(migrated.PhonePower.ScreenOffRequested,
+                "temporary runtime state was lost during migration");
+        }
+
+        private static void PreservesRuntimeStateAcrossDisconnect()
+        {
+            var physical = new PhysicalDeviceRegistry();
+            var runtime = new DeviceRuntimeSessionRegistry();
+            runtime.Reconcile(physical.Reconcile(new[]
+            {
+                Device("phone-a", "Galaxy A", "USB-A", DeviceTransportKind.Usb)
+            }));
+            runtime.SetPcToPhoneTransferState("USB-A", 1, 2);
+            runtime.Reconcile(physical.Reset());
+
+            var session = runtime.Current.FindByIdentity("phone-a");
+            NotNull(session, "disconnected runtime must remain for cleanup");
+            True(!session.IsConnected,
+                "disconnected runtime must be marked offline");
+            Equal(2, session.Transfers.QueuedPcToPhoneItems,
+                "disconnect must not erase cleanup evidence");
+        }
+
+        private static void IgnoresUnchangedRuntimeReconciles()
+        {
+            var physical = new PhysicalDeviceRegistry();
+            var runtime = new DeviceRuntimeSessionRegistry();
+            var devices = new[]
+            {
+                Device("phone-a", "Galaxy A", "USB-A", DeviceTransportKind.Usb)
+            };
+            runtime.Reconcile(physical.Reconcile(devices));
+            var before = runtime.Current;
+            var eventCount = 0;
+            runtime.Changed += delegate { eventCount++; };
+
+            runtime.Reconcile(physical.Reconcile(devices));
+
+            var after = runtime.Current;
+            Equal(0, eventCount,
+                "timestamp-only runtime refresh must not publish an event");
+            Equal(before.Generation, after.Generation,
+                "timestamp-only runtime refresh must not change generation");
+            Equal(
+                before.Sessions[0].Revision,
+                after.Sessions[0].Revision,
+                "timestamp-only runtime refresh must not change revision");
+        }
+
+        private static void BindsOneServiceInstancePerPhysicalDevice()
+        {
+            var registry = CreateRuntimeRegistry();
+            var firstServices = Guid.NewGuid();
+            var secondServices = Guid.NewGuid();
+            var eventCount = 0;
+            registry.Changed += delegate { eventCount++; };
+
+            registry.BindServiceInstance("USB-A", firstServices);
+            registry.BindServiceInstance("USB-A", firstServices);
+            registry.BindServiceInstance("USB-B", secondServices);
+
+            var snapshot = registry.Current;
+            Equal(
+                firstServices,
+                snapshot.FindByIdentity("phone-a").ServiceInstanceId,
+                "phone-a service binding missing");
+            Equal(
+                secondServices,
+                snapshot.FindByIdentity("phone-b").ServiceInstanceId,
+                "phone-b service binding missing");
+            Equal(2, eventCount,
+                "rebinding the same service must not publish an event");
+            Throws<InvalidOperationException>(delegate
+            {
+                registry.BindServiceInstance("USB-A", secondServices);
+            }, "a physical device must not be rebound to another service set");
+        }
+
+        private static DeviceRuntimeSessionRegistry CreateRuntimeRegistry()
+        {
+            var physical = new PhysicalDeviceRegistry();
+            var runtime = new DeviceRuntimeSessionRegistry();
+            runtime.Reconcile(physical.Reconcile(new[]
+            {
+                Device("phone-a", "Galaxy A", "USB-A", DeviceTransportKind.Usb),
+                Device("phone-b", "Galaxy B", "USB-B", DeviceTransportKind.Usb)
+            }));
+            return runtime;
         }
 
         private static DiscoveredDeviceTransport Device(

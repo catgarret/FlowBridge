@@ -6,6 +6,9 @@
 
 - `PathService`: OS/설정별 ADB 선택
 - `AdbService`: 전역 target 없이 명시적 serial 기반 ADB 실행
+- `PhysicalDeviceRegistry`: 동일 휴대폰의 USB·무선 transport 병합
+- `DeviceRuntimeSessionRegistry`: 물리 기기별 세션·전송·전원 상태 스냅샷
+- `DeviceRuntimeServiceFactory`: 물리 기기별 독립 실행 서비스 묶음 생성
 - `WirelessAdbService`: USB 준비, TCP/IP, 페어링, 재연결
 - `VirtualDisplayService`: DeX overlay와 ID 탐색
 - `DexOrchestrator`: DeX 실행/정리
@@ -16,6 +19,18 @@
 - `KeyMappingService`: Scrcpy 활성 상태 키 보정
 - `CaptureCoordinator`: F8 캡처
 - `FileTransferCoordinator`: scrcpy 파일 드롭 IPC, 전역 FIFO 전송과 상태 관리
+
+v2 런타임은 물리 identity 하나당 `DeviceRuntimeSessionSnapshot` 하나를 유지한다.
+여기에는 활성 transport, DeX display/PID, 단일창 슬롯별 display/PID/HWND,
+Companion 연결, 양방향 전송 수와 화면 OFF·절전모드 해제 복구 상태가 들어간다.
+연결 해제 시에도 정리 증거를 보존하며, 표시 이름·연결·transport처럼 의미 있는
+값이 바뀔 때만 revision과 registry generation을 올린다.
+
+`DeviceRuntimeServiceSet`은 Scrcpy·DeX·단일창·화면 OFF·가상 디스플레이,
+Companion 수신기와 PC→휴대폰 전송 큐를 함께 소유한다. 각 묶음의 고유 instance
+ID는 한 물리 기기 런타임에 한 번만 결속된다. 서비스 묶음끼리는 상태와 큐를
+공유하지 않고, 대상 상태가 없는 전역 시작 직렬화기만 공유한다. 현재 UI는 첫
+묶음만 사용하며 기기별 생성과 전환은 v2 다중 기기 UI 단계에서 연결한다.
 
 ## ADB
 

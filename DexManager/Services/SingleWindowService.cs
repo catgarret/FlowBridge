@@ -27,6 +27,7 @@ namespace DexManager.Services
         private readonly FileTransferCoordinator _fileTransferCoordinator;
         private readonly LogService _logService;
         private readonly ScrcpyRuntimeInfo _runtimeInfo;
+        private readonly DeviceRuntimeSessionRegistry _runtimeSessions;
         private bool _unsupportedFlexDisplayLogged;
         private readonly Dictionary<int, Process> _processes =
             new Dictionary<int, Process>();
@@ -53,7 +54,8 @@ namespace DexManager.Services
             ScrcpyLaunchCoordinator launchCoordinator,
             ScrcpyRuntimeInfo runtimeInfo,
             FileTransferCoordinator fileTransferCoordinator,
-            LogService logService)
+            LogService logService,
+            DeviceRuntimeSessionRegistry runtimeSessions)
         {
             if (string.IsNullOrWhiteSpace(scrcpyPath))
                 throw new ArgumentException(
@@ -73,6 +75,8 @@ namespace DexManager.Services
                 throw new ArgumentNullException("fileTransferCoordinator");
             _logService = logService ??
                 throw new ArgumentNullException("logService");
+            _runtimeSessions = runtimeSessions ??
+                throw new ArgumentNullException("runtimeSessions");
         }
 
         public event EventHandler RunningChanged;
@@ -415,6 +419,7 @@ namespace DexManager.Services
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
                     WaitForMainWindow(process, slot);
+                    PublishSlotRuntime(slot);
                     started = true;
                 }
                 catch
@@ -650,6 +655,7 @@ namespace DexManager.Services
             var slot = 0;
             var ownedProcess = false;
             string transferSessionId = null;
+            string serial = null;
             lock (_syncRoot)
             {
                 foreach (var item in _processes)
@@ -660,6 +666,7 @@ namespace DexManager.Services
                 }
                 if (slot > 0 && !_stoppingSlots.Contains(slot))
                 {
+                    _targetSerials.TryGetValue(slot, out serial);
                     _processes.Remove(slot);
                     _stayAwakeRequests.Remove(slot);
                     _screenOffRequests.Remove(slot);
@@ -676,6 +683,8 @@ namespace DexManager.Services
 
             if (ownedProcess)
             {
+                if (!string.IsNullOrWhiteSpace(serial))
+                    _runtimeSessions.ClearSingleWindow(serial, slot);
                 _fileTransferCoordinator.EndSession(transferSessionId);
                 _logService.Info(LocalizationService.Format(
                     "Log.SingleWindow.ProcessExited",
@@ -720,6 +729,7 @@ namespace DexManager.Services
                 return;
             }
 
+            var slot = 0;
             lock (_syncRoot)
             {
                 foreach (var item in _processes)
@@ -731,9 +741,11 @@ namespace DexManager.Services
                     }
 
                     _displayIds[item.Key] = displayId;
-                    return;
+                    slot = item.Key;
+                    break;
                 }
             }
+            if (slot > 0) PublishSlotRuntime(slot);
         }
 
         private void RaiseRunningChanged()
@@ -901,6 +913,7 @@ namespace DexManager.Services
         private void CompleteExplicitStop(int slot, Process process)
         {
             string transferSessionId = null;
+            string serial = null;
             lock (_syncRoot)
             {
                 Process current;
@@ -910,6 +923,7 @@ namespace DexManager.Services
                     _processes.Remove(slot);
                     _stayAwakeRequests.Remove(slot);
                     _screenOffRequests.Remove(slot);
+                    _targetSerials.TryGetValue(slot, out serial);
                     _targetSerials.Remove(slot);
                     _displayIds.Remove(slot);
                     _windowHandles.Remove(slot);
@@ -920,6 +934,8 @@ namespace DexManager.Services
                 }
                 _stoppingSlots.Remove(slot);
             }
+            if (!string.IsNullOrWhiteSpace(serial))
+                _runtimeSessions.ClearSingleWindow(serial, slot);
             _fileTransferCoordinator.EndSession(transferSessionId);
             QueueDrainAndDispose(process);
         }
@@ -928,6 +944,7 @@ namespace DexManager.Services
         {
             Process stale = null;
             string transferSessionId = null;
+            string serial = null;
             lock (_syncRoot)
             {
                 Process current;
@@ -939,6 +956,7 @@ namespace DexManager.Services
                     _processes.Remove(slot);
                     _stayAwakeRequests.Remove(slot);
                     _screenOffRequests.Remove(slot);
+                    _targetSerials.TryGetValue(slot, out serial);
                     _targetSerials.Remove(slot);
                     _displayIds.Remove(slot);
                     _windowHandles.Remove(slot);
@@ -950,9 +968,43 @@ namespace DexManager.Services
             }
             if (stale != null)
             {
+                if (!string.IsNullOrWhiteSpace(serial))
+                    _runtimeSessions.ClearSingleWindow(serial, slot);
                 _fileTransferCoordinator.EndSession(transferSessionId);
                 QueueDrainAndDispose(stale);
             }
+        }
+
+        private void PublishSlotRuntime(int slot)
+        {
+            string serial;
+            Process process;
+            int displayId;
+            IntPtr handle;
+            bool stayAwake;
+            bool screenOff;
+            lock (_syncRoot)
+            {
+                if (!_processes.TryGetValue(slot, out process) ||
+                    !IsProcessRunning(process) ||
+                    !_targetSerials.TryGetValue(slot, out serial) ||
+                    string.IsNullOrWhiteSpace(serial)) return;
+                _displayIds.TryGetValue(slot, out displayId);
+                _windowHandles.TryGetValue(slot, out handle);
+                _stayAwakeRequests.TryGetValue(slot, out stayAwake);
+                _screenOffRequests.TryGetValue(slot, out screenOff);
+            }
+            var processId = 0;
+            try { processId = process.Id; }
+            catch (InvalidOperationException) { }
+            _runtimeSessions.SetSingleWindow(
+                serial,
+                slot,
+                displayId,
+                processId,
+                handle,
+                stayAwake,
+                screenOff);
         }
 
         private void QueueDrainAndDispose(Process process)

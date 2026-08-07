@@ -82,11 +82,13 @@ namespace DexManager.Services
 
         private void MarkTerminalAndUnregister(TransferWorkItem item)
         {
+            var serial = item.Session.Serial;
             lock (_syncRoot)
             {
                 item.MarkTerminal();
                 _requests.Remove(item.Request.RequestId);
             }
+            PublishTransferState(serial);
         }
 
         private void SendResponse(

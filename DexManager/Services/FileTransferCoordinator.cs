@@ -35,6 +35,7 @@ namespace DexManager.Services
         private readonly string _pipeToken;
         private readonly AppSettings _settings;
         private readonly LogService _logService;
+        private readonly DeviceRuntimeSessionRegistry _runtimeSessions;
         private readonly BlockingCollection<TransferWorkItem> _queue =
             new BlockingCollection<TransferWorkItem>(
                 new ConcurrentQueue<TransferWorkItem>());
@@ -60,13 +61,16 @@ namespace DexManager.Services
         public FileTransferCoordinator(
             string realAdbPath,
             AppSettings settings,
-            LogService logService)
+            LogService logService,
+            DeviceRuntimeSessionRegistry runtimeSessions)
         {
             if (string.IsNullOrWhiteSpace(realAdbPath))
                 throw new ArgumentException("ADB path is empty.", "realAdbPath");
             _realAdbPath = Path.GetFullPath(realAdbPath);
             _settings = settings ?? throw new ArgumentNullException("settings");
             _logService = logService ?? throw new ArgumentNullException("logService");
+            _runtimeSessions = runtimeSessions ??
+                throw new ArgumentNullException("runtimeSessions");
             _proxyPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 "tools",
@@ -222,6 +226,7 @@ namespace DexManager.Services
                     displayName,
                     NormalizeRemoteDirectory(remoteDirectory));
             }
+            PublishTransferState(serial);
             return id;
         }
 
@@ -310,6 +315,7 @@ namespace DexManager.Services
             }
             CancelSessionRequests(sessionId, false);
             lock (_syncRoot) _sessions.Remove(sessionId);
+            PublishTransferState(session.Serial);
         }
 
         public void CancelSerial(string serial)
@@ -353,6 +359,33 @@ namespace DexManager.Services
                 _requests.TryGetValue(requestId, out item);
             if (item != null)
                 CancelSessionRequests(item.Request.SessionId, true);
+        }
+
+        private void PublishTransferState(string serial)
+        {
+            if (string.IsNullOrWhiteSpace(serial)) return;
+            var activeSessions = 0;
+            var queuedItems = 0;
+            lock (_syncRoot)
+            {
+                foreach (var session in _sessions.Values)
+                {
+                    if (session.Active && DeviceSerialScope.Matches(
+                            serial,
+                            session.Serial)) activeSessions++;
+                }
+                foreach (var request in _requests.Values)
+                {
+                    if (!request.IsTerminal &&
+                        DeviceSerialScope.Matches(
+                            serial,
+                            request.Session.Serial)) queuedItems++;
+                }
+            }
+            _runtimeSessions.SetPcToPhoneTransferState(
+                serial,
+                activeSessions,
+                queuedItems);
         }
 
         public void RequestShutdown()

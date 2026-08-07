@@ -35,6 +35,7 @@ namespace DexManager.Services
         private readonly AppSettings _settings;
         private readonly LogService _logService;
         private readonly DisplayCleanupPermissionService _companionVerifier;
+        private readonly DeviceRuntimeSessionRegistry _runtimeSessions;
         private readonly CancellationTokenSource _shutdown =
             new CancellationTokenSource();
         private readonly SemaphoreSlim _configurationGate =
@@ -53,7 +54,8 @@ namespace DexManager.Services
             AdbService adbService,
             SettingsService settingsService,
             AppSettings settings,
-            LogService logService)
+            LogService logService,
+            DeviceRuntimeSessionRegistry runtimeSessions)
         {
             _adbService = adbService ??
                 throw new ArgumentNullException("adbService");
@@ -63,6 +65,8 @@ namespace DexManager.Services
                 throw new ArgumentNullException("settings");
             _logService = logService ??
                 throw new ArgumentNullException("logService");
+            _runtimeSessions = runtimeSessions ??
+                throw new ArgumentNullException("runtimeSessions");
             _companionVerifier =
                 new DisplayCleanupPermissionService(adbService);
         }
@@ -168,6 +172,7 @@ namespace DexManager.Services
                     _serial = serial;
                     _token = token;
                 }
+                _runtimeSessions.SetCompanionAttached(serial, true);
             }).ConfigureAwait(false);
 
             if (_shutdown.IsCancellationRequested)
@@ -319,7 +324,9 @@ namespace DexManager.Services
 
         private void HandleClient(TcpClient client)
         {
-            Interlocked.Increment(ref _activeTransfers);
+            var activeTransfers = Interlocked.Increment(
+                ref _activeTransfers);
+            UpdateActiveTransferCount(activeTransfers);
             var batchId = Guid.Empty;
             try
             {
@@ -409,7 +416,9 @@ namespace DexManager.Services
             finally
             {
                 lock (_sync) _clients.Remove(client);
-                Interlocked.Decrement(ref _activeTransfers);
+                activeTransfers = Interlocked.Decrement(
+                    ref _activeTransfers);
+                UpdateActiveTransferCount(activeTransfers);
             }
         }
 
@@ -578,6 +587,8 @@ namespace DexManager.Services
                 _clients.Clear();
             }
             if (string.IsNullOrWhiteSpace(serial)) return;
+            _runtimeSessions.SetCompanionAttached(serial, false);
+            _runtimeSessions.SetPhoneToPcActiveTransfers(serial, 0);
 
             if (notifyCompanion)
             {
@@ -616,6 +627,18 @@ namespace DexManager.Services
             for (var i = 0; i < token.Length; i++)
                 difference |= token[i] ^ value[i];
             return difference == 0;
+        }
+
+        private void UpdateActiveTransferCount(int count)
+        {
+            string serial;
+            lock (_sync) serial = _serial;
+            if (!string.IsNullOrWhiteSpace(serial))
+            {
+                _runtimeSessions.SetPhoneToPcActiveTransfers(
+                    serial,
+                    count);
+            }
         }
 
         private string ResolveDestinationFolder()

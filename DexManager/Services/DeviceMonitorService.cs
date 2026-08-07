@@ -9,6 +9,7 @@ namespace DexManager.Services
     {
         private readonly AdbService _adbService;
         private readonly WirelessAdbService _wirelessAdbService;
+        private readonly PhysicalDeviceRegistry _physicalDeviceRegistry;
         private readonly LogService _logService;
         private readonly int _intervalMs;
         private readonly int _disconnectConfirmationMs;
@@ -36,12 +37,15 @@ namespace DexManager.Services
         public DeviceMonitorService(
             AdbService adbService,
             WirelessAdbService wirelessAdbService,
+            PhysicalDeviceRegistry physicalDeviceRegistry,
             LogService logService,
             int intervalMs,
             int disconnectConfirmationMs)
         {
             _adbService = adbService;
             _wirelessAdbService = wirelessAdbService;
+            _physicalDeviceRegistry = physicalDeviceRegistry ??
+                throw new ArgumentNullException("physicalDeviceRegistry");
             _logService = logService;
             _intervalMs = Math.Max(intervalMs, 500);
             _disconnectConfirmationMs = Math.Max(
@@ -126,6 +130,7 @@ namespace DexManager.Services
                 }
 
                 RefreshVisibleDevices(devices);
+                ReconcilePhysicalDevices(devices);
                 var eligibleDevices = GetEligibleDevices(devices);
                 var preferred = _wirelessAdbService.FindPreferredDevice(
                     eligibleDevices,
@@ -139,6 +144,7 @@ namespace DexManager.Services
                         return;
                     }
                     RefreshVisibleDevices(devices);
+                    ReconcilePhysicalDevices(devices);
                     eligibleDevices = GetEligibleDevices(devices);
                     preferred = _wirelessAdbService.FindPreferredDevice(
                         eligibleDevices,
@@ -427,6 +433,46 @@ namespace DexManager.Services
             _visibleDeviceSerials.Clear();
             foreach (var serial in current)
                 _visibleDeviceSerials.Add(serial);
+        }
+
+        private void ReconcilePhysicalDevices(IList<AdbDeviceInfo> devices)
+        {
+            var observations = new List<DiscoveredDeviceTransport>();
+            foreach (var device in devices ?? new List<AdbDeviceInfo>())
+            {
+                if (device == null ||
+                    string.IsNullOrWhiteSpace(device.Serial)) continue;
+                var authorized = device.Status == AdbDeviceStatus.Device;
+                observations.Add(new DiscoveredDeviceTransport
+                {
+                    DeviceIdentity = authorized
+                        ? GetDeviceIdentity(device.Serial)
+                        : string.Empty,
+                    DisplayName = authorized
+                        ? GetDeviceDisplayName(device.Serial)
+                        : string.Empty,
+                    Serial = device.Serial,
+                    Kind = GetTransportKind(device.Serial),
+                    Status = device.Status,
+                    RawStatus = device.RawStatus
+                });
+            }
+            _physicalDeviceRegistry.Reconcile(observations);
+        }
+
+        private static DeviceTransportKind GetTransportKind(string serial)
+        {
+            if (string.IsNullOrWhiteSpace(serial))
+                return DeviceTransportKind.Unknown;
+            if (serial.IndexOf(':') >= 0)
+                return DeviceTransportKind.Wireless;
+            if (serial.StartsWith(
+                    "emulator-",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return DeviceTransportKind.Emulator;
+            }
+            return DeviceTransportKind.Usb;
         }
 
         private static DeviceState CopyState(DeviceState state)

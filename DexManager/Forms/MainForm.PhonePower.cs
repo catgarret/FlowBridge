@@ -28,6 +28,8 @@ namespace DexManager.Forms
 
             foreach (var serial in GetScreenOffSerials())
                 RememberManagedSerial(serial);
+            foreach (var serial in GetManagedSerials())
+                PublishPhonePowerState(serial);
 
             UpdateRunningState();
             QueueDeviceStayAwakeUpdate();
@@ -82,6 +84,23 @@ namespace DexManager.Forms
                     StringComparison.OrdinalIgnoreCase)) return;
             }
             serials.Add(serial);
+        }
+
+        private void PublishPhonePowerState(string serial)
+        {
+            if (string.IsNullOrWhiteSpace(serial)) return;
+            string original;
+            var overrideApplied = _stayAwakeOriginalValues.TryGetValue(
+                serial,
+                out original);
+            _runtimeSessions.SetPhonePowerState(
+                serial,
+                IsScreenOffRequestedForSerial(serial),
+                overrideApplied,
+                overrideApplied ? original : string.Empty,
+                _managedSerialHistory.Contains(serial) ||
+                    _deferredPhoneWakeSerials.Contains(serial) ||
+                    _phoneScreenWakeInProgress.Contains(serial));
         }
 
         private void RememberManagedSerial(string serial)
@@ -215,6 +234,7 @@ namespace DexManager.Forms
                     }
 
                     _stayAwakeOriginalValues[serial] = original;
+                    PublishPhonePowerState(serial);
                     _logService.Info(LocalizationService.Get(
                         "Log.Main.StayAwakeEnabled"));
                 }
@@ -248,6 +268,7 @@ namespace DexManager.Forms
             if (!_settings.Features.DisableStayAwakeOnStop)
             {
                 _stayAwakeOriginalValues.Remove(serial);
+                PublishPhonePowerState(serial);
                 return;
             }
 
@@ -273,6 +294,7 @@ namespace DexManager.Forms
                     StringComparison.Ordinal))
                 {
                     _stayAwakeOriginalValues.Remove(serial);
+                    PublishPhonePowerState(serial);
                     _logService.Warning(LocalizationService.Format(
                         "Log.Main.StayAwakeRestoreSkipped",
                         current ?? string.Empty));
@@ -296,6 +318,7 @@ namespace DexManager.Forms
                 }
 
                 _stayAwakeOriginalValues.Remove(serial);
+                PublishPhonePowerState(serial);
                 _logService.Info(LocalizationService.Get(
                     "Log.Main.StayAwakeDisabled"));
             }
@@ -385,6 +408,8 @@ namespace DexManager.Forms
                             _phoneScreenWakeInProgress.Remove(serial);
                         foreach (var serial in woken)
                             _managedSerialHistory.Remove(serial);
+                        foreach (var serial in serials)
+                            PublishPhonePowerState(serial);
                         _phoneScreenWakeTimer.Interval =
                             woken.Count == serials.Count ? 600 : 3000;
                         UpdatePhoneScreenWakeSchedule();

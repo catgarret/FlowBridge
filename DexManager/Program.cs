@@ -75,17 +75,16 @@ namespace DexManager
                     settings.Timing.ProcessTimeoutMs,
                     processRunner,
                     logService);
-                var fileTransferCoordinator =
-                    new FileTransferCoordinator(
-                        adbPath,
-                        settings,
-                        logService);
-                var phoneTransferReceiver =
-                    new PhoneTransferReceiver(
-                        adbService,
-                        settingsService,
-                        settings,
-                        logService);
+                var physicalDeviceRegistry =
+                    new PhysicalDeviceRegistry();
+                var runtimeSessions =
+                    new DeviceRuntimeSessionRegistry();
+                physicalDeviceRegistry.SnapshotChanged += delegate(
+                    object sender,
+                    Models.DeviceRegistrySnapshotChangedEventArgs eventArgs)
+                {
+                    runtimeSessions.Reconcile(eventArgs.Current);
+                };
                 var wirelessAdbService = new WirelessAdbService(
                     adbService,
                     settingsService,
@@ -95,43 +94,31 @@ namespace DexManager
                 var scrcpyPath = settingsService.ResolvePath(settings.Paths.ScrcpyPath);
                 var scrcpyLaunchCoordinator =
                     new ScrcpyLaunchCoordinator();
-                var scrcpyService = new ScrcpyService(
+                var runtimeServiceFactory =
+                    new DeviceRuntimeServiceFactory(
                     scrcpyPath,
+                    adbPath,
                     settings.Timing.ProcessTimeoutMs,
                     processRunner,
                     adbService,
                     scrcpyLaunchCoordinator,
-                    fileTransferCoordinator,
-                    logService);
-                var singleWindowService = new SingleWindowService(
-                    scrcpyPath,
-                    settings.Timing.ProcessTimeoutMs,
-                    adbService,
-                    scrcpyLaunchCoordinator,
-                    scrcpyService.RuntimeInfo,
-                    fileTransferCoordinator,
-                    logService);
-                var screenOffService = new ScreenOffService(
-                    scrcpyPath,
-                    settings.Timing.ProcessTimeoutMs,
-                    adbService,
-                    scrcpyLaunchCoordinator,
-                    scrcpyService.RuntimeInfo,
-                    logService);
-                var virtualDisplayService = new VirtualDisplayService(
-                    adbService,
-                    logService);
-                var orchestrator = new DexOrchestrator(
-                    adbService,
-                    virtualDisplayService,
-                    scrcpyService,
-                    scrcpyLaunchCoordinator,
                     settingsService,
+                    settings,
                     logService,
-                    settings);
+                    runtimeSessions);
+                var activeRuntime = runtimeServiceFactory.Create();
+                var fileTransferCoordinator =
+                    activeRuntime.FileTransfers;
+                var phoneTransferReceiver =
+                    activeRuntime.PhoneTransfers;
+                var scrcpyService = activeRuntime.Scrcpy;
+                var singleWindowService = activeRuntime.SingleWindows;
+                var screenOffService = activeRuntime.ScreenOff;
+                var orchestrator = activeRuntime.Dex;
                 var deviceMonitor = new DeviceMonitorService(
                     adbService,
                     wirelessAdbService,
+                    physicalDeviceRegistry,
                     logService,
                     settings.Timing.DeviceMonitorIntervalMs,
                     settings.Timing.DisconnectMonitorIntervalMs);
@@ -190,6 +177,8 @@ namespace DexManager
                     keyMappingService,
                     fileTransferCoordinator,
                     phoneTransferReceiver,
+                    runtimeSessions,
+                    activeRuntime,
                     IsAutoRun(args)));
             }
             catch (Exception ex)

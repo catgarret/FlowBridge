@@ -167,6 +167,8 @@ namespace DexManager.Services
                         ArmClientDisconnectMonitor(item);
                     }
                 }
+                if (item != null)
+                    PublishTransferState(session.Serial);
                 if (!string.IsNullOrEmpty(rejectMessage))
                 {
                     SendImmediateFailure(

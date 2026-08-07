@@ -320,6 +320,20 @@ namespace DexManager.Forms
         private void DeviceMonitor_DeviceConnected(object sender, DeviceStateChangedEventArgs e)
         {
             if (_exitInProgress) return;
+            try
+            {
+                _runtimeSessions.BindServiceInstance(
+                    e.Current.Serial,
+                    _activeRuntime.InstanceId);
+            }
+            catch (Exception ex)
+            {
+                _logService.Error(
+                    "Could not bind the selected device to its runtime " +
+                    "service set.",
+                    ex);
+                return;
+            }
             RecordDeviceConnected(e.Current.Serial);
             ConfigurePhoneTransferReceiver(e.Current.Serial);
             var deviceSwitch = IsDeviceSwitch(e);
