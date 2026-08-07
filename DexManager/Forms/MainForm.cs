@@ -24,22 +24,26 @@ namespace DexManager.Forms
         private readonly LogService _logService;
         private readonly AdbService _adbService;
         private readonly WirelessAdbService _wirelessAdbService;
-        private readonly ScrcpyService _scrcpyService;
-        private readonly SingleWindowService _singleWindowService;
-        private readonly ScreenOffService _screenOffService;
+        private ScrcpyService _scrcpyService;
+        private SingleWindowService _singleWindowService;
+        private ScreenOffService _screenOffService;
         private readonly ScrcpyLaunchCoordinator _launchCoordinator;
         private readonly DeviceMonitorService _deviceMonitor;
-        private readonly DexOrchestrator _orchestrator;
-        private readonly CaptureCoordinator _captureCoordinator;
-        private readonly AutoHideService _autoHideService;
+        private DexOrchestrator _orchestrator;
+        private CaptureCoordinator _captureCoordinator;
+        private AutoHideService _autoHideService;
         private readonly AutoStartService _autoStartService;
-        private readonly EnvironmentCheckService _environmentCheckService;
-        private readonly KeyMappingService _keyMappingService;
-        private readonly FileTransferCoordinator _fileTransferCoordinator;
-        private readonly PhoneTransferReceiver _phoneTransferReceiver;
+        private EnvironmentCheckService _environmentCheckService;
+        private KeyMappingService _keyMappingService;
+        private FileTransferCoordinator _fileTransferCoordinator;
+        private PhoneTransferReceiver _phoneTransferReceiver;
         private readonly DeviceRuntimeSessionRegistry _runtimeSessions;
-        private readonly DeviceRuntimeServiceSet _activeRuntime;
-        private readonly MiniControlBarManager _miniControlBarManager;
+        private DeviceRuntimeServiceSet _activeRuntime;
+        private MiniControlBarManager _miniControlBarManager;
+        private readonly PhysicalDeviceRegistry _physicalDeviceRegistry;
+        private readonly DeviceRuntimeServiceFactory _runtimeServiceFactory;
+        private readonly PathService _pathService;
+        private readonly CaptureService _captureService;
         private readonly bool _isAutoRun;
         private readonly TrayService _trayService;
         private readonly Label _adbStatusValue;
@@ -130,6 +134,20 @@ namespace DexManager.Forms
         private PhoneTransferStatusForm _phoneTransferStatusForm;
         private long _lastFileTransferProgressSequence;
         private long _lastPhoneTransferProgressSequence;
+        private FileTransferCoordinator _fileTransferStatusSource;
+        private PhoneTransferReceiver _phoneTransferStatusSource;
+        private readonly Dictionary<string, DeviceUiContext> _deviceContexts =
+            new Dictionary<string, DeviceUiContext>(
+                StringComparer.OrdinalIgnoreCase);
+        private readonly object _deviceContextsSync = new object();
+        private readonly Dictionary<string, ThemedButton> _deviceTabButtons =
+            new Dictionary<string, ThemedButton>(
+                StringComparer.OrdinalIgnoreCase);
+        private readonly FlowLayoutPanel _deviceTabsPanel;
+        private DeviceUiContext _selectedDeviceContext;
+        private DeviceUiContext _initialDeviceContext;
+        private string _selectedDeviceIdentity = string.Empty;
+        private bool _interactiveServicesStarted;
 
         public MainForm(
             SettingsService settingsService,
@@ -152,6 +170,10 @@ namespace DexManager.Forms
             PhoneTransferReceiver phoneTransferReceiver,
             DeviceRuntimeSessionRegistry runtimeSessions,
             DeviceRuntimeServiceSet activeRuntime,
+            PhysicalDeviceRegistry physicalDeviceRegistry,
+            DeviceRuntimeServiceFactory runtimeServiceFactory,
+            PathService pathService,
+            CaptureService captureService,
             bool isAutoRun)
         {
             _settingsService = settingsService;
@@ -178,6 +200,14 @@ namespace DexManager.Forms
                 throw new ArgumentNullException("runtimeSessions");
             _activeRuntime = activeRuntime ??
                 throw new ArgumentNullException("activeRuntime");
+            _physicalDeviceRegistry = physicalDeviceRegistry ??
+                throw new ArgumentNullException("physicalDeviceRegistry");
+            _runtimeServiceFactory = runtimeServiceFactory ??
+                throw new ArgumentNullException("runtimeServiceFactory");
+            _pathService = pathService ??
+                throw new ArgumentNullException("pathService");
+            _captureService = captureService ??
+                throw new ArgumentNullException("captureService");
             _miniControlBarManager = new MiniControlBarManager(
                 _settings,
                 _scrcpyService,
@@ -207,6 +237,19 @@ namespace DexManager.Forms
                 Text = LocalizationService.Get("App.Name")
             };
             Controls.Add(_pageTitle);
+
+            _deviceTabsPanel = new FlowLayoutPanel
+            {
+                Location = new Point(430, 10),
+                Size = new Size(476, 46),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = true,
+                BackColor = _theme.WindowBackground,
+                Padding = new Padding(0),
+                Margin = new Padding(0)
+            };
+            Controls.Add(_deviceTabsPanel);
 
             _indicatorDot = new StatusRing
             {
@@ -439,12 +482,13 @@ namespace DexManager.Forms
             AttachRunSettingChangeHandlers();
             LoadRunSettings();
 
+            _initialDeviceContext = CreateInitialDeviceContext();
+            _selectedDeviceContext = _initialDeviceContext;
+
             Shown += MainForm_Shown;
             FormClosing += MainForm_FormClosing;
             FormClosed += MainForm_FormClosed;
             _deviceMonitor.StateChanged += DeviceMonitor_StateChanged;
-            _deviceMonitor.DeviceConnected += DeviceMonitor_DeviceConnected;
-            _deviceMonitor.DeviceDisconnected += DeviceMonitor_DeviceDisconnected;
             _scrcpyService.RunningChanged += ScrcpyService_RunningChanged;
             _singleWindowService.RunningChanged +=
                 SingleWindowService_RunningChanged;
@@ -454,6 +498,8 @@ namespace DexManager.Forms
                 FileTransferCoordinator_ProgressChanged;
             _phoneTransferReceiver.ProgressChanged +=
                 PhoneTransferReceiver_ProgressChanged;
+            _physicalDeviceRegistry.SnapshotChanged +=
+                PhysicalDeviceRegistry_SnapshotChanged;
             _trayService = new TrayService(
                 ShowMainWindow,
                 async delegate { await StartDexAsync(); },
@@ -494,6 +540,7 @@ namespace DexManager.Forms
             }
 
             _miniControlBarManager.Start();
+            _interactiveServicesStarted = true;
 
             await InitializeAdbAndMonitorAsync();
             if (_exitInProgress || IsDisposed) return;

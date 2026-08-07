@@ -19,9 +19,21 @@ namespace DexManager.Forms
             FileTransferProgressEventArgs e)
         {
             if (e == null || e.Progress == null) return;
+            var coordinator = sender as FileTransferCoordinator;
+            if (coordinator == null) return;
             RunOnUi(delegate
             {
                 if (_exitInProgress || IsDisposed) return;
+                if (!ReferenceEquals(
+                        _fileTransferStatusSource,
+                        coordinator))
+                {
+                    if (_fileTransferStatusForm != null)
+                        _fileTransferStatusForm.Dispose();
+                    _fileTransferStatusForm = null;
+                    _fileTransferStatusSource = coordinator;
+                    _lastFileTransferProgressSequence = 0;
+                }
                 if (e.Progress.Sequence <= _lastFileTransferProgressSequence)
                     return;
                 _lastFileTransferProgressSequence = e.Progress.Sequence;
@@ -29,7 +41,7 @@ namespace DexManager.Forms
                     _fileTransferStatusForm.IsDisposed)
                 {
                     _fileTransferStatusForm = new FileTransferStatusForm(
-                        _fileTransferCoordinator,
+                        coordinator,
                         _settings.Theme);
                 }
                 var shouldShow = !_fileTransferStatusForm.Visible;
@@ -39,7 +51,7 @@ namespace DexManager.Forms
                     var target = PositionTransferStatusWindow(
                         _fileTransferStatusForm,
                         _phoneTransferStatusForm,
-                        _fileTransferCoordinator.GetWindowHandle(
+                        coordinator.GetWindowHandle(
                             e.Progress.SessionId));
                     ShowTransferStatusWindow(
                         _fileTransferStatusForm,
@@ -53,9 +65,19 @@ namespace DexManager.Forms
             PhoneTransferProgressEventArgs e)
         {
             if (e == null || e.Progress == null) return;
+            var receiver = sender as PhoneTransferReceiver;
+            if (receiver == null) return;
             RunOnUi(delegate
             {
                 if (_exitInProgress || IsDisposed) return;
+                if (!ReferenceEquals(_phoneTransferStatusSource, receiver))
+                {
+                    if (_phoneTransferStatusForm != null)
+                        _phoneTransferStatusForm.Dispose();
+                    _phoneTransferStatusForm = null;
+                    _phoneTransferStatusSource = receiver;
+                    _lastPhoneTransferProgressSequence = 0;
+                }
                 if (e.Progress.Sequence <=
                     _lastPhoneTransferProgressSequence)
                 {
@@ -86,8 +108,8 @@ namespace DexManager.Forms
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             _deviceMonitor.StateChanged -= DeviceMonitor_StateChanged;
-            _deviceMonitor.DeviceConnected -= DeviceMonitor_DeviceConnected;
-            _deviceMonitor.DeviceDisconnected -= DeviceMonitor_DeviceDisconnected;
+            _physicalDeviceRegistry.SnapshotChanged -=
+                PhysicalDeviceRegistry_SnapshotChanged;
             _scrcpyService.RunningChanged -= ScrcpyService_RunningChanged;
             _singleWindowService.RunningChanged -=
                 SingleWindowService_RunningChanged;
@@ -101,21 +123,11 @@ namespace DexManager.Forms
                 PhoneTransferReceiver_ProgressChanged;
             _phoneScreenWakeTimer.Tick -= PhoneScreenWakeTimer_Tick;
 
-            _orchestrator.RequestShutdown();
-            _singleWindowService.RequestShutdown();
-            _screenOffService.RequestShutdown();
-            _fileTransferCoordinator.RequestShutdown();
-            _phoneTransferReceiver.RequestShutdown();
+            RequestAllRuntimeShutdown();
             var cleanupStillRunning = _exitCleanupTask != null &&
                 !_exitCleanupTask.IsCompleted;
             if (!cleanupStillRunning)
                 TryCleanup("device monitor", _deviceMonitor.Dispose);
-            TryCleanup(
-                "mini control bar",
-                _miniControlBarManager.Dispose);
-            TryCleanup("capture coordinator", _captureCoordinator.Dispose);
-            TryCleanup("automatic hide", _autoHideService.Dispose);
-            TryCleanup("key mapping", _keyMappingService.Dispose);
             TryCleanup("phone screen timer", _phoneScreenWakeTimer.Dispose);
             TryCleanup("app profile menu", _appProfileMenu.Dispose);
             if (_fileTransferStatusForm != null)
@@ -128,24 +140,7 @@ namespace DexManager.Forms
                     _phoneTransferStatusForm.Dispose);
             if (!cleanupStillRunning)
             {
-                TryCleanup("screen-off service", _screenOffService.Dispose);
-                TryCleanup(
-                    "single-window service",
-                    _singleWindowService.Dispose);
-                TryCleanup("scrcpy service", _scrcpyService.Dispose);
-                TryCleanup(
-                    "file transfer service",
-                    _fileTransferCoordinator.Dispose);
-                TryCleanup(
-                    "phone transfer receiver",
-                    _phoneTransferReceiver.Dispose);
-                TryCleanup("DeX finalization", delegate
-                {
-                    _orchestrator.ShutdownAsync(
-                            GetSelectedDeviceSerial())
-                        .GetAwaiter()
-                        .GetResult();
-                });
+                DisposeAllDeviceContexts();
             }
             TryCleanup("tray service", _trayService.Dispose);
             if (_logForm != null)
@@ -170,11 +165,7 @@ namespace DexManager.Forms
 
             _exitInProgress = true;
             _allowExit = true;
-            _orchestrator.RequestShutdown();
-            _singleWindowService.RequestShutdown();
-            _screenOffService.RequestShutdown();
-            _fileTransferCoordinator.RequestShutdown();
-            _phoneTransferReceiver.RequestShutdown();
+            RequestAllRuntimeShutdown();
             TryCleanup(
                 "mini control bar",
                 _miniControlBarManager.Dispose);

@@ -13,15 +13,23 @@ namespace DexManager.Forms
     {
         private void ScrcpyService_RunningChanged(object sender, EventArgs e)
         {
-            RunOnUi(HandleScrcpyRunningChanged);
+            var updateSelectedUi = IsActiveRuntimeSender(sender);
+            RunOnUi(delegate
+            {
+                HandleScrcpyRunningChanged(updateSelectedUi);
+            });
         }
 
         private void SingleWindowService_RunningChanged(object sender, EventArgs e)
         {
-            RunOnUi(HandleScrcpyRunningChanged);
+            var updateSelectedUi = IsActiveRuntimeSender(sender);
+            RunOnUi(delegate
+            {
+                HandleScrcpyRunningChanged(updateSelectedUi);
+            });
         }
 
-        private void HandleScrcpyRunningChanged()
+        private void HandleScrcpyRunningChanged(bool updateSelectedUi)
         {
             var generation = System.Threading.Interlocked.Increment(
                 ref _screenOffReapplyGeneration);
@@ -31,7 +39,7 @@ namespace DexManager.Forms
             foreach (var serial in GetManagedSerials())
                 PublishPhonePowerState(serial);
 
-            UpdateRunningState();
+            if (updateSelectedUi) UpdateRunningState();
             QueueDeviceStayAwakeUpdate();
             UpdatePhoneScreenWakeSchedule();
             if (ShouldReapplyScreenOff(generation))
@@ -42,8 +50,13 @@ namespace DexManager.Forms
 
         private int GetManagedScrcpyCount()
         {
-            return (_scrcpyService.IsRunning ? 1 : 0) +
-                _singleWindowService.RunningCount;
+            var count = 0;
+            foreach (var context in GetAllDeviceContexts())
+            {
+                count += (context.Runtime.Scrcpy.IsRunning ? 1 : 0) +
+                    context.Runtime.SingleWindows.RunningCount;
+            }
+            return count;
         }
 
         private bool IsScreenOffRequested()
@@ -54,22 +67,36 @@ namespace DexManager.Forms
         private IList<string> GetManagedSerials()
         {
             var serials = new List<string>();
-            var dexSession = _scrcpyService.GetSessionSnapshot();
-            if (dexSession.IsRunning)
-                AddSerial(serials, dexSession.Serial);
-            foreach (var serial in _singleWindowService.GetRunningSerials())
-                AddSerial(serials, serial);
+            foreach (var context in GetAllDeviceContexts())
+            {
+                var dexSession = context.Runtime.Scrcpy
+                    .GetSessionSnapshot();
+                if (dexSession.IsRunning)
+                    AddSerial(serials, dexSession.Serial);
+                foreach (var serial in context.Runtime.SingleWindows
+                    .GetRunningSerials())
+                {
+                    AddSerial(serials, serial);
+                }
+            }
             return serials;
         }
 
         private IList<string> GetScreenOffSerials()
         {
             var serials = new List<string>();
-            var dexSession = _scrcpyService.GetSessionSnapshot();
-            if (dexSession.ScreenOffRequested)
-                AddSerial(serials, dexSession.Serial);
-            foreach (var serial in _singleWindowService.GetScreenOffSerials())
-                AddSerial(serials, serial);
+            foreach (var context in GetAllDeviceContexts())
+            {
+                var dexSession = context.Runtime.Scrcpy
+                    .GetSessionSnapshot();
+                if (dexSession.ScreenOffRequested)
+                    AddSerial(serials, dexSession.Serial);
+                foreach (var serial in context.Runtime.SingleWindows
+                    .GetScreenOffSerials())
+                {
+                    AddSerial(serials, serial);
+                }
+            }
             return serials;
         }
 
@@ -140,7 +167,7 @@ namespace DexManager.Forms
                     foreach (var serial in GetScreenOffSerials())
                     {
                         var targetSerial = serial;
-                        _screenOffService.Reapply(
+                        GetScreenOffServiceForSerial(targetSerial).Reapply(
                             targetSerial,
                             delegate
                             {
@@ -192,13 +219,17 @@ namespace DexManager.Forms
         {
             var requestedSerials = new HashSet<string>(
                 StringComparer.OrdinalIgnoreCase);
-            var dexSession = _scrcpyService.GetSessionSnapshot();
-            if (dexSession.StayAwakeRequested)
-                requestedSerials.Add(dexSession.Serial);
-            foreach (var serial in
-                _singleWindowService.GetStayAwakeSerials())
+            foreach (var context in GetAllDeviceContexts())
             {
-                requestedSerials.Add(serial);
+                var dexSession = context.Runtime.Scrcpy
+                    .GetSessionSnapshot();
+                if (dexSession.StayAwakeRequested)
+                    requestedSerials.Add(dexSession.Serial);
+                foreach (var serial in context.Runtime.SingleWindows
+                    .GetStayAwakeSerials())
+                {
+                    requestedSerials.Add(serial);
+                }
             }
             requestedSerials.RemoveWhere(string.IsNullOrWhiteSpace);
 

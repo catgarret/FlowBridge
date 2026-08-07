@@ -145,6 +145,7 @@ namespace DexManager.Forms
         private void ApplyTheme()
         {
             BackColor = _theme.WindowBackground;
+            _deviceTabsPanel.BackColor = _theme.WindowBackground;
             _pageTitle.ForeColor = _theme.TextPrimary;
             _indicatorStatus.ForeColor = _theme.TextPrimary;
             _indicatorDetail.ForeColor = _theme.TextTertiary;
@@ -240,6 +241,7 @@ namespace DexManager.Forms
             _saveAppProfileMenuItem.ForeColor = _theme.TextPrimary;
             _deleteAppProfileMenuItem.BackColor = _theme.CardSoft;
             _deleteAppProfileMenuItem.ForeColor = _theme.TextPrimary;
+            RebuildDeviceTabs();
             Invalidate(true);
         }
 

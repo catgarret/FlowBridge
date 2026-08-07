@@ -34,7 +34,8 @@ namespace DexManager.MultiDeviceTests
                 MigratesTemporaryRuntimeIdentity,
                 PreservesRuntimeStateAcrossDisconnect,
                 IgnoresUnchangedRuntimeReconciles,
-                BindsOneServiceInstancePerPhysicalDevice
+                BindsOneServiceInstancePerPhysicalDevice,
+                KeepsBoundRuntimeWhenPreferredTransportChanges
             };
 
             try
@@ -480,6 +481,48 @@ namespace DexManager.MultiDeviceTests
             {
                 registry.BindServiceInstance("USB-A", secondServices);
             }, "a physical device must not be rebound to another service set");
+        }
+
+        private static void KeepsBoundRuntimeWhenPreferredTransportChanges()
+        {
+            var physical = new PhysicalDeviceRegistry();
+            var runtime = new DeviceRuntimeSessionRegistry();
+            runtime.Reconcile(physical.Reconcile(new[]
+            {
+                Device("phone-a", "Galaxy A", "USB-A", DeviceTransportKind.Usb),
+                Device("phone-a", "Galaxy A", "10.0.0.2:5555", DeviceTransportKind.Wireless),
+                Device("phone-b", "Galaxy B", "USB-B", DeviceTransportKind.Usb)
+            }));
+            var phoneAService = Guid.NewGuid();
+            var phoneBService = Guid.NewGuid();
+            runtime.BindServiceInstance("USB-A", phoneAService);
+            runtime.BindServiceInstance("USB-B", phoneBService);
+            runtime.SetDexSession("USB-A", new ManagedDisplaySession
+            {
+                Serial = "USB-A",
+                DisplayId = 21,
+                ScrcpyProcessId = 101
+            });
+
+            runtime.Reconcile(physical.Reconcile(new[]
+            {
+                Device("phone-a", "Galaxy A", "10.0.0.2:5555", DeviceTransportKind.Wireless),
+                Device("phone-b", "Galaxy B", "USB-B", DeviceTransportKind.Usb)
+            }));
+
+            var snapshot = runtime.Current;
+            var phoneA = snapshot.FindByIdentity("phone-a");
+            var phoneB = snapshot.FindByIdentity("phone-b");
+            Equal(phoneAService, phoneA.ServiceInstanceId,
+                "phone-a tab must retain its runtime after transport change");
+            Equal("10.0.0.2:5555", phoneA.ActiveTransportSerial,
+                "phone-a tab must select the remaining wireless transport");
+            True(phoneA.Dex.IsRunning,
+                "phone-a runtime evidence must survive transport change");
+            Equal(phoneBService, phoneB.ServiceInstanceId,
+                "phone-b runtime binding must remain isolated");
+            True(!phoneB.Dex.IsRunning,
+                "phone-a session must not leak into phone-b tab");
         }
 
         private static DeviceRuntimeSessionRegistry CreateRuntimeRegistry()

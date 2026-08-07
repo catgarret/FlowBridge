@@ -287,6 +287,8 @@ namespace DexManager.Forms
             RunOnUi(delegate
             {
                 if (_exitInProgress || IsDisposed) return;
+                if (!string.IsNullOrWhiteSpace(_selectedDeviceIdentity))
+                    return;
                 _lastDeviceState = e.Current;
                 _adbStatusValue.Text =
                     e.Current.Status == AdbDeviceStatus.Unknown
@@ -538,6 +540,18 @@ namespace DexManager.Forms
 
         private string GetSelectedDeviceSerial()
         {
+            if (_selectedDeviceContext != null &&
+                !string.IsNullOrWhiteSpace(
+                    _selectedDeviceContext.Identity))
+            {
+                return _selectedDeviceContext.Device != null &&
+                    _selectedDeviceContext.Device.IsConnected
+                    ? GetContextSerial(_selectedDeviceContext)
+                    : string.Empty;
+            }
+
+            var selected = GetContextSerial(_selectedDeviceContext);
+            if (!string.IsNullOrWhiteSpace(selected)) return selected;
             var current = _deviceMonitor.CurrentState;
             if (current != null &&
                 current.IsConnected &&

@@ -82,7 +82,7 @@ namespace DexManager.Forms
                         ShowEnvironmentCheck,
                         ApplyThemeSelection,
                         ApplyGeneralSettingsChanges,
-                        _phoneTransferReceiver.DetachAsync,
+                        DetachSelectedPhoneTransferAsync,
                         ConfigurePhoneTransferReceiver);
                     _settingsForm.FormClosed += delegate { _settingsForm = null; };
                 }
@@ -130,18 +130,24 @@ namespace DexManager.Forms
                     ex);
             }
 
-            _autoHideService.ApplySettings(
-                _settings.Features.AutoHideEnabled,
-                _settings.Timing.AutoHideIdleSeconds);
-            _wirelessAdbService.SynchronizeTargetWithSettings();
-            _miniControlBarManager.ApplySettings();
-            _phoneTransferReceiver.ApplySettings();
-            if (_settings.Features.PhoneToPcTransferEnabled &&
-                _lastDeviceState != null &&
-                _lastDeviceState.Status == AdbDeviceStatus.Device)
+            foreach (var context in GetAllDeviceContexts())
             {
-                ConfigurePhoneTransferReceiver(
-                    _lastDeviceState.Serial);
+                context.AutoHide.ApplySettings(
+                    ReferenceEquals(context, _selectedDeviceContext) &&
+                    _settings.Features.AutoHideEnabled,
+                    _settings.Timing.AutoHideIdleSeconds);
+                context.MiniBar.ApplySettings();
+                context.Runtime.PhoneTransfers.ApplySettings();
+            }
+            _wirelessAdbService.SynchronizeTargetWithSettings();
+            if (_settings.Features.PhoneToPcTransferEnabled)
+            {
+                foreach (var context in GetAllDeviceContexts())
+                {
+                    var serial = GetContextSerial(context);
+                    if (!string.IsNullOrWhiteSpace(serial))
+                        ConfigurePhoneTransferReceiver(context, serial);
+                }
             }
 
             try
@@ -192,11 +198,7 @@ namespace DexManager.Forms
             if (_exitInProgress) return;
 
             _exitInProgress = true;
-            _orchestrator.RequestShutdown();
-            _singleWindowService.RequestShutdown();
-            _screenOffService.RequestShutdown();
-            _fileTransferCoordinator.RequestShutdown();
-            _phoneTransferReceiver.RequestShutdown();
+            RequestAllRuntimeShutdown();
             var wakeSerials = CaptureWakeSerials();
             var cleanupSerial = GetSelectedDeviceSerial();
             TryCleanup(
@@ -236,19 +238,7 @@ namespace DexManager.Forms
             IList<string> wakeSerials,
             string cleanupSerial)
         {
-            await TryCleanupAsync(
-                "DeX session",
-                delegate
-                {
-                    return _orchestrator.ShutdownAsync(cleanupSerial);
-                }).ConfigureAwait(false);
-            await TryCleanupAsync(
-                "single-window sessions",
-                delegate
-                {
-                    return Task.Run(
-                        (Action)_singleWindowService.StopAll);
-                }).ConfigureAwait(false);
+            await CleanupAllRuntimeSessionsAsync().ConfigureAwait(false);
             var supplementalCleanup = new[]
             {
                 TryCleanupAsync(

@@ -179,6 +179,10 @@ namespace DexManager
                     phoneTransferReceiver,
                     runtimeSessions,
                     activeRuntime,
+                    physicalDeviceRegistry,
+                    runtimeServiceFactory,
+                    pathService,
+                    captureService,
                     IsAutoRun(args)));
             }
             catch (Exception ex)
