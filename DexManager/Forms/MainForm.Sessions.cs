@@ -426,7 +426,11 @@ namespace DexManager.Forms
             }
             try
             {
-                await _phoneTransferReceiver.AttachAsync(serial);
+                await _phoneTransferReceiver.AttachAsync(
+                    serial,
+                    _lastDeviceState == null
+                        ? string.Empty
+                        : _lastDeviceState.DisplayName);
             }
             catch (Exception ex)
             {

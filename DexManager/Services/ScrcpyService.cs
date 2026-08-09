@@ -184,6 +184,7 @@ namespace DexManager.Services
         private string _targetSerial;
         private int _displayId;
         private IntPtr _mainWindowHandle;
+        private string _deviceDisplayName = string.Empty;
         private string _fileTransferSessionId;
         private bool _stopping;
         private int _shutdownRequested;
@@ -380,7 +381,9 @@ namespace DexManager.Services
             }
 
             arguments.Add("--window-title");
-            arguments.Add(Quote("DX Manager - DeX Station"));
+            arguments.Add(Quote(BuildWindowTitle(
+                "DX Manager - DeX Station",
+                DeviceDisplayName)));
 
             if (settings.UseHidKeyboard) arguments.Add("-K");
             if (settings.UseHidMouse) arguments.Add("-M");
@@ -1142,6 +1145,28 @@ namespace DexManager.Services
                     ? _targetSerial
                     : string.Empty;
             }
+        }
+
+        public string DeviceDisplayName
+        {
+            get
+            {
+                lock (_syncRoot) return _deviceDisplayName;
+            }
+            set
+            {
+                lock (_syncRoot)
+                    _deviceDisplayName = (value ?? string.Empty).Trim();
+            }
+        }
+
+        internal static string BuildWindowTitle(
+            string baseTitle,
+            string deviceDisplayName)
+        {
+            var title = (baseTitle ?? string.Empty).Trim();
+            var device = (deviceDisplayName ?? string.Empty).Trim();
+            return device.Length == 0 ? title : title + " - " + device;
         }
 
         private void RaiseRunningChanged()

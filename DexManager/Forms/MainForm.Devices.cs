@@ -110,6 +110,7 @@ namespace DexManager.Forms
 
                 var context = EnsureDeviceContext(device);
                 context.Device = device.Clone();
+                ConfigureContextPresentation(context);
                 ConfigureContextConnection(context);
             }
 
@@ -138,6 +139,8 @@ namespace DexManager.Forms
 
             RebuildDeviceTabs();
             RefreshSelectedDeviceState();
+            if (_settingsForm != null && !_settingsForm.IsDisposed)
+                _settingsForm.RefreshSelectedDeviceContext();
         }
 
         private DeviceUiContext EnsureDeviceContext(PhysicalDeviceInfo device)
@@ -177,6 +180,7 @@ namespace DexManager.Forms
             context.Identity = device.Identity;
             context.Device = device.Clone();
             context.Runtime.Dex.DeviceIdentity = device.Identity;
+            ConfigureContextPresentation(context);
             lock (_deviceContextsSync)
                 _deviceContexts.Add(device.Identity, context);
             if (ReferenceEquals(context, _selectedDeviceContext))
@@ -320,7 +324,9 @@ namespace DexManager.Forms
                 string.IsNullOrWhiteSpace(serial)) return;
             try
             {
-                await context.Runtime.PhoneTransfers.AttachAsync(serial);
+                await context.Runtime.PhoneTransfers.AttachAsync(
+                    serial,
+                    GetContextDisplayName(context));
             }
             catch (Exception ex)
             {
@@ -405,7 +411,7 @@ namespace DexManager.Forms
             if (_interactiveServicesStarted)
                 StartInteractiveContext(context);
             if (_settingsForm != null && !_settingsForm.IsDisposed)
-                _settingsForm.Close();
+                _settingsForm.RefreshSelectedDeviceContext();
             if (_environmentCheckForm != null &&
                 !_environmentCheckForm.IsDisposed)
             {
@@ -568,6 +574,15 @@ namespace DexManager.Forms
                 return context.Device.DisplayName;
             }
             return context.Identity ?? string.Empty;
+        }
+
+        private static void ConfigureContextPresentation(
+            DeviceUiContext context)
+        {
+            if (context == null || context.Runtime == null) return;
+            var displayName = GetContextDisplayName(context);
+            context.Runtime.Scrcpy.DeviceDisplayName = displayName;
+            context.Runtime.SingleWindows.DeviceDisplayName = displayName;
         }
 
         private static string GetTransportText(DeviceTransportInfo transport)

@@ -162,6 +162,7 @@ namespace DexManager.Forms
         private void ShowPage(int index)
         {
             if (index < 0 || index >= _pages.Count) return;
+            _activePageIndex = index;
             for (var i = 0; i < _pages.Count; i++)
             {
                 _pages[i].Visible = i == index;

@@ -36,6 +36,12 @@
   - [x] 혼합 USB·무선 연결과 복수 무선 자동 재연결 지원
   - [x] 기존 전역 무선 설정을 최초 기기 프로필로 안전하게 이관
   - [x] .NET Framework 4.6.2 x64 Release 및 29개 다중 기기 회귀 테스트
+- [x] v2 다중 기기 식별·표시 마무리
+  - [x] 실제 승인 transport가 하나뿐일 때 설정의 USB·무선 상태 자동 보정
+  - [x] 메인 기기 탭 전환 시 설정 창을 유지하고 선택 기기 정보 새로 고침
+  - [x] 휴대폰→PC 수신 파일을 휴대폰 표시 이름별 하위 폴더로 분리
+  - [x] DeX·단일창 scrcpy 제목에 휴대폰 표시 이름 추가
+  - [x] .NET Framework 4.6.2 x64 Release 및 29개 다중 기기 회귀 테스트
 
 - [x] v1.2.0 구조 분리
   - [x] MainForm·SettingsForm feature partial 분리

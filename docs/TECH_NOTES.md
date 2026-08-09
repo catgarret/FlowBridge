@@ -119,6 +119,11 @@ push, shell과 단독 APK 설치는 가로채지 않는다.
 push와 shell을 중단하고 임시 데이터를 정리하며, 같은 드롭에서 이어지는
 요청도 짧은 취소 구간 동안 거부한다. 최종 commit 구간에는 취소를 잠시 막는다.
 
+휴대폰→PC 수신 경로 설정은 공통 상위 폴더다. 각 기기별 수신기는 표시 이름을
+Windows 폴더 이름으로 안전하게 정규화하고 `상위 폴더\휴대폰 이름` 하위 폴더에
+저장한다. 같은 파일 이름의 `(1)`, `(2)` 충돌 회피는 각 휴대폰 하위 폴더 안에서
+독립적으로 적용된다.
+
 ## 무선 ADB
 
 - v2에서는 설정 페이지에서 대상 물리 휴대폰을 먼저 선택한다. 메인 화면의 현재
@@ -131,6 +136,9 @@ push와 shell을 중단하고 임시 데이터를 정리하며, 같은 드롭에
 - 연결된 endpoint의 실제 물리 identity가 선택한 기기와 다르면 설정 저장과
   transport 전환을 거부한다.
 - 성공 시 해당 물리 기기의 선호 transport를 `IP:PORT`로 바꾼다.
+- 설정 창은 메인 화면의 기기 탭 전환과 registry 변경을 따라 대상 목록을 다시
+  읽는다. 승인된 transport가 한 종류뿐이면 실제 USB·무선 상태로 라디오 선택과
+  무선 endpoint를 보정하고, 두 종류가 모두 있으면 저장된 선호값을 유지한다.
 - 자동 재연결은 최소 5초 간격이며 저장된 모든 기기별 무선 endpoint를 중복 없이
   순회한다.
 - 페어링 포트와 실제 연결 포트는 다를 수 있다.
@@ -202,12 +210,14 @@ UTF-8 바이트로 만들고 Base64로 받아 한글·Unicode와 공백을 보�
 ```text
 --new-display=WIDTHxHEIGHT/DPI
 --start-app=PACKAGE
---window-title "APP NAME"
+--window-title "DX Manager - APP NAME - DEVICE NAME"
 ```
 
 슬롯마다 프로세스와 설정을 따로 관리한다. 강제 종료는
 `--start-app=+PACKAGE`이며 기본값은 꺼짐이다. 앱 이름과 패키지를 함께
 저장해 명령에는 패키지, UI와 창 제목에는 이름을 쓴다.
+DeX 창도 `DX Manager - DeX Station - DEVICE NAME` 형식을 사용하므로 동시에 여러
+휴대폰의 scrcpy 창이 떠 있어도 serial을 확인하지 않고 대상 휴대폰을 구분할 수 있다.
 
 ## Scrcpy와 화면 상태
 

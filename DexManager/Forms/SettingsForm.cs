@@ -116,6 +116,7 @@ namespace DexManager.Forms
         private bool _displayCleanupOperationRunning;
         private bool _loadingWirelessDevice;
         private string _loadedWirelessDeviceIdentity = string.Empty;
+        private int _activePageIndex;
 
         public SettingsForm(
             SettingsService settingsService,

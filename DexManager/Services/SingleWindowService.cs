@@ -46,6 +46,7 @@ namespace DexManager.Services
         private readonly HashSet<int> _stoppingSlots = new HashSet<int>();
         private int _shutdownRequested;
         private int _disposed;
+        private string _deviceDisplayName = string.Empty;
 
         public SingleWindowService(
             string scrcpyPath,
@@ -80,6 +81,19 @@ namespace DexManager.Services
         }
 
         public event EventHandler RunningChanged;
+
+        public string DeviceDisplayName
+        {
+            get
+            {
+                lock (_syncRoot) return _deviceDisplayName;
+            }
+            set
+            {
+                lock (_syncRoot)
+                    _deviceDisplayName = (value ?? string.Empty).Trim();
+            }
+        }
 
         public void RequestShutdown()
         {
@@ -587,7 +601,9 @@ namespace DexManager.Services
                 settings.Dpi.ToString(CultureInfo.InvariantCulture));
             arguments.Add("--start-app=" + GetStartAppArgument(settings));
             arguments.Add("--window-title");
-            arguments.Add(Quote(GetWindowTitle(slot, settings)));
+            arguments.Add(Quote(ScrcpyService.BuildWindowTitle(
+                GetWindowTitle(slot, settings),
+                DeviceDisplayName)));
 
             if (!string.IsNullOrWhiteSpace(settings.BitRate))
             {

@@ -45,6 +45,7 @@ namespace DexManager.Services
         private TcpListener _listener;
         private Task _acceptTask;
         private string _serial;
+        private string _deviceDisplayName;
         private string _token;
         private long _sequence;
         private int _activeTransfers;
@@ -76,6 +77,13 @@ namespace DexManager.Services
 
         public async Task AttachAsync(string serial)
         {
+            await AttachAsync(serial, string.Empty).ConfigureAwait(false);
+        }
+
+        public async Task AttachAsync(
+            string serial,
+            string deviceDisplayName)
+        {
             if (!_settings.Features.PhoneToPcTransferEnabled ||
                 string.IsNullOrWhiteSpace(serial) ||
                 _shutdown.IsCancellationRequested)
@@ -85,7 +93,8 @@ namespace DexManager.Services
             await _configurationGate.WaitAsync().ConfigureAwait(false);
             try
             {
-                await AttachCoreAsync(serial).ConfigureAwait(false);
+                await AttachCoreAsync(serial, deviceDisplayName)
+                    .ConfigureAwait(false);
             }
             finally
             {
@@ -93,7 +102,9 @@ namespace DexManager.Services
             }
         }
 
-        private async Task AttachCoreAsync(string serial)
+        private async Task AttachCoreAsync(
+            string serial,
+            string deviceDisplayName)
         {
             if (!_settings.Features.PhoneToPcTransferEnabled ||
                 string.IsNullOrWhiteSpace(serial) ||
@@ -170,6 +181,10 @@ namespace DexManager.Services
                 lock (_sync)
                 {
                     _serial = serial;
+                    _deviceDisplayName = string.IsNullOrWhiteSpace(
+                        deviceDisplayName)
+                        ? serial.Trim()
+                        : deviceDisplayName.Trim();
                     _token = token;
                 }
                 _runtimeSessions.SetCompanionAttached(serial, true);
@@ -578,6 +593,7 @@ namespace DexManager.Services
             {
                 serial = _serial;
                 _serial = null;
+                _deviceDisplayName = null;
                 _token = null;
                 foreach (var client in _clients)
                 {
@@ -648,9 +664,21 @@ namespace DexManager.Services
             if (string.IsNullOrWhiteSpace(configured))
                 throw new InvalidOperationException(
                     "Phone-to-PC destination folder is empty.");
-            return Path.GetFullPath(
+            var baseFolder = Path.GetFullPath(
                 _settingsService.ResolvePath(
                     Environment.ExpandEnvironmentVariables(configured)));
+            string deviceName;
+            lock (_sync)
+            {
+                deviceName = _deviceDisplayName;
+                if (string.IsNullOrWhiteSpace(deviceName))
+                    deviceName = _serial;
+            }
+            return Path.Combine(
+                baseFolder,
+                SanitizeFileName(string.IsNullOrWhiteSpace(deviceName)
+                    ? "Phone"
+                    : deviceName));
         }
 
         private string ResolveDestinationFolderSafe()
