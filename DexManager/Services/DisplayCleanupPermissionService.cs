@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Threading;
 using DexManager.Utils;
 
 namespace DexManager.Services
@@ -256,7 +257,8 @@ namespace DexManager.Services
                 serial,
                 bundled.ApkPath,
                 current.PackageInstalled);
-            if (!install.IsSuccess)
+            var installed = WaitForInstalledPackage(serial, 20000);
+            if (!install.IsSuccess && !IsExpectedInstalledPackage(installed))
             {
                 return Status(
                     DisplayCleanupPermissionState.Error,
@@ -266,10 +268,7 @@ namespace DexManager.Services
                     current.PackageInstalled);
             }
 
-            var installed = Inspect(serial);
-            if ((installed.State != DisplayCleanupPermissionState.Ready &&
-                 installed.State != DisplayCleanupPermissionState.Granted) ||
-                installed.VersionCode != BundledVersionCode)
+            if (!IsExpectedInstalledPackage(installed))
             {
                 return Status(
                     DisplayCleanupPermissionState.Error,
@@ -281,6 +280,38 @@ namespace DexManager.Services
             return installed.State == DisplayCleanupPermissionState.Granted
                 ? installed
                 : Grant(installed);
+        }
+
+        private DisplayCleanupPermissionStatus WaitForInstalledPackage(
+            string serial,
+            int timeoutMs)
+        {
+            var deadline = DateTime.UtcNow.AddMilliseconds(
+                Math.Max(timeoutMs, 0));
+            DisplayCleanupPermissionStatus current;
+            do
+            {
+                current = Inspect(serial);
+                if (IsExpectedInstalledPackage(current) ||
+                    current.State ==
+                        DisplayCleanupPermissionState.VerificationFailed ||
+                    !_adbService.IsAuthorizedDeviceConnected(serial))
+                {
+                    return current;
+                }
+                if (DateTime.UtcNow >= deadline) return current;
+                Thread.Sleep(500);
+            }
+            while (true);
+        }
+
+        private static bool IsExpectedInstalledPackage(
+            DisplayCleanupPermissionStatus status)
+        {
+            return status != null &&
+                (status.State == DisplayCleanupPermissionState.Ready ||
+                 status.State == DisplayCleanupPermissionState.Granted) &&
+                status.VersionCode == BundledVersionCode;
         }
 
         public DisplayCleanupPermissionStatus Uninstall(string serial)

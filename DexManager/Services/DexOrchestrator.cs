@@ -62,6 +62,8 @@ namespace DexManager.Services
             get { return _currentSession; }
         }
 
+        public string DeviceIdentity { get; set; }
+
         public bool IsShutdownRequested
         {
             get
@@ -158,6 +160,7 @@ namespace DexManager.Services
                         "Error.Dex.DisplayResetFailed"));
             }
             CleanupStaleSession(serial);
+            var runSettings = GetDeviceRunSettings();
 
             VirtualDisplayLease lease = null;
             var scrcpyStarted = false;
@@ -168,12 +171,12 @@ namespace DexManager.Services
                     ThrowIfShutdownRequested();
                     lease = _virtualDisplayService.EnsureVirtualDisplay(
                         serial,
-                        _settings.VirtualDisplay,
+                        runSettings.VirtualDisplay,
                         _settings.Timing.VirtualDisplayDetectionTimeoutMs,
                         delegate { return IsShutdownRequested; });
                     ThrowIfShutdownRequested();
                     _scrcpyService.Start(
-                        _settings.Scrcpy,
+                        runSettings.Scrcpy,
                         lease.DisplayId,
                         serial);
                     scrcpyStarted = true;
@@ -543,19 +546,23 @@ namespace DexManager.Services
             _settingsService.UpdateAndSave(_settings, delegate(
                 AppSettings settings)
             {
-                settings.LastSuccess.Width = settings.VirtualDisplay.Width;
-                settings.LastSuccess.Height = settings.VirtualDisplay.Height;
-                settings.LastSuccess.Dpi = settings.VirtualDisplay.Dpi;
-                settings.LastSuccess.AdbPath = _adbService.AdbPath;
-                settings.LastSuccess.ScrcpyPath =
+                var runSettings = GetDeviceRunSettings(settings);
+                runSettings.LastSuccess.Width =
+                    runSettings.VirtualDisplay.Width;
+                runSettings.LastSuccess.Height =
+                    runSettings.VirtualDisplay.Height;
+                runSettings.LastSuccess.Dpi =
+                    runSettings.VirtualDisplay.Dpi;
+                runSettings.LastSuccess.AdbPath = _adbService.AdbPath;
+                runSettings.LastSuccess.ScrcpyPath =
                     _scrcpyService.ScrcpyPath;
-                settings.LastSuccess.ScrcpyArguments =
+                runSettings.LastSuccess.ScrcpyArguments =
                     _scrcpyService.BuildArguments(
-                        settings.Scrcpy,
+                        runSettings.Scrcpy,
                         displayId,
                         serial);
-                settings.LastSuccess.DisplayId = displayId;
-                settings.LastSuccess.SavedAtUtc =
+                runSettings.LastSuccess.DisplayId = displayId;
+                runSettings.LastSuccess.SavedAtUtc =
                     DateTime.UtcNow.ToString("o");
             });
         }
@@ -569,7 +576,8 @@ namespace DexManager.Services
             {
                 Mode = mode,
                 Serial = serial,
-                AppPackage = _settings.Scrcpy.StartAppPackage,
+                AppPackage = GetDeviceRunSettings()
+                    .Scrcpy.StartAppPackage,
                 DisplayId = lease.DisplayId,
                 ScrcpyProcessId = _scrcpyService.CurrentProcessId,
                 CreatedAtUtc = DateTime.UtcNow.ToString("o"),
@@ -579,6 +587,29 @@ namespace DexManager.Services
             _logService.Info(LocalizationService.Format(
                 "Log.Dex.SessionStarted",
                 _currentSession));
+        }
+
+        private DeviceRunSettingsProfile GetDeviceRunSettings()
+        {
+            return GetDeviceRunSettings(_settings);
+        }
+
+        private DeviceRunSettingsProfile GetDeviceRunSettings(
+            AppSettings settings)
+        {
+            if (!string.IsNullOrWhiteSpace(DeviceIdentity))
+                return settings.GetOrCreateDeviceRunSettings(
+                    DeviceIdentity);
+            return new DeviceRunSettingsProfile
+            {
+                DeviceIdentity = string.Empty,
+                VirtualDisplay = settings.VirtualDisplay,
+                Scrcpy = settings.Scrcpy,
+                LastSuccess = settings.LastSuccess,
+                SingleWindowSlots = settings.SingleWindowSlots,
+                SingleWindowAppProfiles =
+                    settings.SingleWindowAppProfiles
+            };
         }
 
         private void ClearSession(ManagedDisplaySession session)

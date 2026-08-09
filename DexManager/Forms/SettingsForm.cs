@@ -28,6 +28,7 @@ namespace DexManager.Forms
         private readonly DisplayCleanupPermissionService
             _displayCleanupPermissionService;
         private readonly WirelessAdbService _wirelessAdbService;
+        private readonly Func<string> _getSelectedDeviceSerial;
         private readonly Action _showLogs;
         private readonly Action _showEnvironmentCheck;
         private readonly Action<AppTheme> _applyTheme;
@@ -116,6 +117,7 @@ namespace DexManager.Forms
             AppSettings settings,
             AdbService adbService,
             WirelessAdbService wirelessAdbService,
+            Func<string> getSelectedDeviceSerial,
             Action showLogs,
             Action showEnvironmentCheck,
             Action<AppTheme> applyTheme,
@@ -129,6 +131,8 @@ namespace DexManager.Forms
             _displayCleanupPermissionService =
                 new DisplayCleanupPermissionService(adbService);
             _wirelessAdbService = wirelessAdbService;
+            _getSelectedDeviceSerial = getSelectedDeviceSerial ??
+                delegate { return wirelessAdbService.SelectedSerial; };
             _showLogs = showLogs;
             _showEnvironmentCheck = showEnvironmentCheck;
             _applyTheme = applyTheme;

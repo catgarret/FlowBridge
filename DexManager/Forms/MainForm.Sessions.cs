@@ -136,13 +136,15 @@ namespace DexManager.Forms
                             "Error.Dex.NoAuthorizedDevice"));
                 }
                 if (!await WaitForDeviceStartDelayAsync(serial)) return;
-                if (_settings.Scrcpy.TurnScreenOff)
+                var scrcpySettings =
+                    GetSelectedDeviceRunSettings().Scrcpy;
+                if (scrcpySettings.TurnScreenOff)
                     RememberManagedSerial(serial);
                 await _orchestrator.StartAsync(serial);
                 if (_exitInProgress || !_orchestrator.IsRunning) return;
                 RememberStartedApp(
-                    _settings.Scrcpy.StartAppPackage,
-                    _settings.Scrcpy.StartAppName);
+                    scrcpySettings.StartAppPackage,
+                    scrcpySettings.StartAppName);
                 _modeSettingsDirty[0] = false;
             }
             catch (Exception ex)

@@ -22,7 +22,9 @@ namespace DexManager.Forms
             var packageName = GetSelectedAppPackage();
             var hasApp = !string.IsNullOrWhiteSpace(packageName);
             var profile = hasApp
-                ? FindSingleWindowAppProfile(_settings, packageName)
+                ? FindSingleWindowAppProfile(
+                    GetSelectedDeviceRunSettings(),
+                    packageName)
                 : null;
 
             _appProfileButton.Text = !hasApp
@@ -49,7 +51,7 @@ namespace DexManager.Forms
             if (string.IsNullOrWhiteSpace(packageName)) return false;
 
             var profile = FindSingleWindowAppProfile(
-                _settings,
+                GetSelectedDeviceRunSettings(),
                 packageName);
             if (profile == null) return false;
 
@@ -60,8 +62,11 @@ namespace DexManager.Forms
                 _settingsService.UpdateAndSave(_settings, delegate(
                     AppSettings candidate)
                 {
-                    var slot = GetSingleWindowSettings(
+                    var runSettings = GetDeviceRunSettings(
                         candidate,
+                        _selectedDeviceIdentity);
+                    var slot = GetSingleWindowSettings(
+                        runSettings,
                         selectedMode);
                     CopyProfileToSlot(
                         profile,
@@ -105,7 +110,7 @@ namespace DexManager.Forms
             if (string.IsNullOrWhiteSpace(packageName)) return;
             var appName = GetSelectedAppName(packageName);
             var existing = FindSingleWindowAppProfile(
-                _settings,
+                GetSelectedDeviceRunSettings(),
                 packageName);
             if (existing != null)
             {
@@ -132,18 +137,21 @@ namespace DexManager.Forms
                 _settingsService.UpdateAndSave(_settings, delegate(
                     AppSettings candidate)
                 {
-                    if (candidate.SingleWindowAppProfiles == null)
+                    var runSettings = GetDeviceRunSettings(
+                        candidate,
+                        _selectedDeviceIdentity);
+                    if (runSettings.SingleWindowAppProfiles == null)
                     {
-                        candidate.SingleWindowAppProfiles =
+                        runSettings.SingleWindowAppProfiles =
                             new List<SingleWindowAppProfile>();
                     }
 
                     for (var index = 0;
-                        index < candidate.SingleWindowAppProfiles.Count;
+                        index < runSettings.SingleWindowAppProfiles.Count;
                         index++)
                     {
                         var current =
-                            candidate.SingleWindowAppProfiles[index];
+                            runSettings.SingleWindowAppProfiles[index];
                         if (current == null ||
                             !string.Equals(
                                 current.PackageName,
@@ -153,11 +161,11 @@ namespace DexManager.Forms
                             continue;
                         }
 
-                        candidate.SingleWindowAppProfiles[index] = profile;
+                        runSettings.SingleWindowAppProfiles[index] = profile;
                         return;
                     }
 
-                    candidate.SingleWindowAppProfiles.Add(profile);
+                    runSettings.SingleWindowAppProfiles.Add(profile);
                 });
                 UpdateAppProfileControls();
                 _logService.Info(LocalizationService.Format(
@@ -190,7 +198,7 @@ namespace DexManager.Forms
 
             var packageName = GetSelectedAppPackage();
             var profile = FindSingleWindowAppProfile(
-                _settings,
+                GetSelectedDeviceRunSettings(),
                 packageName);
             if (profile == null) return;
 
@@ -211,21 +219,24 @@ namespace DexManager.Forms
                 _settingsService.UpdateAndSave(_settings, delegate(
                     AppSettings candidate)
                 {
-                    if (candidate.SingleWindowAppProfiles == null) return;
+                    var runSettings = GetDeviceRunSettings(
+                        candidate,
+                        _selectedDeviceIdentity);
+                    if (runSettings.SingleWindowAppProfiles == null) return;
                     for (var index =
-                            candidate.SingleWindowAppProfiles.Count - 1;
+                            runSettings.SingleWindowAppProfiles.Count - 1;
                         index >= 0;
                         index--)
                     {
                         var current =
-                            candidate.SingleWindowAppProfiles[index];
+                            runSettings.SingleWindowAppProfiles[index];
                         if (current != null &&
                             string.Equals(
                                 current.PackageName,
                                 packageName,
                                 StringComparison.OrdinalIgnoreCase))
                         {
-                            candidate.SingleWindowAppProfiles.RemoveAt(index);
+                            runSettings.SingleWindowAppProfiles.RemoveAt(index);
                         }
                     }
                 });
@@ -253,7 +264,7 @@ namespace DexManager.Forms
         }
 
         private static SingleWindowAppProfile FindSingleWindowAppProfile(
-            AppSettings settings,
+            DeviceRunSettingsProfile settings,
             string packageName)
         {
             if (settings == null ||

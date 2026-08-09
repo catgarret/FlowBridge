@@ -78,6 +78,7 @@ namespace DexManager.Forms
                         _settings,
                         _adbService,
                         _wirelessAdbService,
+                        GetSelectedDeviceSerial,
                         ShowLogForm,
                         ShowEnvironmentCheck,
                         ApplyThemeSelection,

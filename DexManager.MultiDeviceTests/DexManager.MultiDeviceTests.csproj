@@ -34,11 +34,19 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="..\DexManager\Models\AdbDeviceInfo.cs">
       <Link>Models\AdbDeviceInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\DexManager\Models\AppSettings.cs">
+      <Link>Models\AppSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\DexManager\Models\LastSuccessSettings.cs">
+      <Link>Models\LastSuccessSettings.cs</Link>
     </Compile>
     <Compile Include="..\DexManager\Models\DeviceTransportInfo.cs">
       <Link>Models\DeviceTransportInfo.cs</Link>

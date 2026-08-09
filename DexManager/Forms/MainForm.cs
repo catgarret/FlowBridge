@@ -126,7 +126,7 @@ namespace DexManager.Forms
         private bool _exitInProgress;
         private Task _exitCleanupTask;
         private bool _forcedCloseContinuationScheduled;
-        private readonly bool[] _modeSettingsDirty = new bool[4];
+        private bool[] _modeSettingsDirty = new bool[4];
         private LogForm _logForm;
         private SettingsForm _settingsForm;
         private EnvironmentCheckForm _environmentCheckForm;

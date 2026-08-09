@@ -492,6 +492,8 @@ namespace DexManager.Services
             target.RememberedApps = source.RememberedApps;
             target.SingleWindowAppProfiles =
                 source.SingleWindowAppProfiles;
+            target.DeviceRunSettingsProfiles =
+                source.DeviceRunSettingsProfiles;
         }
     }
 }

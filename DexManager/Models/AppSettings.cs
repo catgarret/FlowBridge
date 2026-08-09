@@ -10,7 +10,7 @@ namespace DexManager.Models
     [DataContract]
     public sealed class AppSettings
     {
-        public const int CurrentSchemaVersion = 23;
+        public const int CurrentSchemaVersion = 24;
 
         [DataMember(Order = 1)] public int SchemaVersion { get; set; }
         [DataMember(Order = 2)] public PathSettings Paths { get; set; }
@@ -28,6 +28,12 @@ namespace DexManager.Models
         public List<RememberedAppSettings> RememberedApps { get; set; }
         [DataMember(Order = 14)]
         public List<SingleWindowAppProfile> SingleWindowAppProfiles { get; set; }
+        [DataMember(Order = 15)]
+        public List<DeviceRunSettingsProfile> DeviceRunSettingsProfiles
+        {
+            get;
+            set;
+        }
 
         public static AppSettings CreateDefault()
         {
@@ -39,6 +45,8 @@ namespace DexManager.Models
                 RememberedApps = new List<RememberedAppSettings>(),
                 SingleWindowAppProfiles =
                     new List<SingleWindowAppProfile>(),
+                DeviceRunSettingsProfiles =
+                    new List<DeviceRunSettingsProfile>(),
                 Paths = new PathSettings
                 {
                     AdbPath = string.Empty,
@@ -149,6 +157,9 @@ namespace DexManager.Models
             if (SingleWindowAppProfiles == null)
                 SingleWindowAppProfiles =
                     new List<SingleWindowAppProfile>();
+            if (DeviceRunSettingsProfiles == null)
+                DeviceRunSettingsProfiles =
+                    new List<DeviceRunSettingsProfile>();
             if (SingleWindowSlots == null)
                 SingleWindowSlots = new List<SingleWindowSlotSettings>();
             while (SingleWindowSlots.Count < 3)
@@ -345,6 +356,12 @@ namespace DexManager.Models
                     defaults.Features.PhoneToPcTransferEnabled;
                 SchemaVersion = defaults.SchemaVersion;
             }
+            if (oldSchemaVersion < 24)
+            {
+                DeviceRunSettingsProfiles =
+                    new List<DeviceRunSettingsProfile>();
+                SchemaVersion = defaults.SchemaVersion;
+            }
             VirtualDisplay.Width = NormalizeRange(
                 VirtualDisplay.Width,
                 320,
@@ -410,6 +427,7 @@ namespace DexManager.Models
             NormalizeSingleWindowAppProfiles(
                 SingleWindowAppProfiles,
                 defaults.SingleWindowSlots[0]);
+            NormalizeDeviceRunSettingsProfiles(defaults);
             if (string.IsNullOrWhiteSpace(Paths.Win7AdbPath))
                 Paths.Win7AdbPath = defaults.Paths.Win7AdbPath;
             if (string.IsNullOrWhiteSpace(Paths.ScrcpyPath))
@@ -526,6 +544,151 @@ namespace DexManager.Models
                 1000,
                 60000,
                 defaults.Timing.VirtualDisplayDetectionTimeoutMs);
+        }
+
+        public DeviceRunSettingsProfile GetOrCreateDeviceRunSettings(
+            string deviceIdentity)
+        {
+            var identity = (deviceIdentity ?? string.Empty).Trim();
+            if (identity.Length == 0)
+                throw new System.ArgumentException(
+                    "Device identity is empty.",
+                    "deviceIdentity");
+            if (DeviceRunSettingsProfiles == null)
+            {
+                DeviceRunSettingsProfiles =
+                    new List<DeviceRunSettingsProfile>();
+            }
+
+            foreach (var profile in DeviceRunSettingsProfiles)
+            {
+                if (profile != null && string.Equals(
+                        profile.DeviceIdentity,
+                        identity,
+                        System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return profile;
+                }
+            }
+
+            var created = DeviceRunSettingsProfile.Create(
+                identity,
+                VirtualDisplay,
+                Scrcpy,
+                LastSuccess,
+                SingleWindowSlots,
+                SingleWindowAppProfiles);
+            DeviceRunSettingsProfiles.Add(created);
+            return created;
+        }
+
+        private void NormalizeDeviceRunSettingsProfiles(
+            AppSettings defaults)
+        {
+            var identities = new HashSet<string>(
+                System.StringComparer.OrdinalIgnoreCase);
+            for (var index = DeviceRunSettingsProfiles.Count - 1;
+                index >= 0;
+                index--)
+            {
+                var profile = DeviceRunSettingsProfiles[index];
+                if (profile == null)
+                {
+                    DeviceRunSettingsProfiles.RemoveAt(index);
+                    continue;
+                }
+
+                profile.DeviceIdentity =
+                    (profile.DeviceIdentity ?? string.Empty).Trim();
+                if (profile.DeviceIdentity.Length == 0 ||
+                    !identities.Add(profile.DeviceIdentity))
+                {
+                    DeviceRunSettingsProfiles.RemoveAt(index);
+                    continue;
+                }
+
+                if (profile.VirtualDisplay == null)
+                    profile.VirtualDisplay = CloneVirtualDisplay(
+                        VirtualDisplay ?? defaults.VirtualDisplay);
+                if (profile.Scrcpy == null)
+                    profile.Scrcpy = CloneScrcpy(
+                        Scrcpy ?? defaults.Scrcpy);
+                if (profile.LastSuccess == null)
+                    profile.LastSuccess = new LastSuccessSettings();
+                if (profile.SingleWindowSlots == null)
+                {
+                    profile.SingleWindowSlots = CloneSingleWindowSlots(
+                        SingleWindowSlots ?? defaults.SingleWindowSlots);
+                }
+                while (profile.SingleWindowSlots.Count < 3)
+                {
+                    profile.SingleWindowSlots.Add(
+                        CloneSingleWindowSlot(
+                            defaults.SingleWindowSlots[
+                                profile.SingleWindowSlots.Count]));
+                }
+                if (profile.SingleWindowAppProfiles == null)
+                {
+                    profile.SingleWindowAppProfiles =
+                        new List<SingleWindowAppProfile>();
+                }
+
+                profile.VirtualDisplay.Width = NormalizeRange(
+                    profile.VirtualDisplay.Width,
+                    320,
+                    4096,
+                    defaults.VirtualDisplay.Width);
+                profile.VirtualDisplay.Height = NormalizeRange(
+                    profile.VirtualDisplay.Height,
+                    240,
+                    4096,
+                    defaults.VirtualDisplay.Height);
+                profile.VirtualDisplay.CustomWidth = NormalizeRange(
+                    profile.VirtualDisplay.CustomWidth,
+                    320,
+                    4096,
+                    profile.VirtualDisplay.Width);
+                profile.VirtualDisplay.CustomHeight = NormalizeRange(
+                    profile.VirtualDisplay.CustomHeight,
+                    240,
+                    4096,
+                    profile.VirtualDisplay.Height);
+                profile.VirtualDisplay.Dpi = System.Math.Max(
+                    120,
+                    System.Math.Min(640, profile.VirtualDisplay.Dpi));
+                profile.VirtualDisplay.ReuseExistingDisplay = true;
+
+                for (var slotIndex = 0;
+                    slotIndex < profile.SingleWindowSlots.Count;
+                    slotIndex++)
+                {
+                    var slot = profile.SingleWindowSlots[slotIndex];
+                    var defaultSlot = slotIndex <
+                        defaults.SingleWindowSlots.Count
+                        ? defaults.SingleWindowSlots[slotIndex]
+                        : defaults.SingleWindowSlots[0];
+                    if (slot == null)
+                    {
+                        slot = CloneSingleWindowSlot(defaultSlot);
+                        profile.SingleWindowSlots[slotIndex] = slot;
+                    }
+                    slot.Slot = slotIndex + 1;
+                    slot.Width = NormalizeRange(
+                        slot.Width, 320, 4096, defaultSlot.Width);
+                    slot.Height = NormalizeRange(
+                        slot.Height, 240, 4096, defaultSlot.Height);
+                    slot.CustomWidth = NormalizeRange(
+                        slot.CustomWidth, 320, 4096, slot.Width);
+                    slot.CustomHeight = NormalizeRange(
+                        slot.CustomHeight, 240, 4096, slot.Height);
+                    slot.Dpi = System.Math.Max(
+                        120,
+                        System.Math.Min(640, slot.Dpi));
+                }
+                NormalizeSingleWindowAppProfiles(
+                    profile.SingleWindowAppProfiles,
+                    defaults.SingleWindowSlots[0]);
+            }
         }
 
         private static int NormalizeRange(
@@ -731,6 +894,168 @@ namespace DexManager.Models
                 CustomWidth = 1600,
                 CustomHeight = 900,
                 FlexDisplay = false
+            };
+        }
+
+        internal static VirtualDisplaySettings CloneVirtualDisplay(
+            VirtualDisplaySettings source)
+        {
+            source = source ?? new VirtualDisplaySettings();
+            return new VirtualDisplaySettings
+            {
+                Width = source.Width,
+                Height = source.Height,
+                Dpi = source.Dpi,
+                Suffix = source.Suffix,
+                ReuseExistingDisplay = source.ReuseExistingDisplay,
+                CustomWidth = source.CustomWidth,
+                CustomHeight = source.CustomHeight
+            };
+        }
+
+        internal static ScrcpySettings CloneScrcpy(ScrcpySettings source)
+        {
+            source = source ?? new ScrcpySettings();
+            return new ScrcpySettings
+            {
+                BitRate = source.BitRate,
+                MaxFps = source.MaxFps,
+                WindowTitle = source.WindowTitle,
+                TurnScreenOff = source.TurnScreenOff,
+                UseHidKeyboard = source.UseHidKeyboard,
+                UseHidMouse = source.UseHidMouse,
+                ForceStopStartApp = source.ForceStopStartApp,
+                StartAppPackage = source.StartAppPackage,
+                StartAppName = source.StartAppName,
+                AdditionalArguments = source.AdditionalArguments,
+                StayAwake = source.StayAwake
+            };
+        }
+
+        internal static List<SingleWindowSlotSettings>
+            CloneSingleWindowSlots(
+                IList<SingleWindowSlotSettings> source)
+        {
+            var result = new List<SingleWindowSlotSettings>();
+            if (source == null) return result;
+            foreach (var slot in source)
+                result.Add(CloneSingleWindowSlot(slot));
+            return result;
+        }
+
+        internal static SingleWindowSlotSettings CloneSingleWindowSlot(
+            SingleWindowSlotSettings source)
+        {
+            source = source ?? new SingleWindowSlotSettings();
+            return new SingleWindowSlotSettings
+            {
+                Slot = source.Slot,
+                Width = source.Width,
+                Height = source.Height,
+                Dpi = source.Dpi,
+                BitRate = source.BitRate,
+                MaxFps = source.MaxFps,
+                TurnScreenOff = source.TurnScreenOff,
+                StayAwake = source.StayAwake,
+                UseHidKeyboard = source.UseHidKeyboard,
+                UseHidMouse = source.UseHidMouse,
+                ForceStopStartApp = source.ForceStopStartApp,
+                StartAppPackage = source.StartAppPackage,
+                StartAppName = source.StartAppName,
+                AdditionalArguments = source.AdditionalArguments,
+                CustomWidth = source.CustomWidth,
+                CustomHeight = source.CustomHeight,
+                FlexDisplay = source.FlexDisplay
+            };
+        }
+
+        internal static List<SingleWindowAppProfile>
+            CloneSingleWindowAppProfiles(
+                IList<SingleWindowAppProfile> source)
+        {
+            var result = new List<SingleWindowAppProfile>();
+            if (source == null) return result;
+            foreach (var profile in source)
+            {
+                if (profile == null) continue;
+                result.Add(new SingleWindowAppProfile
+                {
+                    PackageName = profile.PackageName,
+                    AppName = profile.AppName,
+                    Width = profile.Width,
+                    Height = profile.Height,
+                    Dpi = profile.Dpi,
+                    BitRate = profile.BitRate,
+                    MaxFps = profile.MaxFps,
+                    TurnScreenOff = profile.TurnScreenOff,
+                    StayAwake = profile.StayAwake,
+                    UseHidKeyboard = profile.UseHidKeyboard,
+                    UseHidMouse = profile.UseHidMouse,
+                    ForceStopStartApp = profile.ForceStopStartApp,
+                    AdditionalArguments = profile.AdditionalArguments,
+                    CustomWidth = profile.CustomWidth,
+                    CustomHeight = profile.CustomHeight,
+                    FlexDisplay = profile.FlexDisplay
+                });
+            }
+            return result;
+        }
+    }
+
+    [DataContract]
+    public sealed class DeviceRunSettingsProfile
+    {
+        [DataMember(Order = 1)] public string DeviceIdentity { get; set; }
+        [DataMember(Order = 2)]
+        public VirtualDisplaySettings VirtualDisplay { get; set; }
+        [DataMember(Order = 3)] public ScrcpySettings Scrcpy { get; set; }
+        [DataMember(Order = 4)]
+        public LastSuccessSettings LastSuccess { get; set; }
+        [DataMember(Order = 5)]
+        public List<SingleWindowSlotSettings> SingleWindowSlots { get; set; }
+        [DataMember(Order = 6)]
+        public List<SingleWindowAppProfile> SingleWindowAppProfiles
+        {
+            get;
+            set;
+        }
+
+        public static DeviceRunSettingsProfile Create(
+            string deviceIdentity,
+            VirtualDisplaySettings virtualDisplay,
+            ScrcpySettings scrcpy,
+            LastSuccessSettings lastSuccess,
+            IList<SingleWindowSlotSettings> slots,
+            IList<SingleWindowAppProfile> appProfiles)
+        {
+            return new DeviceRunSettingsProfile
+            {
+                DeviceIdentity = deviceIdentity,
+                VirtualDisplay = AppSettings.CloneVirtualDisplay(
+                    virtualDisplay),
+                Scrcpy = AppSettings.CloneScrcpy(scrcpy),
+                LastSuccess = CloneLastSuccess(lastSuccess),
+                SingleWindowSlots = AppSettings.CloneSingleWindowSlots(
+                    slots),
+                SingleWindowAppProfiles =
+                    AppSettings.CloneSingleWindowAppProfiles(appProfiles)
+            };
+        }
+
+        private static LastSuccessSettings CloneLastSuccess(
+            LastSuccessSettings source)
+        {
+            source = source ?? new LastSuccessSettings();
+            return new LastSuccessSettings
+            {
+                Width = source.Width,
+                Height = source.Height,
+                Dpi = source.Dpi,
+                AdbPath = source.AdbPath,
+                ScrcpyPath = source.ScrcpyPath,
+                ScrcpyArguments = source.ScrcpyArguments,
+                DisplayId = source.DisplayId,
+                SavedAtUtc = source.SavedAtUtc
             };
         }
     }

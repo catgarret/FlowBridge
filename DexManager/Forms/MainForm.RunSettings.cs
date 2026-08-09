@@ -127,22 +127,24 @@ namespace DexManager.Forms
 
             _loadingRunSettings = true;
             _resolutionSelectionInitialized = false;
+            var runSettings = GetSelectedDeviceRunSettings();
             if (_selectedMode == 0)
             {
-                width = _settings.VirtualDisplay.Width;
-                height = _settings.VirtualDisplay.Height;
-                dpi = _settings.VirtualDisplay.Dpi;
-                bitRate = _settings.Scrcpy.BitRate;
-                maxFps = _settings.Scrcpy.MaxFps;
-                turnScreenOff = _settings.Scrcpy.TurnScreenOff;
-                stayAwake = _settings.Scrcpy.StayAwake;
-                useHidKeyboard = _settings.Scrcpy.UseHidKeyboard;
-                useHidMouse = _settings.Scrcpy.UseHidMouse;
-                forceStopStartApp = _settings.Scrcpy.ForceStopStartApp;
+                width = runSettings.VirtualDisplay.Width;
+                height = runSettings.VirtualDisplay.Height;
+                dpi = runSettings.VirtualDisplay.Dpi;
+                bitRate = runSettings.Scrcpy.BitRate;
+                maxFps = runSettings.Scrcpy.MaxFps;
+                turnScreenOff = runSettings.Scrcpy.TurnScreenOff;
+                stayAwake = runSettings.Scrcpy.StayAwake;
+                useHidKeyboard = runSettings.Scrcpy.UseHidKeyboard;
+                useHidMouse = runSettings.Scrcpy.UseHidMouse;
+                forceStopStartApp = runSettings.Scrcpy.ForceStopStartApp;
                 flexDisplay = false;
-                startAppPackage = _settings.Scrcpy.StartAppPackage;
-                startAppName = _settings.Scrcpy.StartAppName;
-                additionalArguments = _settings.Scrcpy.AdditionalArguments;
+                startAppPackage = runSettings.Scrcpy.StartAppPackage;
+                startAppName = runSettings.Scrcpy.StartAppName;
+                additionalArguments =
+                    runSettings.Scrcpy.AdditionalArguments;
             }
             else
             {
@@ -444,41 +446,44 @@ namespace DexManager.Forms
             _settingsService.UpdateAndSave(_settings, delegate(
                 AppSettings candidate)
             {
+                var runSettings = GetDeviceRunSettings(
+                    candidate,
+                    _selectedDeviceIdentity);
                 if (_selectedMode == 0)
                 {
-                    candidate.VirtualDisplay.Width = (int)_widthBox.Value;
-                    candidate.VirtualDisplay.Height = (int)_heightBox.Value;
+                    runSettings.VirtualDisplay.Width = (int)_widthBox.Value;
+                    runSettings.VirtualDisplay.Height = (int)_heightBox.Value;
                     if (IsCustomResolutionSelected())
                     {
-                        candidate.VirtualDisplay.CustomWidth =
+                        runSettings.VirtualDisplay.CustomWidth =
                             (int)_widthBox.Value;
-                        candidate.VirtualDisplay.CustomHeight =
+                        runSettings.VirtualDisplay.CustomHeight =
                             (int)_heightBox.Value;
                     }
-                    candidate.VirtualDisplay.Dpi = (int)_dpiBox.Value;
-                    candidate.VirtualDisplay.ReuseExistingDisplay = true;
-                    candidate.Scrcpy.BitRate = bitRate;
-                    candidate.Scrcpy.MaxFps = GetSelectedMaxFps();
-                    candidate.Scrcpy.TurnScreenOff =
+                    runSettings.VirtualDisplay.Dpi = (int)_dpiBox.Value;
+                    runSettings.VirtualDisplay.ReuseExistingDisplay = true;
+                    runSettings.Scrcpy.BitRate = bitRate;
+                    runSettings.Scrcpy.MaxFps = GetSelectedMaxFps();
+                    runSettings.Scrcpy.TurnScreenOff =
                         _turnScreenOffBox.Checked;
-                    candidate.Scrcpy.StayAwake = _stayAwakeBox.Checked;
-                    candidate.Scrcpy.UseHidKeyboard =
+                    runSettings.Scrcpy.StayAwake = _stayAwakeBox.Checked;
+                    runSettings.Scrcpy.UseHidKeyboard =
                         _useHidKeyboardBox.Checked;
-                    candidate.Scrcpy.UseHidMouse =
+                    runSettings.Scrcpy.UseHidMouse =
                         _useHidMouseBox.Checked;
-                    candidate.Scrcpy.ForceStopStartApp =
+                    runSettings.Scrcpy.ForceStopStartApp =
                         _forceStopAppBox.Checked;
                     var selectedPackage = GetSelectedAppPackage();
                     var selectedName = GetSelectedAppName(selectedPackage);
-                    candidate.Scrcpy.StartAppPackage = selectedPackage;
-                    candidate.Scrcpy.StartAppName = selectedName;
-                    candidate.Scrcpy.AdditionalArguments =
+                    runSettings.Scrcpy.StartAppPackage = selectedPackage;
+                    runSettings.Scrcpy.StartAppName = selectedName;
+                    runSettings.Scrcpy.AdditionalArguments =
                         _additionalArgumentsBox.Text.Trim();
                 }
                 else
                 {
                     var slot = GetSingleWindowSettings(
-                        candidate,
+                        runSettings,
                         _selectedMode);
                     slot.Width = (int)_widthBox.Value;
                     slot.Height = (int)_heightBox.Value;
@@ -572,12 +577,13 @@ namespace DexManager.Forms
 
             if (_selectedMode == 0)
             {
+                var scrcpy = GetSelectedDeviceRunSettings().Scrcpy;
                 return string.Equals(
-                    _settings.Scrcpy.StartAppPackage,
+                    scrcpy.StartAppPackage,
                     packageName,
                     StringComparison.OrdinalIgnoreCase) &&
-                    !string.IsNullOrWhiteSpace(_settings.Scrcpy.StartAppName)
-                    ? _settings.Scrcpy.StartAppName
+                    !string.IsNullOrWhiteSpace(scrcpy.StartAppName)
+                    ? scrcpy.StartAppName
                     : packageName;
             }
 

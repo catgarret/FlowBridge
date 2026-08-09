@@ -14,18 +14,51 @@ namespace DexManager.Forms
         private void SelectDexMode()
         {
             SaveCurrentModeBeforeSwitch();
-            _selectedMode = 0;
+            DisplayMode(0);
+        }
+
+        private void DisplayMode(int slot)
+        {
+            if (slot < 0 || slot > 3) slot = 0;
+            _selectedMode = slot;
+            if (_selectedDeviceContext != null)
+                _selectedDeviceContext.SelectedMode = slot;
             SetSelectedModeButton(0);
-            _modeHintLabel.Text = LocalizationService.Get("Main.DexMode");
-            _displaySettingsTitle.Text =
-                LocalizationService.Get("Main.DisplaySettings.Dex");
-            _startButton.Text = LocalizationService.Get("Main.StartDex");
-            _stopButton.Text = LocalizationService.Get("Main.StopDex");
-            _flexDisplayBox.Visible = false;
-            _flexDisplayBox.Enabled = false;
-            _stayAwakeBox.Top = 84;
-            LayoutStartAppControls(false);
-            SetAppProfileControlsVisible(false);
+            if (slot == 0)
+            {
+                _modeHintLabel.Text =
+                    LocalizationService.Get("Main.DexMode");
+                _displaySettingsTitle.Text = LocalizationService.Get(
+                    "Main.DisplaySettings.Dex");
+                _startButton.Text = LocalizationService.Get(
+                    "Main.StartDex");
+                _stopButton.Text = LocalizationService.Get(
+                    "Main.StopDex");
+                _flexDisplayBox.Visible = false;
+                _flexDisplayBox.Enabled = false;
+                _stayAwakeBox.Top = 84;
+                LayoutStartAppControls(false);
+                SetAppProfileControlsVisible(false);
+            }
+            else
+            {
+                SetSelectedModeButton(slot);
+                _modeHintLabel.Text = LocalizationService.Format(
+                    "Main.SingleMode",
+                    slot);
+                _displaySettingsTitle.Text = LocalizationService.Format(
+                    "Main.DisplaySettings.Single",
+                    slot);
+                _startButton.Text = LocalizationService.Get(
+                    "Main.StartSingle");
+                _stopButton.Text = LocalizationService.Get(
+                    "Main.StopSingle");
+                _flexDisplayBox.Visible = true;
+                _flexDisplayBox.Enabled = true;
+                _stayAwakeBox.Top = 119;
+                LayoutStartAppControls(true);
+                SetAppProfileControlsVisible(true);
+            }
             LoadRunSettings();
             UpdateRunningState();
         }
@@ -33,23 +66,7 @@ namespace DexManager.Forms
         private void SelectSingleWindowPreview(int slot)
         {
             SaveCurrentModeBeforeSwitch();
-            _selectedMode = slot;
-            SetSelectedModeButton(slot);
-            _modeHintLabel.Text =
-                LocalizationService.Format("Main.SingleMode", slot);
-            _displaySettingsTitle.Text =
-                LocalizationService.Format(
-                    "Main.DisplaySettings.Single",
-                    slot);
-            _startButton.Text = LocalizationService.Get("Main.StartSingle");
-            _stopButton.Text = LocalizationService.Get("Main.StopSingle");
-            _flexDisplayBox.Visible = true;
-            _flexDisplayBox.Enabled = true;
-            _stayAwakeBox.Top = 119;
-            LayoutStartAppControls(true);
-            SetAppProfileControlsVisible(true);
-            LoadRunSettings();
-            UpdateRunningState();
+            DisplayMode(slot);
         }
 
         private void SaveCurrentModeBeforeSwitch()
@@ -68,11 +85,13 @@ namespace DexManager.Forms
 
         private SingleWindowSlotSettings GetSingleWindowSettings(int slot)
         {
-            return GetSingleWindowSettings(_settings, slot);
+            return GetSingleWindowSettings(
+                GetSelectedDeviceRunSettings(),
+                slot);
         }
 
         private static SingleWindowSlotSettings GetSingleWindowSettings(
-            AppSettings settings,
+            DeviceRunSettingsProfile settings,
             int slot)
         {
             if (settings == null)
@@ -91,14 +110,16 @@ namespace DexManager.Forms
         private int GetCurrentCustomWidth()
         {
             return _selectedMode == 0
-                ? _settings.VirtualDisplay.CustomWidth
+                ? GetSelectedDeviceRunSettings()
+                    .VirtualDisplay.CustomWidth
                 : GetSingleWindowSettings(_selectedMode).CustomWidth;
         }
 
         private int GetCurrentCustomHeight()
         {
             return _selectedMode == 0
-                ? _settings.VirtualDisplay.CustomHeight
+                ? GetSelectedDeviceRunSettings()
+                    .VirtualDisplay.CustomHeight
                 : GetSingleWindowSettings(_selectedMode).CustomHeight;
         }
 
@@ -110,15 +131,18 @@ namespace DexManager.Forms
             _settingsService.UpdateInMemory(_settings, delegate(
                 AppSettings settings)
             {
+                var runSettings = GetDeviceRunSettings(
+                    settings,
+                    _selectedDeviceIdentity);
                 if (selectedMode == 0)
                 {
-                    settings.VirtualDisplay.CustomWidth = width;
-                    settings.VirtualDisplay.CustomHeight = height;
+                    runSettings.VirtualDisplay.CustomWidth = width;
+                    runSettings.VirtualDisplay.CustomHeight = height;
                     return;
                 }
 
                 var slot = GetSingleWindowSettings(
-                    settings,
+                    runSettings,
                     selectedMode);
                 slot.CustomWidth = width;
                 slot.CustomHeight = height;

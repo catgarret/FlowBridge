@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Json;
 using DexManager.Models;
 using DexManager.Services;
 
@@ -35,7 +37,10 @@ namespace DexManager.MultiDeviceTests
                 PreservesRuntimeStateAcrossDisconnect,
                 IgnoresUnchangedRuntimeReconciles,
                 BindsOneServiceInstancePerPhysicalDevice,
-                KeepsBoundRuntimeWhenPreferredTransportChanges
+                KeepsBoundRuntimeWhenPreferredTransportChanges,
+                KeepsRunSettingsIndependentPerPhysicalDevice,
+                SeedsNewDeviceSettingsFromLegacyTemplate,
+                PersistsDeviceRunSettingsProfiles
             };
 
             try
@@ -535,6 +540,94 @@ namespace DexManager.MultiDeviceTests
                 Device("phone-b", "Galaxy B", "USB-B", DeviceTransportKind.Usb)
             }));
             return runtime;
+        }
+
+        private static void KeepsRunSettingsIndependentPerPhysicalDevice()
+        {
+            var settings = AppSettings.CreateDefault();
+            var phoneA = settings.GetOrCreateDeviceRunSettings("phone-a");
+            var phoneB = settings.GetOrCreateDeviceRunSettings("phone-b");
+
+            phoneA.VirtualDisplay.Width = 1920;
+            phoneA.VirtualDisplay.Height = 1080;
+            phoneA.VirtualDisplay.Dpi = 240;
+            phoneA.SingleWindowSlots[0].Width = 1280;
+            phoneA.SingleWindowSlots[0].StartAppPackage = "app.phone.a";
+            phoneA.Scrcpy.BitRate = "20M";
+
+            Equal(1600, phoneB.VirtualDisplay.Width,
+                "phone-b DeX resolution must not follow phone-a");
+            Equal(900, phoneB.VirtualDisplay.Height,
+                "phone-b DeX height must remain independent");
+            Equal(150, phoneB.VirtualDisplay.Dpi,
+                "phone-b DeX DPI must remain independent");
+            Equal(1600, phoneB.SingleWindowSlots[0].Width,
+                "phone-b single-window resolution must remain independent");
+            True(string.IsNullOrEmpty(
+                    phoneB.SingleWindowSlots[0].StartAppPackage),
+                "phone-b selected app must not follow phone-a");
+            Equal("8M", phoneB.Scrcpy.BitRate,
+                "phone-b scrcpy bitrate must remain independent");
+        }
+
+        private static void SeedsNewDeviceSettingsFromLegacyTemplate()
+        {
+            var settings = AppSettings.CreateDefault();
+            settings.VirtualDisplay.Width = 2560;
+            settings.VirtualDisplay.Height = 1440;
+            settings.VirtualDisplay.Dpi = 180;
+            settings.Scrcpy.BitRate = "30M";
+            settings.SingleWindowSlots[1].Width = 1200;
+            settings.SingleWindowSlots[1].Height = 800;
+
+            var migrated = settings.GetOrCreateDeviceRunSettings(
+                "existing-phone");
+
+            Equal(2560, migrated.VirtualDisplay.Width,
+                "first device profile must preserve existing DeX width");
+            Equal(1440, migrated.VirtualDisplay.Height,
+                "first device profile must preserve existing DeX height");
+            Equal(180, migrated.VirtualDisplay.Dpi,
+                "first device profile must preserve existing DPI");
+            Equal("30M", migrated.Scrcpy.BitRate,
+                "first device profile must preserve existing bitrate");
+            Equal(1200, migrated.SingleWindowSlots[1].Width,
+                "first device profile must preserve existing slot width");
+            Equal(800, migrated.SingleWindowSlots[1].Height,
+                "first device profile must preserve existing slot height");
+        }
+
+        private static void PersistsDeviceRunSettingsProfiles()
+        {
+            var settings = AppSettings.CreateDefault();
+            var phoneA = settings.GetOrCreateDeviceRunSettings("phone-a");
+            var phoneB = settings.GetOrCreateDeviceRunSettings("phone-b");
+            phoneA.VirtualDisplay.Width = 1920;
+            phoneB.VirtualDisplay.Width = 1280;
+            phoneA.SingleWindowSlots[2].StartAppPackage = "app.a";
+            phoneB.SingleWindowSlots[2].StartAppPackage = "app.b";
+
+            var serializer = new DataContractJsonSerializer(
+                typeof(AppSettings));
+            AppSettings loaded;
+            using (var stream = new MemoryStream())
+            {
+                serializer.WriteObject(stream, settings);
+                stream.Position = 0;
+                loaded = (AppSettings)serializer.ReadObject(stream);
+            }
+            loaded.EnsureDefaults();
+
+            var loadedA = loaded.GetOrCreateDeviceRunSettings("phone-a");
+            var loadedB = loaded.GetOrCreateDeviceRunSettings("phone-b");
+            Equal(1920, loadedA.VirtualDisplay.Width,
+                "phone-a profile must survive settings serialization");
+            Equal(1280, loadedB.VirtualDisplay.Width,
+                "phone-b profile must survive settings serialization");
+            Equal("app.a", loadedA.SingleWindowSlots[2].StartAppPackage,
+                "phone-a app selection must survive serialization");
+            Equal("app.b", loadedB.SingleWindowSlots[2].StartAppPackage,
+                "phone-b app selection must survive serialization");
         }
 
         private static DiscoveredDeviceTransport Device(

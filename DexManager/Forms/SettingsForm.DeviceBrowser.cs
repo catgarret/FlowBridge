@@ -16,7 +16,7 @@ namespace DexManager.Forms
     {
         private void BrowseDeviceFolder(ThemedTextControl targetBox)
         {
-            var serial = _wirelessAdbService.SelectedSerial;
+            var serial = _getSelectedDeviceSerial();
             if (string.IsNullOrWhiteSpace(serial) ||
                 !_adbService.IsAuthorizedDeviceConnected(serial))
             {

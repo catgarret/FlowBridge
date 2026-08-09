@@ -23,6 +23,8 @@ namespace DexManager.Forms
             public MiniControlBarManager MiniBar;
             public bool WasConnected;
             public string ActiveSerial = string.Empty;
+            public int SelectedMode;
+            public bool[] ModeSettingsDirty = new bool[4];
         }
 
         private DeviceUiContext CreateInitialDeviceContext()
@@ -34,7 +36,9 @@ namespace DexManager.Forms
                 AutoHide = _autoHideService,
                 EnvironmentCheck = _environmentCheckService,
                 KeyMapping = _keyMappingService,
-                MiniBar = _miniControlBarManager
+                MiniBar = _miniControlBarManager,
+                SelectedMode = _selectedMode,
+                ModeSettingsDirty = _modeSettingsDirty
             };
         }
 
@@ -172,6 +176,7 @@ namespace DexManager.Forms
 
             context.Identity = device.Identity;
             context.Device = device.Clone();
+            context.Runtime.Dex.DeviceIdentity = device.Identity;
             lock (_deviceContextsSync)
                 _deviceContexts.Add(device.Identity, context);
             if (ReferenceEquals(context, _selectedDeviceContext))
@@ -385,9 +390,17 @@ namespace DexManager.Forms
             }
 
             SaveCurrentModeBeforeSwitch();
+            if (_selectedDeviceContext != null)
+            {
+                _selectedDeviceContext.SelectedMode = _selectedMode;
+                _selectedDeviceContext.ModeSettingsDirty =
+                    _modeSettingsDirty;
+            }
             StopInteractiveContext(_selectedDeviceContext);
             _selectedDeviceContext = context;
             _selectedDeviceIdentity = context.Identity ?? string.Empty;
+            _modeSettingsDirty = context.ModeSettingsDirty ??
+                new bool[4];
             ActivateContextServices(context);
             if (_interactiveServicesStarted)
                 StartInteractiveContext(context);
@@ -412,7 +425,7 @@ namespace DexManager.Forms
                 GetTransportText(transport)));
             RefreshSelectedDeviceState();
             RebuildDeviceTabs();
-            UpdateRunningState();
+            DisplayMode(context.SelectedMode);
         }
 
         private void ActivateContextServices(DeviceUiContext context)

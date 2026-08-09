@@ -81,15 +81,18 @@ namespace DexManager.Forms
                 _settingsService.UpdateAndSave(_settings, delegate(
                     AppSettings candidate)
                 {
+                    var runSettings = GetDeviceRunSettings(
+                        candidate,
+                        _selectedDeviceIdentity);
                     if (selectedMode == 0)
                     {
-                        candidate.Scrcpy.StartAppPackage = packageName;
-                        candidate.Scrcpy.StartAppName = appName;
+                        runSettings.Scrcpy.StartAppPackage = packageName;
+                        runSettings.Scrcpy.StartAppName = appName;
                     }
                     else
                     {
                         var slot = GetSingleWindowSettings(
-                            candidate,
+                            runSettings,
                             selectedMode);
                         slot.StartAppPackage = packageName;
                         slot.StartAppName = appName;

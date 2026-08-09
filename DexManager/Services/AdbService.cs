@@ -11,6 +11,7 @@ namespace DexManager.Services
 {
     public sealed class AdbService
     {
+        private const int PackageInstallTimeoutMs = 120000;
         private readonly string _adbPath;
         private readonly int _defaultTimeoutMs;
         private readonly ProcessRunner _processRunner;
@@ -218,7 +219,8 @@ namespace DexManager.Services
                 serial,
                 "install " + (replaceExisting ? "-r " : string.Empty) +
                 Quote(fullPath),
-                true);
+                true,
+                PackageInstallTimeoutMs);
         }
 
         public ProcessResult UninstallPackageForSerial(
@@ -464,6 +466,14 @@ namespace DexManager.Services
 
         private ProcessResult Run(string arguments, bool writeLog)
         {
+            return Run(arguments, writeLog, _defaultTimeoutMs);
+        }
+
+        private ProcessResult Run(
+            string arguments,
+            bool writeLog,
+            int timeoutMs)
+        {
             var outputEncoding = string.Equals(
                 (arguments ?? string.Empty).Trim(),
                 "version",
@@ -474,7 +484,7 @@ namespace DexManager.Services
                 _adbPath,
                 arguments,
                 Path.GetDirectoryName(_adbPath),
-                _defaultTimeoutMs,
+                Math.Max(timeoutMs, 1000),
                 writeLog,
                 outputEncoding);
         }
@@ -487,6 +497,18 @@ namespace DexManager.Services
             return Run(
                 AdbCommandBuilder.ForDevice(serial, arguments),
                 writeLog);
+        }
+
+        private ProcessResult RunForSerial(
+            string serial,
+            string arguments,
+            bool writeLog,
+            int timeoutMs)
+        {
+            return Run(
+                AdbCommandBuilder.ForDevice(serial, arguments),
+                writeLog,
+                timeoutMs);
         }
 
         public static bool IsTcpIpSerial(string serial)
