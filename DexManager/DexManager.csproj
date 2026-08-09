@@ -211,6 +211,7 @@
     <Compile Include="Utils\AdbVersionParser.cs" />
     <Compile Include="Utils\ApkSigningCertificateReader.cs" />
     <Compile Include="Utils\AppIconProvider.cs" />
+    <Compile Include="Utils\DeviceLogFormatter.cs" />
     <Compile Include="..\Shared\FileTransferProtocol.cs">
       <Link>Shared\FileTransferProtocol.cs</Link>
     </Compile>

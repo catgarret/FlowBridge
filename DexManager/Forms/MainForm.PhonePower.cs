@@ -258,22 +258,28 @@ namespace DexManager.Forms
                         true);
                     if (!result.IsSuccess)
                     {
-                        _logService.Warning(LocalizationService.Format(
-                            "Log.Main.StayAwakeCommandFailed",
-                            result.StandardError));
+                        _logService.Warning(DeviceLogFormatter.ForSerial(
+                            serial,
+                            LocalizationService.Format(
+                                "Log.Main.StayAwakeCommandFailed",
+                                result.StandardError)));
                         continue;
                     }
 
                     _stayAwakeOriginalValues[serial] = original;
                     PublishPhonePowerState(serial);
-                    _logService.Info(LocalizationService.Get(
-                        "Log.Main.StayAwakeEnabled"));
+                    _logService.Info(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Get(
+                            "Log.Main.StayAwakeEnabled")));
                 }
                 catch (Exception ex)
                 {
                     _logService.Error(
-                        LocalizationService.Get(
-                            "Log.Main.StayAwakeChangeFailed"),
+                        DeviceLogFormatter.ForSerial(
+                            serial,
+                            LocalizationService.Get(
+                                "Log.Main.StayAwakeChangeFailed")),
                         ex);
                 }
             }
@@ -311,9 +317,11 @@ namespace DexManager.Forms
                     false);
                 if (!currentResult.IsSuccess)
                 {
-                    _logService.Warning(LocalizationService.Format(
-                        "Log.Main.StayAwakeCommandFailed",
-                        currentResult.StandardError));
+                    _logService.Warning(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Format(
+                            "Log.Main.StayAwakeCommandFailed",
+                            currentResult.StandardError)));
                     return;
                 }
 
@@ -326,9 +334,11 @@ namespace DexManager.Forms
                 {
                     _stayAwakeOriginalValues.Remove(serial);
                     PublishPhonePowerState(serial);
-                    _logService.Warning(LocalizationService.Format(
-                        "Log.Main.StayAwakeRestoreSkipped",
-                        current ?? string.Empty));
+                    _logService.Warning(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Format(
+                            "Log.Main.StayAwakeRestoreSkipped",
+                            current ?? string.Empty)));
                     return;
                 }
 
@@ -342,22 +352,28 @@ namespace DexManager.Forms
                     true);
                 if (!result.IsSuccess)
                 {
-                    _logService.Warning(LocalizationService.Format(
-                        "Log.Main.StayAwakeCommandFailed",
-                        result.StandardError));
+                    _logService.Warning(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Format(
+                            "Log.Main.StayAwakeCommandFailed",
+                            result.StandardError)));
                     return;
                 }
 
                 _stayAwakeOriginalValues.Remove(serial);
                 PublishPhonePowerState(serial);
-                _logService.Info(LocalizationService.Get(
-                    "Log.Main.StayAwakeDisabled"));
+                _logService.Info(DeviceLogFormatter.ForSerial(
+                    serial,
+                    LocalizationService.Get(
+                        "Log.Main.StayAwakeDisabled")));
             }
             catch (Exception ex)
             {
                 _logService.Error(
-                    LocalizationService.Get(
-                        "Log.Main.StayAwakeChangeFailed"),
+                    DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Get(
+                            "Log.Main.StayAwakeChangeFailed")),
                     ex);
             }
         }
@@ -477,20 +493,26 @@ namespace DexManager.Forms
                     true);
                 if (result.IsSuccess)
                 {
-                    _logService.Info(LocalizationService.Get(
-                        "Log.Main.PhoneScreenWoken"));
+                    _logService.Info(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Get(
+                            "Log.Main.PhoneScreenWoken")));
                     return true;
                 }
                 else
-                    _logService.Warning(LocalizationService.Format(
-                        "Log.Main.PhoneScreenWakeCommandFailed",
-                        result.StandardError));
+                    _logService.Warning(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Format(
+                            "Log.Main.PhoneScreenWakeCommandFailed",
+                            result.StandardError)));
             }
             catch (Exception ex)
             {
                 _logService.Error(
-                    LocalizationService.Get(
-                        "Log.Main.PhoneScreenWakeFailed"),
+                    DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Get(
+                            "Log.Main.PhoneScreenWakeFailed")),
                     ex);
             }
             return false;

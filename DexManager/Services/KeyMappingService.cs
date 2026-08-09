@@ -77,8 +77,10 @@ namespace DexManager.Services
             }
             else
             {
-                _logService.Warning(LocalizationService.Get(
-                    "Log.KeyMapping.EnterConversionDisabled"));
+                _logService.InfoOnce(
+                    "key-mapping.enter-conversion-disabled",
+                    LocalizationService.Get(
+                        "Log.KeyMapping.EnterConversionDisabled"));
             }
         }
 

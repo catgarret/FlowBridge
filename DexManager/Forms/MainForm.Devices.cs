@@ -185,6 +185,11 @@ namespace DexManager.Forms
                     transport.Serial,
                     runtime.InstanceId);
             }
+            _logService.Info(LocalizationService.Format(
+                "Log.DeviceContext.Registered",
+                GetContextDisplayName(context),
+                transport == null ? device.Identity : transport.Serial,
+                GetTransportText(transport)));
             return context;
         }
 
@@ -394,6 +399,17 @@ namespace DexManager.Forms
                 _environmentCheckForm.Close();
             }
             _connectionError = null;
+            var serial = GetContextSerial(context);
+            var transport = context.Device == null
+                ? null
+                : context.Device.SelectPreferredTransport(serial);
+            _logService.Info(LocalizationService.Format(
+                "Log.DeviceContext.Selected",
+                GetContextDisplayName(context),
+                string.IsNullOrWhiteSpace(serial)
+                    ? context.Identity
+                    : serial,
+                GetTransportText(transport)));
             RefreshSelectedDeviceState();
             RebuildDeviceTabs();
             UpdateRunningState();

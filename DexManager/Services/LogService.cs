@@ -9,6 +9,8 @@ namespace DexManager.Services
     {
         private readonly object _syncRoot = new object();
         private readonly List<string> _sessionEntries = new List<string>();
+        private readonly HashSet<string> _onceKeys =
+            new HashSet<string>(StringComparer.Ordinal);
         private string _logDirectory;
 
         public LogService()
@@ -56,6 +58,20 @@ namespace DexManager.Services
 
         public void Info(string message)
         {
+            Write("INFO", message, null);
+        }
+
+        public void InfoOnce(string key, string message)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                Info(message);
+                return;
+            }
+            lock (_syncRoot)
+            {
+                if (!_onceKeys.Add(key)) return;
+            }
             Write("INFO", message, null);
         }
 

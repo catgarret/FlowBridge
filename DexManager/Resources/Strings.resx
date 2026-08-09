@@ -181,8 +181,8 @@
   <data name="Error.Adb.WirelessEndpointEmpty" xml:space="preserve"><value>The wireless ADB address is empty.</value></data>
   <data name="Error.Adb.PairingEndpointEmpty" xml:space="preserve"><value>The pairing address is empty.</value></data>
   <data name="Error.Adb.PairingCodeEmpty" xml:space="preserve"><value>The pairing code is empty.</value></data>
-  <data name="Log.Adb.TargetCleared" xml:space="preserve"><value>Cleared the selected ADB target device.</value></data>
-  <data name="Log.Adb.TargetSelected" xml:space="preserve"><value>Selected ADB target device: {0}</value></data>
+  <data name="Log.Adb.TargetCleared" xml:space="preserve"><value>Cleared the initial connection-monitoring target.</value></data>
+  <data name="Log.Adb.TargetSelected" xml:space="preserve"><value>Selected initial connection-monitoring target: {0}</value></data>
   <data name="Log.Adb.StartServerResult" xml:space="preserve"><value>ADB start-server result</value></data>
   <data name="Log.Adb.SelectedPath" xml:space="preserve"><value>Selected ADB path: {0}</value></data>
   <data name="Log.Adb.VersionResult" xml:space="preserve"><value>ADB version result</value></data>
@@ -209,7 +209,7 @@
   <data name="Log.Main.StayAwakeDisabled" xml:space="preserve"><value>Disabled stay-awake because no scrcpy session is running.</value></data>
   <data name="Log.Main.StayAwakeChangeFailed" xml:space="preserve"><value>Could not change the stay-awake setting.</value></data>
   <data name="Log.Main.StayAwakeRestoreSkipped" xml:space="preserve"><value>Did not restore stay-awake because another process changed the current value to '{0}'.</value></data>
-  <data name="Log.Main.PhoneScreenWoken" xml:space="preserve"><value>Turned on the phone screen after all scrcpy windows closed.</value></data>
+  <data name="Log.Main.PhoneScreenWoken" xml:space="preserve"><value>Turned on this device's phone screen after all of its scrcpy windows closed.</value></data>
   <data name="Log.Main.PhoneScreenWakeCommandFailed" xml:space="preserve"><value>The command to turn on the phone screen failed: {0}</value></data>
   <data name="Log.Main.PhoneScreenWakeFailed" xml:space="preserve"><value>Could not turn on the phone screen.</value></data>
   <data name="Log.Main.CleanupFailed" xml:space="preserve"><value>The cleanup step '{0}' failed while exiting.</value></data>
@@ -252,13 +252,15 @@
   <data name="Log.Capture.MediaScanFailed" xml:space="preserve"><value>The media scan broadcast failed.</value></data>
   <data name="Log.Capture.Pushed" xml:space="preserve"><value>Transferred the capture to the phone: {0}</value></data>
   <data name="Log.Capture.PushSkippedNoTarget" xml:space="preserve"><value>Saved the capture locally, but did not copy it to a device because the source window's ADB target was unavailable.</value></data>
-  <data name="Log.DeviceMonitor.Started" xml:space="preserve"><value>Started ADB device monitoring.</value></data>
-  <data name="Log.DeviceMonitor.Stopped" xml:space="preserve"><value>Stopped ADB device monitoring.</value></data>
-  <data name="Log.DeviceMonitor.Failed" xml:space="preserve"><value>An error occurred while monitoring the device.</value></data>
-  <data name="Log.DeviceMonitor.StateChanged" xml:space="preserve"><value>Device state changed: {0} -&gt; {1}{2}</value></data>
-  <data name="Log.DeviceMonitor.DevicePinned" xml:space="preserve"><value>Locked device control to {0} ({1}) for this DX Manager session.</value></data>
-  <data name="Log.DeviceMonitor.IgnoredOtherDevice" xml:space="preserve"><value>Ignored another ADB device because this session is locked to its first phone: {0}</value></data>
-  <data name="Log.DeviceMonitor.PinnedTransportChanged" xml:space="preserve"><value>The locked phone changed ADB transport: {0} -&gt; {1}</value></data>
+  <data name="Log.DeviceMonitor.Started" xml:space="preserve"><value>Started initial connection monitoring.</value></data>
+  <data name="Log.DeviceMonitor.Stopped" xml:space="preserve"><value>Stopped initial connection monitoring.</value></data>
+  <data name="Log.DeviceMonitor.Failed" xml:space="preserve"><value>An error occurred during initial connection monitoring.</value></data>
+  <data name="Log.DeviceMonitor.StateChanged" xml:space="preserve"><value>Initial connection-monitoring state changed: {0} -&gt; {1}{2}</value></data>
+  <data name="Log.DeviceMonitor.DevicePinned" xml:space="preserve"><value>Selected the initial connection-monitoring device: {0} ({1})</value></data>
+  <data name="Log.DeviceMonitor.IgnoredOtherDevice" xml:space="preserve"><value>Detected an additional ADB device outside the initial connection-monitoring target: {0}</value></data>
+  <data name="Log.DeviceContext.Registered" xml:space="preserve"><value>Registered device runtime: {0} ({1}, {2})</value></data>
+  <data name="Log.DeviceContext.Selected" xml:space="preserve"><value>Selected current device tab: {0} ({1}, {2})</value></data>
+  <data name="Log.DeviceMonitor.PinnedTransportChanged" xml:space="preserve"><value>The initial connection-monitoring device changed ADB transport: {0} -&gt; {1}</value></data>
   <data name="Log.Dex.OperationInProgress" xml:space="preserve"><value>A DeX operation is already in progress.</value></data>
   <data name="Log.Dex.AlreadyRunning" xml:space="preserve"><value>DeX is already running.</value></data>
   <data name="Error.Dex.NoAuthorizedDevice" xml:space="preserve"><value>No authorized ADB device is connected.</value></data>

@@ -641,12 +641,14 @@ namespace DexManager.Services
             _launchCoordinator.RunExclusive(delegate
             {
                 Process process;
+                string serial;
                 lock (_syncRoot)
                 {
                     process = _process;
                     if (process == null || _stopping) return;
                     _stopping = true;
                     _mainWindowHandle = IntPtr.Zero;
+                    serial = _targetSerial;
                 }
 
                 try
@@ -654,8 +656,10 @@ namespace DexManager.Services
                     EnsureProcessStopped(process);
                     CompleteExplicitStop(process);
                     stopped = true;
-                    _logService.Info(LocalizationService.Get(
-                        "Log.Scrcpy.Stopped"));
+                    _logService.Info(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Get(
+                            "Log.Scrcpy.Stopped")));
                 }
                 catch
                 {
@@ -812,10 +816,12 @@ namespace DexManager.Services
             var process = sender as Process;
             var ownedProcess = false;
             string transferSessionId = null;
+            string serial = null;
             lock (_syncRoot)
             {
                 if (ReferenceEquals(_process, process) && !_stopping)
                 {
+                    serial = _targetSerial;
                     _process = null;
                     _stayAwakeRequested = false;
                     _turnScreenOffRequested = false;
@@ -830,8 +836,10 @@ namespace DexManager.Services
 
             if (!ownedProcess) return;
             _fileTransferCoordinator.EndSession(transferSessionId);
-            _logService.Info(LocalizationService.Get(
-                "Log.Scrcpy.ProcessExited"));
+            _logService.Info(DeviceLogFormatter.ForSerial(
+                serial,
+                LocalizationService.Get(
+                    "Log.Scrcpy.ProcessExited")));
             RaiseRunningChanged();
             QueueDrainAndDispose(process);
         }
@@ -869,9 +877,11 @@ namespace DexManager.Services
                     _fileTransferCoordinator.BindWindow(
                         transferSessionId,
                         handle);
-                    _logService.Info(LocalizationService.Format(
-                        "Log.Scrcpy.WindowReady",
-                        process.Id));
+                    _logService.Info(DeviceLogFormatter.ForSerial(
+                        GetActiveSerialForProcess(process),
+                        LocalizationService.Format(
+                            "Log.Scrcpy.WindowReady",
+                            process.Id)));
                     QueueWindowMonitor(process, handle);
                     return;
                 }
@@ -1107,13 +1117,31 @@ namespace DexManager.Services
         private void Process_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (!string.IsNullOrWhiteSpace(e.Data))
-                _logService.Info("[scrcpy] " + e.Data);
+                _logService.Info(DeviceLogFormatter.ForSerial(
+                    GetActiveSerialForProcess(sender as Process),
+                    "[scrcpy] " + e.Data));
         }
 
         private void Process_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            if (!string.IsNullOrWhiteSpace(e.Data))
-                _logService.Warning("[scrcpy] " + e.Data);
+            if (string.IsNullOrWhiteSpace(e.Data)) return;
+            var message = DeviceLogFormatter.ForSerial(
+                GetActiveSerialForProcess(sender as Process),
+                "[scrcpy] " + e.Data);
+            if (DeviceLogFormatter.IsInformationalScrcpyErrorLine(e.Data))
+                _logService.Info(message);
+            else
+                _logService.Warning(message);
+        }
+
+        private string GetActiveSerialForProcess(Process process)
+        {
+            lock (_syncRoot)
+            {
+                return ReferenceEquals(_process, process)
+                    ? _targetSerial
+                    : string.Empty;
+            }
         }
 
         private void RaiseRunningChanged()

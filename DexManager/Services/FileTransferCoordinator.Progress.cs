@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using DexManager.FileTransfer;
 using DexManager.Models;
+using DexManager.Utils;
 
 namespace DexManager.Services
 {
@@ -31,10 +32,12 @@ namespace DexManager.Services
                 FinalFileName = item.FinalFileName,
                 Message = string.Empty
             });
-            _logService.Info(LocalizationService.Format(
-                "Log.FileTransfer.Completed",
-                item.FileName,
-                item.FinalFileName));
+            _logService.Info(DeviceLogFormatter.ForSerial(
+                item.Session.Serial,
+                LocalizationService.Format(
+                    "Log.FileTransfer.Completed",
+                    item.FileName,
+                    item.FinalFileName)));
         }
 
         private void CompleteFailed(TransferWorkItem item, string message)
@@ -52,10 +55,12 @@ namespace DexManager.Services
                 ExitCode = 1,
                 Message = message ?? string.Empty
             });
-            _logService.Warning(LocalizationService.Format(
-                "Log.FileTransfer.Failed",
-                item.FileName,
-                message));
+            _logService.Warning(DeviceLogFormatter.ForSerial(
+                item.Session.Serial,
+                LocalizationService.Format(
+                    "Log.FileTransfer.Failed",
+                    item.FileName,
+                    message)));
         }
 
         private void CompleteCanceled(TransferWorkItem item)
@@ -75,9 +80,11 @@ namespace DexManager.Services
                 ExitCode = 1,
                 Message = message
             });
-            _logService.Info(LocalizationService.Format(
-                "Log.FileTransfer.Canceled",
-                item.FileName));
+            _logService.Info(DeviceLogFormatter.ForSerial(
+                item.Session.Serial,
+                LocalizationService.Format(
+                    "Log.FileTransfer.Canceled",
+                    item.FileName)));
         }
 
         private void MarkTerminalAndUnregister(TransferWorkItem item)

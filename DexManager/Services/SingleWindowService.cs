@@ -506,6 +506,7 @@ namespace DexManager.Services
         private bool StopSlotCore(int slot)
         {
             Process process;
+            string serial;
             lock (_syncRoot)
             {
                 if (!_processes.TryGetValue(slot, out process) ||
@@ -515,15 +516,18 @@ namespace DexManager.Services
                 }
                 _stoppingSlots.Add(slot);
                 _windowHandles.Remove(slot);
+                _targetSerials.TryGetValue(slot, out serial);
             }
 
             try
             {
                 EnsureProcessStopped(process);
                 CompleteExplicitStop(slot, process);
-                _logService.Info(LocalizationService.Format(
-                    "Log.SingleWindow.Stopped",
-                    slot));
+                _logService.Info(DeviceLogFormatter.ForSerial(
+                    serial,
+                    LocalizationService.Format(
+                        "Log.SingleWindow.Stopped",
+                        slot)));
                 return true;
             }
             catch
@@ -686,9 +690,11 @@ namespace DexManager.Services
                 if (!string.IsNullOrWhiteSpace(serial))
                     _runtimeSessions.ClearSingleWindow(serial, slot);
                 _fileTransferCoordinator.EndSession(transferSessionId);
-                _logService.Info(LocalizationService.Format(
-                    "Log.SingleWindow.ProcessExited",
-                    slot));
+                _logService.Info(DeviceLogFormatter.ForSerial(
+                    serial,
+                    LocalizationService.Format(
+                        "Log.SingleWindow.ProcessExited",
+                        slot)));
                 RaiseRunningChanged();
                 QueueDrainAndDispose(process);
             }
@@ -700,7 +706,9 @@ namespace DexManager.Services
         {
             if (string.IsNullOrWhiteSpace(e.Data)) return;
             CaptureDisplayId(sender as Process, e.Data);
-            _logService.Info("[single scrcpy] " + e.Data);
+            _logService.Info(DeviceLogFormatter.ForSerial(
+                GetSerialForProcess(sender as Process),
+                "[single scrcpy] " + e.Data));
         }
 
         private void Process_ErrorDataReceived(
@@ -709,7 +717,30 @@ namespace DexManager.Services
         {
             if (string.IsNullOrWhiteSpace(e.Data)) return;
             CaptureDisplayId(sender as Process, e.Data);
-            _logService.Warning("[single scrcpy] " + e.Data);
+            var message = DeviceLogFormatter.ForSerial(
+                GetSerialForProcess(sender as Process),
+                "[single scrcpy] " + e.Data);
+            if (DeviceLogFormatter.IsInformationalScrcpyErrorLine(e.Data))
+                _logService.Info(message);
+            else
+                _logService.Warning(message);
+        }
+
+        private string GetSerialForProcess(Process process)
+        {
+            if (process == null) return string.Empty;
+            lock (_syncRoot)
+            {
+                foreach (var item in _processes)
+                {
+                    if (!ReferenceEquals(item.Value, process)) continue;
+                    string serial;
+                    return _targetSerials.TryGetValue(item.Key, out serial)
+                        ? serial
+                        : string.Empty;
+                }
+            }
+            return string.Empty;
         }
 
         private void CaptureDisplayId(Process process, string line)

@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using DexManager.Utils;
 
 namespace DexManager.Services
 {
@@ -76,8 +77,10 @@ namespace DexManager.Services
                 {
                     if (_shutdownSignal.WaitOne(0) || !shouldRun())
                     {
-                        _logService.Info(LocalizationService.Get(
-                            "Log.ScreenOff.Cancelled"));
+                        _logService.Info(DeviceLogFormatter.ForSerial(
+                            serial,
+                            LocalizationService.Get(
+                                "Log.ScreenOff.Cancelled")));
                         return false;
                     }
                     return RunOnce(serial);
@@ -168,21 +171,23 @@ namespace DexManager.Services
                     object sender,
                     DataReceivedEventArgs e)
                 {
-                    HandleOutput(e.Data, false, confirmation);
+                    HandleOutput(serial, e.Data, false, confirmation);
                 };
                 DataReceivedEventHandler errorHandler = delegate(
                     object sender,
                     DataReceivedEventArgs e)
                 {
-                    HandleOutput(e.Data, true, confirmation);
+                    HandleOutput(serial, e.Data, true, confirmation);
                 };
                 process.OutputDataReceived += outputHandler;
                 process.ErrorDataReceived += errorHandler;
 
                 try
                 {
-                    _logService.Info(LocalizationService.Get(
-                        "Log.ScreenOff.Starting"));
+                    _logService.Info(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Get(
+                            "Log.ScreenOff.Starting")));
                     process.Start();
                     started = true;
                     process.BeginOutputReadLine();
@@ -194,15 +199,19 @@ namespace DexManager.Services
                         if (_shutdownSignal.WaitOne(0)) return false;
                         if (confirmation.Wait(50))
                         {
-                            _logService.Info(LocalizationService.Get(
-                                "Log.ScreenOff.Confirmed"));
+                            _logService.Info(DeviceLogFormatter.ForSerial(
+                                serial,
+                                LocalizationService.Get(
+                                    "Log.ScreenOff.Confirmed")));
                             return true;
                         }
                         if (process.HasExited) break;
                     }
 
-                    _logService.Warning(LocalizationService.Get(
-                        "Log.ScreenOff.ConfirmationFailed"));
+                    _logService.Warning(DeviceLogFormatter.ForSerial(
+                        serial,
+                        LocalizationService.Get(
+                            "Log.ScreenOff.ConfirmationFailed")));
                     return false;
                 }
                 finally
@@ -215,16 +224,21 @@ namespace DexManager.Services
         }
 
         private void HandleOutput(
+            string serial,
             string data,
             bool warning,
             ManualResetEventSlim confirmation)
         {
             if (string.IsNullOrWhiteSpace(data)) return;
 
-            if (warning)
-                _logService.Warning("[screen-off scrcpy] " + data);
+            var message = DeviceLogFormatter.ForSerial(
+                serial,
+                "[screen-off scrcpy] " + data);
+            if (warning &&
+                !DeviceLogFormatter.IsInformationalScrcpyErrorLine(data))
+                _logService.Warning(message);
             else
-                _logService.Info("[screen-off scrcpy] " + data);
+                _logService.Info(message);
 
             if (data.IndexOf(
                 ConfirmationText,
