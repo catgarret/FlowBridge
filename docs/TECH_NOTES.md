@@ -121,12 +121,18 @@ push와 shell을 중단하고 임시 데이터를 정리하며, 같은 드롭에
 
 ## 무선 ADB
 
-- 승인된 USB 장치가 정확히 하나일 때 준비한다.
-- IP가 비어 있으면 `adb -s SERIAL shell ip route`의 `wlan` 경로에서
+- v2에서는 설정 페이지에서 대상 물리 휴대폰을 먼저 선택한다. 메인 화면의 현재
+  기기 탭이 기본 선택이며 각 identity별 프로필에 모드·IP·포트·자동 재연결을 저장한다.
+- USB 무선 준비는 선택한 휴대폰의 승인된 USB transport serial을 정확히 사용한다.
+- IP가 비어 있으면 선택한 `adb -s SERIAL shell ip route`의 `wlan` 경로에서
   `src` IPv4 주소를 우선 찾는다.
-- `adb -s SERIAL tcpip PORT` 후 USB를 꽂아둔 채 `adb connect`한다.
-- 성공 시 target serial을 `IP:PORT`로 바꾼다.
-- 자동 재연결은 최소 5초 간격이다.
+- `adb -s SERIAL tcpip PORT` 후 USB를 꽂아둔 채 해당 기기의 저장 주소 또는 감지
+  주소로 `adb connect`한다. 저장 주소가 틀렸을 때만 감지 주소로 한 번 재시도한다.
+- 연결된 endpoint의 실제 물리 identity가 선택한 기기와 다르면 설정 저장과
+  transport 전환을 거부한다.
+- 성공 시 해당 물리 기기의 선호 transport를 `IP:PORT`로 바꾼다.
+- 자동 재연결은 최소 5초 간격이며 저장된 모든 기기별 무선 endpoint를 중복 없이
+  순회한다.
 - 페어링 포트와 실제 연결 포트는 다를 수 있다.
 - 페어링 코드는 저장하거나 로그에 남기지 않는다.
 

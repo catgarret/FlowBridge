@@ -394,6 +394,11 @@
   <data name="Log.Wireless.EnableFromUsb" xml:space="preserve"><value>Switching the USB device to wireless ADB mode: {0}, port={1}</value></data>
   <data name="Log.Wireless.Disconnected" xml:space="preserve"><value>Disconnected wireless ADB and switched to USB mode.</value></data>
   <data name="Log.Wireless.DisconnectCommandFailed" xml:space="preserve"><value>Switched to USB mode, but the wireless ADB disconnect command failed: {0}</value></data>
+  <data name="Log.Wireless.DeviceConnectAttempt" xml:space="preserve"><value>Attempting wireless ADB connection for device {0}: {1}</value></data>
+  <data name="Log.Wireless.DeviceConnectSucceeded" xml:space="preserve"><value>Wireless ADB connection succeeded for device {0}: {1}</value></data>
+  <data name="Log.Wireless.DeviceEnableFromUsb" xml:space="preserve"><value>Preparing device {0} for wireless ADB over its USB transport {1}, port={2}</value></data>
+  <data name="Log.Wireless.DeviceDisconnected" xml:space="preserve"><value>Disconnected wireless ADB for device {0}: {1}</value></data>
+  <data name="Log.Wireless.RetryDetectedAddress" xml:space="preserve"><value>The saved address for device {0} did not connect. Retrying the address detected over USB: {1}</value></data>
   <data name="Wireless.NoResult" xml:space="preserve"><value>No result</value></data>
   <data name="Settings.Language" xml:space="preserve"><value>Display language</value></data>
   <data name="Settings.LanguageRestart" xml:space="preserve"><value>Language changes are applied after restarting DX Manager.</value></data>
@@ -441,6 +446,11 @@
   <data name="Settings.Usb" xml:space="preserve"><value>Use USB connection</value></data>
   <data name="Settings.Wireless" xml:space="preserve"><value>Use wireless ADB</value></data>
   <data name="Settings.ConnectionMode" xml:space="preserve"><value>Connection mode</value></data>
+  <data name="Settings.WirelessDevice" xml:space="preserve"><value>Target phone</value></data>
+  <data name="Settings.NoWirelessDevice" xml:space="preserve"><value>No connected phone is available.</value></data>
+  <data name="Settings.DeviceTransportUsb" xml:space="preserve"><value>USB</value></data>
+  <data name="Settings.DeviceTransportWireless" xml:space="preserve"><value>Wireless</value></data>
+  <data name="Settings.DeviceTransportUsbWireless" xml:space="preserve"><value>USB + Wireless</value></data>
   <data name="Settings.PhoneIp" xml:space="preserve"><value>Phone IP address</value></data>
   <data name="Settings.ConnectPort" xml:space="preserve"><value>Connection port</value></data>
   <data name="Settings.AutoReconnect" xml:space="preserve"><value>Reconnect automatically</value></data>
@@ -499,6 +509,8 @@
   <data name="Wireless.ConnectFailed" xml:space="preserve"><value>Wireless ADB connection failed: {0}</value></data>
   <data name="Wireless.Connected" xml:space="preserve"><value>Wireless connection completed.</value></data>
   <data name="Wireless.NoUsb" xml:space="preserve"><value>No authorized USB device was found.</value></data>
+  <data name="Wireless.SelectedDeviceNoUsb" xml:space="preserve"><value>The selected phone does not have an authorized USB connection. Connect that phone over USB first.</value></data>
+  <data name="Wireless.DeviceMismatch" xml:space="preserve"><value>{0} belongs to a different phone. Select the correct target phone or check its IP address.</value></data>
   <data name="Wireless.MultipleUsb" xml:space="preserve"><value>Multiple USB devices were found. Connect only one.</value></data>
   <data name="Wireless.NoWifiIp" xml:space="preserve"><value>Could not detect the phone Wi-Fi address. Enter it manually.</value></data>
   <data name="Wireless.TcpipFailed" xml:space="preserve"><value>Could not enable TCP/IP mode on the phone: {0}</value></data>

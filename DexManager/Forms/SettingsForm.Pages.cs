@@ -174,6 +174,14 @@ namespace DexManager.Forms
             var page = CreatePage();
             var connection = CreateTable();
 
+            _wirelessDeviceBox = CreateSelect();
+            _wirelessDeviceBox.SelectedIndexChanged +=
+                WirelessDeviceBox_SelectedIndexChanged;
+            AddRow(
+                connection,
+                LocalizationService.Get("Settings.WirelessDevice"),
+                _wirelessDeviceBox);
+
             _usbConnectionBox = CreateRadio(
                 LocalizationService.Get("Settings.Usb"));
             _wirelessConnectionBox = CreateRadio(

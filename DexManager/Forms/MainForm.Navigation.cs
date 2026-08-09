@@ -79,6 +79,8 @@ namespace DexManager.Forms
                         _adbService,
                         _wirelessAdbService,
                         GetSelectedDeviceSerial,
+                        delegate { return _selectedDeviceIdentity; },
+                        delegate { return _physicalDeviceRegistry.Current; },
                         ShowLogForm,
                         ShowEnvironmentCheck,
                         ApplyThemeSelection,
@@ -102,6 +104,8 @@ namespace DexManager.Forms
                 Array.Clear(_modeSettingsDirty, 0, _modeSettingsDirty.Length);
                 UpdateApplySettingsLink();
             }
+
+            ReconcileDeviceTabs(_physicalDeviceRegistry.Current);
 
             try
             {

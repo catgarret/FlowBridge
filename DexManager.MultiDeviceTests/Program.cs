@@ -40,7 +40,10 @@ namespace DexManager.MultiDeviceTests
                 KeepsBoundRuntimeWhenPreferredTransportChanges,
                 KeepsRunSettingsIndependentPerPhysicalDevice,
                 SeedsNewDeviceSettingsFromLegacyTemplate,
-                PersistsDeviceRunSettingsProfiles
+                PersistsDeviceRunSettingsProfiles,
+                KeepsWirelessSettingsIndependentPerPhysicalDevice,
+                SeedsSelectedWirelessDeviceFromLegacyConnection,
+                PersistsDeviceWirelessConnectionProfiles
             };
 
             try
@@ -628,6 +631,94 @@ namespace DexManager.MultiDeviceTests
                 "phone-a app selection must survive serialization");
             Equal("app.b", loadedB.SingleWindowSlots[2].StartAppPackage,
                 "phone-b app selection must survive serialization");
+        }
+
+        private static void KeepsWirelessSettingsIndependentPerPhysicalDevice()
+        {
+            var settings = AppSettings.CreateDefault();
+            var phoneA = settings.GetOrCreateDeviceWirelessConnection(
+                "phone-a",
+                false);
+            var phoneB = settings.GetOrCreateDeviceWirelessConnection(
+                "phone-b",
+                false);
+            phoneA.Mode = AdbConnectionMode.Wireless;
+            phoneA.WirelessHost = "192.168.50.82";
+            phoneA.WirelessPort = 5555;
+            phoneA.AutoReconnect = true;
+
+            Equal(AdbConnectionMode.Usb, phoneB.Mode,
+                "phone-b mode must not follow phone-a");
+            True(string.IsNullOrEmpty(phoneB.WirelessHost),
+                "phone-b address must not follow phone-a");
+            Equal(5555, phoneB.WirelessPort,
+                "phone-b must retain the default wireless port");
+        }
+
+        private static void SeedsSelectedWirelessDeviceFromLegacyConnection()
+        {
+            var settings = AppSettings.CreateDefault();
+            settings.Connection.Mode = AdbConnectionMode.Wireless;
+            settings.Connection.WirelessHost = "192.168.50.83";
+            settings.Connection.WirelessPort = 5566;
+            settings.Connection.AutoReconnect = false;
+
+            var migrated = settings.GetOrCreateDeviceWirelessConnection(
+                "existing-phone",
+                true);
+            var other = settings.GetOrCreateDeviceWirelessConnection(
+                "other-phone",
+                false);
+
+            Equal(AdbConnectionMode.Wireless, migrated.Mode,
+                "selected legacy device must preserve wireless mode");
+            Equal("192.168.50.83", migrated.WirelessHost,
+                "selected legacy device must preserve its address");
+            Equal(5566, migrated.WirelessPort,
+                "selected legacy device must preserve its port");
+            True(!migrated.AutoReconnect,
+                "selected legacy device must preserve reconnect setting");
+            True(string.IsNullOrEmpty(other.WirelessHost),
+                "another physical device must not inherit legacy address");
+        }
+
+        private static void PersistsDeviceWirelessConnectionProfiles()
+        {
+            var settings = AppSettings.CreateDefault();
+            var phoneA = settings.GetOrCreateDeviceWirelessConnection(
+                "phone-a",
+                false);
+            var phoneB = settings.GetOrCreateDeviceWirelessConnection(
+                "phone-b",
+                false);
+            phoneA.Mode = AdbConnectionMode.Wireless;
+            phoneA.WirelessHost = "10.0.0.2";
+            phoneA.WirelessPort = 5555;
+            phoneB.Mode = AdbConnectionMode.Wireless;
+            phoneB.WirelessHost = "10.0.0.3";
+            phoneB.WirelessPort = 5566;
+
+            var serializer = new DataContractJsonSerializer(
+                typeof(AppSettings));
+            AppSettings loaded;
+            using (var stream = new MemoryStream())
+            {
+                serializer.WriteObject(stream, settings);
+                stream.Position = 0;
+                loaded = (AppSettings)serializer.ReadObject(stream);
+            }
+            loaded.EnsureDefaults();
+
+            var loadedA = loaded.FindDeviceWirelessConnection("phone-a");
+            var loadedB = loaded.FindDeviceWirelessConnection("phone-b");
+            NotNull(loadedA,
+                "phone-a wireless profile must survive serialization");
+            NotNull(loadedB,
+                "phone-b wireless profile must survive serialization");
+            Equal("10.0.0.2", loadedA.WirelessHost,
+                "phone-a address must survive serialization");
+            Equal(5566, loadedB.WirelessPort,
+                "phone-b port must survive serialization");
         }
 
         private static DiscoveredDeviceTransport Device(

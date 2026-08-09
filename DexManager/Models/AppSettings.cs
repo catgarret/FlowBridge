@@ -10,7 +10,7 @@ namespace DexManager.Models
     [DataContract]
     public sealed class AppSettings
     {
-        public const int CurrentSchemaVersion = 24;
+        public const int CurrentSchemaVersion = 25;
 
         [DataMember(Order = 1)] public int SchemaVersion { get; set; }
         [DataMember(Order = 2)] public PathSettings Paths { get; set; }
@@ -34,6 +34,9 @@ namespace DexManager.Models
             get;
             set;
         }
+        [DataMember(Order = 16)]
+        public List<DeviceWirelessConnectionProfile>
+            DeviceWirelessConnectionProfiles { get; set; }
 
         public static AppSettings CreateDefault()
         {
@@ -47,6 +50,8 @@ namespace DexManager.Models
                     new List<SingleWindowAppProfile>(),
                 DeviceRunSettingsProfiles =
                     new List<DeviceRunSettingsProfile>(),
+                DeviceWirelessConnectionProfiles =
+                    new List<DeviceWirelessConnectionProfile>(),
                 Paths = new PathSettings
                 {
                     AdbPath = string.Empty,
@@ -160,6 +165,9 @@ namespace DexManager.Models
             if (DeviceRunSettingsProfiles == null)
                 DeviceRunSettingsProfiles =
                     new List<DeviceRunSettingsProfile>();
+            if (DeviceWirelessConnectionProfiles == null)
+                DeviceWirelessConnectionProfiles =
+                    new List<DeviceWirelessConnectionProfile>();
             if (SingleWindowSlots == null)
                 SingleWindowSlots = new List<SingleWindowSlotSettings>();
             while (SingleWindowSlots.Count < 3)
@@ -362,6 +370,12 @@ namespace DexManager.Models
                     new List<DeviceRunSettingsProfile>();
                 SchemaVersion = defaults.SchemaVersion;
             }
+            if (oldSchemaVersion < 25)
+            {
+                DeviceWirelessConnectionProfiles =
+                    new List<DeviceWirelessConnectionProfile>();
+                SchemaVersion = defaults.SchemaVersion;
+            }
             VirtualDisplay.Width = NormalizeRange(
                 VirtualDisplay.Width,
                 320,
@@ -428,6 +442,7 @@ namespace DexManager.Models
                 SingleWindowAppProfiles,
                 defaults.SingleWindowSlots[0]);
             NormalizeDeviceRunSettingsProfiles(defaults);
+            NormalizeDeviceWirelessConnectionProfiles(defaults);
             if (string.IsNullOrWhiteSpace(Paths.Win7AdbPath))
                 Paths.Win7AdbPath = defaults.Paths.Win7AdbPath;
             if (string.IsNullOrWhiteSpace(Paths.ScrcpyPath))
@@ -582,6 +597,66 @@ namespace DexManager.Models
             return created;
         }
 
+        public DeviceWirelessConnectionProfile
+            GetOrCreateDeviceWirelessConnection(
+                string deviceIdentity,
+                bool seedFromLegacyConnection)
+        {
+            var identity = (deviceIdentity ?? string.Empty).Trim();
+            if (identity.Length == 0)
+                throw new System.ArgumentException(
+                    "Device identity is empty.",
+                    "deviceIdentity");
+            if (DeviceWirelessConnectionProfiles == null)
+            {
+                DeviceWirelessConnectionProfiles =
+                    new List<DeviceWirelessConnectionProfile>();
+            }
+
+            foreach (var profile in DeviceWirelessConnectionProfiles)
+            {
+                if (profile != null && string.Equals(
+                        profile.DeviceIdentity,
+                        identity,
+                        System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return profile;
+                }
+            }
+
+            var source = seedFromLegacyConnection
+                ? Connection
+                : null;
+            var created = DeviceWirelessConnectionProfile.Create(
+                identity,
+                source);
+            DeviceWirelessConnectionProfiles.Add(created);
+            return created;
+        }
+
+        public DeviceWirelessConnectionProfile
+            FindDeviceWirelessConnection(string deviceIdentity)
+        {
+            var identity = (deviceIdentity ?? string.Empty).Trim();
+            if (identity.Length == 0 ||
+                DeviceWirelessConnectionProfiles == null)
+            {
+                return null;
+            }
+
+            foreach (var profile in DeviceWirelessConnectionProfiles)
+            {
+                if (profile != null && string.Equals(
+                        profile.DeviceIdentity,
+                        identity,
+                        System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return profile;
+                }
+            }
+            return null;
+        }
+
         private void NormalizeDeviceRunSettingsProfiles(
             AppSettings defaults)
         {
@@ -688,6 +763,53 @@ namespace DexManager.Models
                 NormalizeSingleWindowAppProfiles(
                     profile.SingleWindowAppProfiles,
                     defaults.SingleWindowSlots[0]);
+            }
+        }
+
+        private void NormalizeDeviceWirelessConnectionProfiles(
+            AppSettings defaults)
+        {
+            var identities = new HashSet<string>(
+                System.StringComparer.OrdinalIgnoreCase);
+            for (var index = DeviceWirelessConnectionProfiles.Count - 1;
+                index >= 0;
+                index--)
+            {
+                var profile = DeviceWirelessConnectionProfiles[index];
+                if (profile == null)
+                {
+                    DeviceWirelessConnectionProfiles.RemoveAt(index);
+                    continue;
+                }
+
+                profile.DeviceIdentity =
+                    (profile.DeviceIdentity ?? string.Empty).Trim();
+                if (profile.DeviceIdentity.Length == 0 ||
+                    !identities.Add(profile.DeviceIdentity))
+                {
+                    DeviceWirelessConnectionProfiles.RemoveAt(index);
+                    continue;
+                }
+
+                if (!System.Enum.IsDefined(
+                    typeof(AdbConnectionMode),
+                    profile.Mode))
+                {
+                    profile.Mode = AdbConnectionMode.Usb;
+                }
+                profile.WirelessHost =
+                    (profile.WirelessHost ?? string.Empty).Trim();
+                if (profile.WirelessPort < 1 ||
+                    profile.WirelessPort > 65535)
+                {
+                    profile.WirelessPort =
+                        defaults.Connection.WirelessPort;
+                }
+                if (profile.Mode == AdbConnectionMode.Wireless &&
+                    !IsValidWirelessHost(profile.WirelessHost))
+                {
+                    profile.Mode = AdbConnectionMode.Usb;
+                }
             }
         }
 
@@ -1096,6 +1218,38 @@ namespace DexManager.Models
         [DataMember(Order = 2)] public string WirelessHost { get; set; }
         [DataMember(Order = 3)] public int WirelessPort { get; set; }
         [DataMember(Order = 4)] public bool AutoReconnect { get; set; }
+    }
+
+    [DataContract]
+    public sealed class DeviceWirelessConnectionProfile
+    {
+        [DataMember(Order = 1)] public string DeviceIdentity { get; set; }
+        [DataMember(Order = 2)] public AdbConnectionMode Mode { get; set; }
+        [DataMember(Order = 3)] public string WirelessHost { get; set; }
+        [DataMember(Order = 4)] public int WirelessPort { get; set; }
+        [DataMember(Order = 5)] public bool AutoReconnect { get; set; }
+
+        public static DeviceWirelessConnectionProfile Create(
+            string deviceIdentity,
+            ConnectionSettings source)
+        {
+            return new DeviceWirelessConnectionProfile
+            {
+                DeviceIdentity = (deviceIdentity ?? string.Empty).Trim(),
+                Mode = source == null
+                    ? AdbConnectionMode.Usb
+                    : source.Mode,
+                WirelessHost = source == null
+                    ? string.Empty
+                    : source.WirelessHost ?? string.Empty,
+                WirelessPort = source == null ||
+                    source.WirelessPort < 1 ||
+                    source.WirelessPort > 65535
+                    ? 5555
+                    : source.WirelessPort,
+                AutoReconnect = source == null || source.AutoReconnect
+            };
+        }
     }
 
     public enum AdbConnectionMode

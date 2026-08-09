@@ -513,11 +513,50 @@ namespace DexManager.Forms
                     : context.ActiveSerial ?? string.Empty;
             var session = _runtimeSessions.Current.FindByIdentity(
                 context.Identity);
+            var configuredSerial = GetConfiguredTransportSerial(context);
             var preferred = context.Device.SelectPreferredTransport(
-                session == null
-                    ? string.Empty
-                    : session.ActiveTransportSerial);
+                !string.IsNullOrWhiteSpace(configuredSerial)
+                    ? configuredSerial
+                    : session == null
+                        ? string.Empty
+                        : session.ActiveTransportSerial);
             return preferred == null ? string.Empty : preferred.Serial;
+        }
+
+        private string GetConfiguredTransportSerial(
+            DeviceUiContext context)
+        {
+            if (context == null || context.Device == null ||
+                string.IsNullOrWhiteSpace(context.Identity))
+            {
+                return string.Empty;
+            }
+            var profile = _settings.FindDeviceWirelessConnection(
+                context.Identity);
+            if (profile == null) return string.Empty;
+
+            if (profile.Mode == AdbConnectionMode.Wireless)
+            {
+                var endpoint = WirelessAdbService.BuildEndpoint(
+                    profile.WirelessHost,
+                    profile.WirelessPort);
+                var wireless = context.Device.FindTransport(endpoint);
+                return wireless != null && wireless.IsAuthorized
+                    ? wireless.Serial
+                    : string.Empty;
+            }
+
+            if (context.Device.Transports == null) return string.Empty;
+            foreach (var transport in context.Device.Transports)
+            {
+                if (transport != null &&
+                    transport.Kind == DeviceTransportKind.Usb &&
+                    transport.IsAuthorized)
+                {
+                    return transport.Serial ?? string.Empty;
+                }
+            }
+            return string.Empty;
         }
 
         private static string GetContextDisplayName(DeviceUiContext context)

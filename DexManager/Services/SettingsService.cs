@@ -494,6 +494,8 @@ namespace DexManager.Services
                 source.SingleWindowAppProfiles;
             target.DeviceRunSettingsProfiles =
                 source.DeviceRunSettingsProfiles;
+            target.DeviceWirelessConnectionProfiles =
+                source.DeviceWirelessConnectionProfiles;
         }
     }
 }

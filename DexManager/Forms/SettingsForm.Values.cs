@@ -112,19 +112,7 @@ namespace DexManager.Forms
             _rightWindowsBox.Checked = _settings.KeyMappings.HandleRightWindowsKey;
             _convertEnterBox.Checked = _settings.KeyMappings.ConvertEnterToShiftEnter;
             _ignoreShiftSpaceBox.Checked = _settings.KeyMappings.IgnoreShiftSpace;
-            _usbConnectionBox.Checked =
-                _settings.Connection.Mode == AdbConnectionMode.Usb;
-            _wirelessConnectionBox.Checked =
-                !_usbConnectionBox.Checked;
-            _wirelessHostBox.Text =
-                _settings.Connection.WirelessHost ?? string.Empty;
-            _wirelessPortBox.Value = Clamp(
-                _settings.Connection.WirelessPort,
-                _wirelessPortBox);
-            _wirelessAutoReconnectBox.Checked =
-                _settings.Connection.AutoReconnect;
-            _pairingPortBox.Value = _wirelessPortBox.Value;
-            UpdateWirelessStatus();
+            PopulateWirelessDevices();
             UpdateManualAdbControls();
             UpdateWirelessControls();
         }
@@ -374,10 +362,7 @@ namespace DexManager.Forms
                     LocalizationService.Get(
                         "Settings.WirelessRequiresIp"));
             }
-            settings.Connection.Mode = _wirelessConnectionBox.Checked
-                ? AdbConnectionMode.Wireless
-                : AdbConnectionMode.Usb;
-            SaveConnectionDetails(settings);
+            SaveSelectedDeviceConnection(settings);
         }
 
         private string ResolveDisplayPath(string configuredPath)
@@ -424,15 +409,27 @@ namespace DexManager.Forms
             }
         }
 
-        private void SaveConnectionDetails(AppSettings settings)
+        private void SaveSelectedDeviceConnection(AppSettings settings)
         {
+            var option = GetSelectedWirelessDeviceOption();
+            if (option == null ||
+                string.IsNullOrWhiteSpace(option.DeviceIdentity))
+            {
+                return;
+            }
             var host = _wirelessHostBox.Text.Trim();
             var port = (int)_wirelessPortBox.Value;
             if (!string.IsNullOrWhiteSpace(host))
                 WirelessAdbService.BuildEndpoint(host, port);
-            settings.Connection.WirelessHost = host;
-            settings.Connection.WirelessPort = port;
-            settings.Connection.AutoReconnect =
+            var profile = settings.GetOrCreateDeviceWirelessConnection(
+                option.DeviceIdentity,
+                ShouldSeedLegacyConnection(option));
+            profile.Mode = _wirelessConnectionBox.Checked
+                ? AdbConnectionMode.Wireless
+                : AdbConnectionMode.Usb;
+            profile.WirelessHost = host;
+            profile.WirelessPort = port;
+            profile.AutoReconnect =
                 _wirelessAutoReconnectBox.Checked;
         }
 

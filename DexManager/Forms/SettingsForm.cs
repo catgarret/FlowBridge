@@ -29,6 +29,8 @@ namespace DexManager.Forms
             _displayCleanupPermissionService;
         private readonly WirelessAdbService _wirelessAdbService;
         private readonly Func<string> _getSelectedDeviceSerial;
+        private readonly Func<string> _getSelectedDeviceIdentity;
+        private readonly Func<DeviceRegistrySnapshot> _getDeviceSnapshot;
         private readonly Action _showLogs;
         private readonly Action _showEnvironmentCheck;
         private readonly Action<AppTheme> _applyTheme;
@@ -89,6 +91,7 @@ namespace DexManager.Forms
         private CheckBox _ignoreShiftSpaceBox;
         private RadioButton _usbConnectionBox;
         private RadioButton _wirelessConnectionBox;
+        private ThemedSelectControl _wirelessDeviceBox;
         private ThemedTextControl _wirelessHostBox;
         private ThemedNumberControl _wirelessPortBox;
         private CheckBox _wirelessAutoReconnectBox;
@@ -111,6 +114,8 @@ namespace DexManager.Forms
         private DisplayCleanupPermissionStatus _displayCleanupStatus;
         private BundledCompanionStatus _bundledCompanionStatus;
         private bool _displayCleanupOperationRunning;
+        private bool _loadingWirelessDevice;
+        private string _loadedWirelessDeviceIdentity = string.Empty;
 
         public SettingsForm(
             SettingsService settingsService,
@@ -118,6 +123,8 @@ namespace DexManager.Forms
             AdbService adbService,
             WirelessAdbService wirelessAdbService,
             Func<string> getSelectedDeviceSerial,
+            Func<string> getSelectedDeviceIdentity,
+            Func<DeviceRegistrySnapshot> getDeviceSnapshot,
             Action showLogs,
             Action showEnvironmentCheck,
             Action<AppTheme> applyTheme,
@@ -133,6 +140,10 @@ namespace DexManager.Forms
             _wirelessAdbService = wirelessAdbService;
             _getSelectedDeviceSerial = getSelectedDeviceSerial ??
                 delegate { return wirelessAdbService.SelectedSerial; };
+            _getSelectedDeviceIdentity = getSelectedDeviceIdentity ??
+                delegate { return string.Empty; };
+            _getDeviceSnapshot = getDeviceSnapshot ??
+                delegate { return new DeviceRegistrySnapshot(); };
             _showLogs = showLogs;
             _showEnvironmentCheck = showEnvironmentCheck;
             _applyTheme = applyTheme;

@@ -16,8 +16,9 @@ namespace DexManager.Forms
     {
         private void UpdateWirelessControls()
         {
+            var option = GetSelectedWirelessDeviceOption();
             var enabled = _wirelessConnectionBox != null &&
-                _wirelessConnectionBox.Checked;
+                _wirelessConnectionBox.Checked && option != null;
             if (_wirelessHostBox != null)
                 _wirelessHostBox.Enabled = enabled;
             if (_wirelessPortBox != null)
@@ -25,7 +26,8 @@ namespace DexManager.Forms
             if (_wirelessAutoReconnectBox != null)
                 _wirelessAutoReconnectBox.Enabled = enabled;
             if (_wirelessPrepareButton != null)
-                _wirelessPrepareButton.Enabled = enabled;
+                _wirelessPrepareButton.Enabled = enabled &&
+                    option.HasAuthorizedUsb;
             if (_wirelessConnectButton != null)
                 _wirelessConnectButton.Enabled = enabled;
             if (_wirelessDisconnectButton != null)
@@ -42,44 +44,61 @@ namespace DexManager.Forms
             object sender,
             EventArgs e)
         {
+            SaveLoadedWirelessProfileToMemory();
+            var option = GetSelectedWirelessDeviceOption();
+            if (option == null) return;
             var host = _wirelessHostBox.Text;
             var port = (int)_wirelessPortBox.Value;
+            var autoReconnect = _wirelessAutoReconnectBox.Checked;
             await RunWirelessOperationAsync(delegate
             {
-                return _wirelessAdbService.EnableFromUsb(
+                return _wirelessAdbService.EnableFromUsbForDevice(
+                    option.DeviceIdentity,
+                    option.UsbSerial,
                     host,
-                    port);
+                    port,
+                    autoReconnect);
             });
             if (IsDisposed) return;
-            _wirelessHostBox.Text =
-                _settings.Connection.WirelessHost ?? string.Empty;
+            LoadSelectedWirelessProfile(false);
         }
 
         private async void WirelessConnectButton_Click(
             object sender,
             EventArgs e)
         {
+            SaveLoadedWirelessProfileToMemory();
+            var option = GetSelectedWirelessDeviceOption();
+            if (option == null) return;
             var host = _wirelessHostBox.Text;
             var port = (int)_wirelessPortBox.Value;
+            var autoReconnect = _wirelessAutoReconnectBox.Checked;
             await RunWirelessOperationAsync(delegate
             {
-                return _wirelessAdbService.Connect(
+                return _wirelessAdbService.ConnectForDevice(
+                    option.DeviceIdentity,
                     host,
-                    port);
+                    port,
+                    autoReconnect);
             });
+            if (IsDisposed) return;
+            LoadSelectedWirelessProfile(false);
         }
 
         private async void WirelessDisconnectButton_Click(
             object sender,
             EventArgs e)
         {
+            SaveLoadedWirelessProfileToMemory();
+            var option = GetSelectedWirelessDeviceOption();
+            if (option == null) return;
             await RunWirelessOperationAsync(delegate
             {
-                return _wirelessAdbService.Disconnect();
+                return _wirelessAdbService.DisconnectForDevice(
+                    option.DeviceIdentity);
             });
             if (IsDisposed) return;
-            _usbConnectionBox.Checked =
-                !_wirelessAdbService.IsWirelessMode;
+            LoadSelectedWirelessProfile(false);
         }
 
         private async void PairButton_Click(
@@ -116,9 +135,6 @@ namespace DexManager.Forms
                 _wirelessStatusLabel.ForeColor = result.Success
                     ? Color.DarkGreen
                     : Color.Firebrick;
-                if (result.Success)
-                    _wirelessConnectionBox.Checked =
-                        _wirelessAdbService.IsWirelessMode;
             }
             catch (Exception ex)
             {
@@ -151,11 +167,30 @@ namespace DexManager.Forms
 
         private void UpdateWirelessStatus()
         {
-            var target = _wirelessAdbService.SelectedSerial;
+            var option = GetSelectedWirelessDeviceOption();
+            if (option == null)
+            {
+                _wirelessStatusLabel.Text =
+                    LocalizationService.Get("Settings.NoWirelessDevice");
+                return;
+            }
+
+            var profile = _settings.FindDeviceWirelessConnection(
+                option.DeviceIdentity);
+            var expectedEndpoint = profile == null
+                ? string.Empty
+                : WirelessAdbService.BuildEndpoint(
+                    profile.WirelessHost,
+                    profile.WirelessPort);
+            var target = option.FindAuthorizedWirelessSerial(
+                expectedEndpoint);
+            if (string.IsNullOrWhiteSpace(target))
+                target = option.UsbSerial;
             if (string.IsNullOrWhiteSpace(target))
             {
                 _wirelessStatusLabel.Text =
-                    _settings.Connection.Mode == AdbConnectionMode.Wireless
+                    profile != null &&
+                    profile.Mode == AdbConnectionMode.Wireless
                         ? LocalizationService.Get(
                             "Settings.WirelessWaiting")
                         : LocalizationService.Get(
@@ -168,6 +203,267 @@ namespace DexManager.Forms
                         ? "Settings.WirelessTarget"
                         : "Settings.UsbTarget",
                     target);
+        }
+
+        private void PopulateWirelessDevices()
+        {
+            _loadingWirelessDevice = true;
+            try
+            {
+                _wirelessDeviceBox.Items.Clear();
+                var snapshot = _getDeviceSnapshot();
+                if (snapshot != null && snapshot.Devices != null)
+                {
+                    foreach (var device in snapshot.Devices)
+                    {
+                        if (device != null &&
+                            !string.IsNullOrWhiteSpace(device.Identity))
+                        {
+                            _wirelessDeviceBox.Items.Add(
+                                new WirelessDeviceOption(device));
+                        }
+                    }
+                }
+
+                var selectedIdentity = _getSelectedDeviceIdentity();
+                var selectedIndex = -1;
+                for (var index = 0;
+                    index < _wirelessDeviceBox.Items.Count;
+                    index++)
+                {
+                    var option = _wirelessDeviceBox.Items[index] as
+                        WirelessDeviceOption;
+                    if (option != null && string.Equals(
+                        option.DeviceIdentity,
+                        selectedIdentity,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        selectedIndex = index;
+                        break;
+                    }
+                }
+                if (selectedIndex < 0 &&
+                    _wirelessDeviceBox.Items.Count > 0)
+                {
+                    selectedIndex = 0;
+                }
+                _wirelessDeviceBox.SelectedIndex = selectedIndex;
+            }
+            finally
+            {
+                _loadingWirelessDevice = false;
+            }
+            LoadSelectedWirelessProfile();
+        }
+
+        private void WirelessDeviceBox_SelectedIndexChanged(
+            object sender,
+            EventArgs e)
+        {
+            if (_loadingWirelessDevice) return;
+            SaveLoadedWirelessProfileToMemory();
+            LoadSelectedWirelessProfile();
+        }
+
+        private void LoadSelectedWirelessProfile()
+        {
+            LoadSelectedWirelessProfile(true);
+        }
+
+        private void LoadSelectedWirelessProfile(bool updateStatus)
+        {
+            var option = GetSelectedWirelessDeviceOption();
+            _loadingWirelessDevice = true;
+            try
+            {
+                if (option == null)
+                {
+                    _loadedWirelessDeviceIdentity = string.Empty;
+                    _usbConnectionBox.Checked = true;
+                    _wirelessHostBox.Text = string.Empty;
+                    _wirelessPortBox.Value = Clamp(5555,
+                        _wirelessPortBox);
+                    _wirelessAutoReconnectBox.Checked = true;
+                }
+                else
+                {
+                    var profile = _wirelessAdbService.GetDeviceProfile(
+                        option.DeviceIdentity,
+                        ShouldSeedLegacyConnection(option));
+                    _loadedWirelessDeviceIdentity = option.DeviceIdentity;
+                    _usbConnectionBox.Checked =
+                        profile.Mode == AdbConnectionMode.Usb;
+                    _wirelessConnectionBox.Checked =
+                        !_usbConnectionBox.Checked;
+                    _wirelessHostBox.Text =
+                        profile.WirelessHost ?? string.Empty;
+                    _wirelessPortBox.Value = Clamp(
+                        profile.WirelessPort,
+                        _wirelessPortBox);
+                    _wirelessAutoReconnectBox.Checked =
+                        profile.AutoReconnect;
+                }
+                _pairingPortBox.Value = _wirelessPortBox.Value;
+            }
+            finally
+            {
+                _loadingWirelessDevice = false;
+            }
+            if (updateStatus) UpdateWirelessStatus();
+            UpdateWirelessControls();
+        }
+
+        private void SaveLoadedWirelessProfileToMemory()
+        {
+            if (_loadingWirelessDevice ||
+                string.IsNullOrWhiteSpace(
+                    _loadedWirelessDeviceIdentity))
+            {
+                return;
+            }
+            var profile = _settings.GetOrCreateDeviceWirelessConnection(
+                _loadedWirelessDeviceIdentity,
+                false);
+            profile.Mode = _wirelessConnectionBox.Checked
+                ? AdbConnectionMode.Wireless
+                : AdbConnectionMode.Usb;
+            profile.WirelessHost = (_wirelessHostBox.Text ?? string.Empty)
+                .Trim();
+            profile.WirelessPort = (int)_wirelessPortBox.Value;
+            profile.AutoReconnect = _wirelessAutoReconnectBox.Checked;
+        }
+
+        private WirelessDeviceOption GetSelectedWirelessDeviceOption()
+        {
+            return _wirelessDeviceBox == null
+                ? null
+                : _wirelessDeviceBox.SelectedItem as
+                    WirelessDeviceOption;
+        }
+
+        private bool ShouldSeedLegacyConnection(
+            WirelessDeviceOption option)
+        {
+            if (option == null ||
+                _settings.FindDeviceWirelessConnection(
+                    option.DeviceIdentity) != null)
+            {
+                return false;
+            }
+            var legacy = _settings.Connection;
+            if (legacy == null) return false;
+            var endpoint = WirelessAdbService.BuildEndpoint(
+                legacy.WirelessHost,
+                legacy.WirelessPort);
+            if (!string.IsNullOrWhiteSpace(endpoint) &&
+                option.ContainsTransport(endpoint))
+            {
+                return true;
+            }
+            return (_settings.DeviceWirelessConnectionProfiles == null ||
+                    _settings.DeviceWirelessConnectionProfiles.Count == 0) &&
+                string.Equals(
+                    option.DeviceIdentity,
+                    _getSelectedDeviceIdentity(),
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private sealed class WirelessDeviceOption
+        {
+            private readonly PhysicalDeviceInfo _device;
+
+            public WirelessDeviceOption(PhysicalDeviceInfo device)
+            {
+                _device = device == null
+                    ? new PhysicalDeviceInfo()
+                    : device.Clone();
+            }
+
+            public string DeviceIdentity
+            {
+                get { return _device.Identity ?? string.Empty; }
+            }
+
+            public string UsbSerial
+            {
+                get
+                {
+                    if (_device.Transports == null) return string.Empty;
+                    foreach (var transport in _device.Transports)
+                    {
+                        if (transport != null &&
+                            transport.Kind == DeviceTransportKind.Usb &&
+                            transport.IsAuthorized)
+                        {
+                            return transport.Serial ?? string.Empty;
+                        }
+                    }
+                    return string.Empty;
+                }
+            }
+
+            public bool HasAuthorizedUsb
+            {
+                get { return !string.IsNullOrWhiteSpace(UsbSerial); }
+            }
+
+            public bool ContainsTransport(string serial)
+            {
+                return _device.FindTransport(serial) != null;
+            }
+
+            public string FindAuthorizedWirelessSerial(
+                string preferredEndpoint)
+            {
+                if (_device.Transports == null) return string.Empty;
+                foreach (var transport in _device.Transports)
+                {
+                    if (transport != null &&
+                        transport.Kind == DeviceTransportKind.Wireless &&
+                        transport.IsAuthorized &&
+                        !string.IsNullOrWhiteSpace(preferredEndpoint) &&
+                        string.Equals(
+                            transport.Serial,
+                            preferredEndpoint,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        return transport.Serial;
+                    }
+                }
+                foreach (var transport in _device.Transports)
+                {
+                    if (transport != null &&
+                        transport.Kind == DeviceTransportKind.Wireless &&
+                        transport.IsAuthorized)
+                    {
+                        return transport.Serial ?? string.Empty;
+                    }
+                }
+                return string.Empty;
+            }
+
+            public override string ToString()
+            {
+                var hasUsb = HasAuthorizedUsb;
+                var hasWireless = !string.IsNullOrWhiteSpace(
+                    FindAuthorizedWirelessSerial(string.Empty));
+                var transport = hasUsb && hasWireless
+                    ? LocalizationService.Get(
+                        "Settings.DeviceTransportUsbWireless")
+                    : hasWireless
+                        ? LocalizationService.Get(
+                            "Settings.DeviceTransportWireless")
+                        : hasUsb
+                            ? LocalizationService.Get(
+                                "Settings.DeviceTransportUsb")
+                            : LocalizationService.Get(
+                                "Device.Disconnected");
+                var name = string.IsNullOrWhiteSpace(_device.DisplayName)
+                    ? DeviceIdentity
+                    : _device.DisplayName;
+                return name + " · " + transport + " · " +
+                    DeviceIdentity;
+            }
         }
 
         private string GetAdbVersionText()
