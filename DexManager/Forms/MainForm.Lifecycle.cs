@@ -223,13 +223,30 @@ namespace DexManager.Forms
 
         private void BeginSystemShutdown()
         {
+            BeginSystemShutdown(false);
+        }
+
+        private void SimulateWindowsShutdown()
+        {
+            RunOnUi(delegate
+            {
+                if (_exitInProgress || IsDisposed) return;
+                BeginSystemShutdown(true);
+                Close();
+            });
+        }
+
+        private void BeginSystemShutdown(bool simulation)
+        {
             if (_systemShutdownInProgress) return;
 
             _systemShutdownInProgress = true;
+            _systemShutdownSimulationInProgress = simulation;
             _exitInProgress = true;
             _allowExit = true;
-            _logService.Info(LocalizationService.Get(
-                "Log.Main.SystemShutdownDetected"));
+            _logService.Info(LocalizationService.Get(simulation
+                ? "Log.Main.SystemShutdownSimulationStarted"
+                : "Log.Main.SystemShutdownDetected"));
 
             var cleanupTargets = CaptureWindowsShutdownCleanupTargets();
             BeginPhoneScreenWakeSuppression();

@@ -83,6 +83,7 @@ namespace DexManager.Forms
                         delegate { return _physicalDeviceRegistry.Current; },
                         ShowLogForm,
                         ShowEnvironmentCheck,
+                        SimulateWindowsShutdown,
                         ApplyThemeSelection,
                         ApplyGeneralSettingsChanges,
                         DetachSelectedPhoneTransferAsync,

@@ -428,6 +428,10 @@
   <data name="Settings.OpenLogs" xml:space="preserve"><value>현재 세션 로그 열기</value></data>
   <data name="Settings.OpenEnvironment" xml:space="preserve"><value>환경 점검 실행</value></data>
   <data name="Settings.DiagnosticsGuide" xml:space="preserve"><value>로그를 열거나 ADB, Scrcpy와 장치 연결 상태를 점검합니다.</value></data>
+  <data name="Settings.WindowsShutdownTest" xml:space="preserve"><value>Windows 종료 정리 테스트</value></data>
+  <data name="Settings.WindowsShutdownTestGuide" xml:space="preserve"><value>Windows를 끄지 않고 실제 Windows 종료 때와 같은 빠른 기기 정리 경로를 실행합니다. 테스트가 끝나면 DX Manager만 종료됩니다.</value></data>
+  <data name="Settings.WindowsShutdownTestConfirm" xml:space="preserve"><value>Windows 종료 정리 경로를 테스트할까요? 실행 중인 DeX·단일창과 파일 전송을 중단하고, 연결된 휴대폰의 가상 화면과 절전모드 해제를 정리한 뒤 DX Manager가 종료됩니다. Windows는 종료되지 않습니다.</value></data>
+  <data name="Log.Main.SystemShutdownSimulationStarted" xml:space="preserve"><value>Windows 종료 정리 테스트를 시작합니다. Windows는 종료하지 않고 동일한 빠른 기기 정리 경로를 실행합니다.</value></data>
   <data name="Settings.StartWithWindows" xml:space="preserve"><value>Windows 시작 시 자동 실행</value></data>
   <data name="Settings.StartMinimized" xml:space="preserve"><value>자동 실행 시 트레이로 시작</value></data>
   <data name="Settings.WakeUpMode" xml:space="preserve"><value>ADB Wake-up 방식</value></data>

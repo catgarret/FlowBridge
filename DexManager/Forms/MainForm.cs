@@ -131,6 +131,7 @@ namespace DexManager.Forms
         private bool _allowExit;
         private bool _exitInProgress;
         private bool _systemShutdownInProgress;
+        private bool _systemShutdownSimulationInProgress;
         private Task _exitCleanupTask;
         private bool _forcedCloseContinuationScheduled;
         private bool[] _modeSettingsDirty = new bool[4];
@@ -144,9 +145,13 @@ namespace DexManager.Forms
         private FileTransferCoordinator _fileTransferStatusSource;
         private PhoneTransferReceiver _phoneTransferStatusSource;
 
-        internal bool IsSystemShutdownInProgress
+        internal bool ShouldDeferProcessCleanupToWindows
         {
-            get { return _systemShutdownInProgress; }
+            get
+            {
+                return _systemShutdownInProgress &&
+                    !_systemShutdownSimulationInProgress;
+            }
         }
         private readonly Dictionary<string, DeviceUiContext> _deviceContexts =
             new Dictionary<string, DeviceUiContext>(

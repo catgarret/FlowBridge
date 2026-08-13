@@ -227,7 +227,7 @@ namespace DexManager
                 // sweep. During Windows shutdown, do not race the OS by
                 // terminating ADB/scrcpy processes from this finally block.
                 var windowsShutdown = mainForm != null &&
-                    mainForm.IsSystemShutdownInProgress;
+                    mainForm.ShouldDeferProcessCleanupToWindows;
                 if (!windowsShutdown)
                 {
                     if (processRunner != null)

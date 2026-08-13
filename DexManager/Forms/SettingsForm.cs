@@ -33,6 +33,7 @@ namespace DexManager.Forms
         private readonly Func<DeviceRegistrySnapshot> _getDeviceSnapshot;
         private readonly Action _showLogs;
         private readonly Action _showEnvironmentCheck;
+        private readonly Action _simulateWindowsShutdown;
         private readonly Action<AppTheme> _applyTheme;
         private readonly Action<bool> _settingsChanged;
         private readonly Func<string, Task> _detachPhoneTransfer;
@@ -128,6 +129,7 @@ namespace DexManager.Forms
             Func<DeviceRegistrySnapshot> getDeviceSnapshot,
             Action showLogs,
             Action showEnvironmentCheck,
+            Action simulateWindowsShutdown,
             Action<AppTheme> applyTheme,
             Action<bool> settingsChanged,
             Func<string, Task> detachPhoneTransfer,
@@ -147,6 +149,7 @@ namespace DexManager.Forms
                 delegate { return new DeviceRegistrySnapshot(); };
             _showLogs = showLogs;
             _showEnvironmentCheck = showEnvironmentCheck;
+            _simulateWindowsShutdown = simulateWindowsShutdown;
             _applyTheme = applyTheme;
             _settingsChanged = settingsChanged;
             _detachPhoneTransfer = detachPhoneTransfer;

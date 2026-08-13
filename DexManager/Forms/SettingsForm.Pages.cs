@@ -366,6 +366,37 @@ namespace DexManager.Forms
                 BackColor = _theme.CardBackground,
                 Margin = new Padding(0, 24, 0, 10),
                 Text = LocalizationService.Get(
+                    "Settings.WindowsShutdownTestGuide")
+            });
+            var shutdownTestButton = CreateActionButton(
+                LocalizationService.Get("Settings.WindowsShutdownTest"),
+                220);
+            shutdownTestButton.Click += delegate
+            {
+                if (_simulateWindowsShutdown == null) return;
+                var answer = MessageBox.Show(
+                    this,
+                    LocalizationService.Get(
+                        "Settings.WindowsShutdownTestConfirm"),
+                    LocalizationService.Get("App.Name"),
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2);
+                if (answer != DialogResult.Yes) return;
+
+                var simulate = _simulateWindowsShutdown;
+                Close();
+                simulate();
+            };
+            panel.Controls.Add(shutdownTestButton);
+            panel.Controls.Add(new Label
+            {
+                AutoSize = true,
+                MaximumSize = new Size(610, 0),
+                ForeColor = _theme.TextTertiary,
+                BackColor = _theme.CardBackground,
+                Margin = new Padding(0, 24, 0, 10),
+                Text = LocalizationService.Get(
                     "Settings.AdvancedOptionsGuide")
             });
             _advancedOptionsButton = CreateActionButton(
