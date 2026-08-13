@@ -191,6 +191,8 @@ namespace DexManager.Forms
                 !string.IsNullOrWhiteSpace(previousSerial))
             {
                 context.Runtime.FileTransfers.CancelSerial(previousSerial);
+                context.Runtime.CompanionGuardian.NotifyConnectionLost(
+                    previousSerial);
                 var detachTask = context.Runtime.PhoneTransfers.DetachAsync(
                     previousSerial);
                 ForgetDeviceConnectionTimestamp(previousSerial);
@@ -212,7 +214,10 @@ namespace DexManager.Forms
                 }
                 RecordDeviceConnected(serial);
                 MarkSerialReconnected(serial);
-                ConfigurePhoneTransferReceiver(context, serial);
+                ConfigurePhoneTransferReceiver(
+                    context,
+                    serial,
+                    selectedTransport.Kind);
                 RetryContextCleanupAsync(
                     context,
                     serial,
@@ -255,7 +260,15 @@ namespace DexManager.Forms
 
             RecordDeviceConnected(serial);
             MarkSerialReconnected(serial);
-            ConfigurePhoneTransferReceiver(context, serial);
+            var transport = context.Device == null
+                ? null
+                : context.Device.FindTransport(serial);
+            ConfigurePhoneTransferReceiver(
+                context,
+                serial,
+                transport == null
+                    ? DeviceTransportKind.Unknown
+                    : transport.Kind);
             RetryContextCleanupAsync(context, serial, false);
             RefreshSelectedDeviceState();
             RebuildDeviceTabs();
@@ -404,6 +417,7 @@ namespace DexManager.Forms
             ForgetDeviceConnection(serial);
             MarkSerialDisconnected(serial);
             context.Runtime.FileTransfers.CancelSerial(serial);
+            context.Runtime.CompanionGuardian.NotifyConnectionLost(serial);
             var detachTask = context.Runtime.PhoneTransfers.DetachAsync(serial);
             Task.Run(async delegate
             {
@@ -426,7 +440,8 @@ namespace DexManager.Forms
 
         private async void ConfigurePhoneTransferReceiver(
             DeviceUiContext context,
-            string serial)
+            string serial,
+            DeviceTransportKind transportKind)
         {
             if (_exitInProgress || context == null ||
                 string.IsNullOrWhiteSpace(serial)) return;
@@ -443,6 +458,28 @@ namespace DexManager.Forms
                     ".",
                     ex);
             }
+
+            if (_exitInProgress || !context.WasConnected ||
+                !string.Equals(
+                    context.ActiveSerial,
+                    serial,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+            try
+            {
+                await context.Runtime.CompanionGuardian.AttachAsync(
+                    serial,
+                    transportKind);
+            }
+            catch (Exception ex)
+            {
+                _logService.Error(
+                    "Could not prepare DX Companion shutdown protection for " +
+                    serial + ".",
+                    ex);
+            }
         }
 
         private void ConfigurePhoneTransferReceiver(string serial)
@@ -457,7 +494,15 @@ namespace DexManager.Forms
                 {
                     continue;
                 }
-                ConfigurePhoneTransferReceiver(context, serial);
+                var transport = context.Device == null
+                    ? null
+                    : context.Device.FindTransport(serial);
+                ConfigurePhoneTransferReceiver(
+                    context,
+                    serial,
+                    transport == null
+                        ? DeviceTransportKind.Unknown
+                        : transport.Kind);
                 return;
             }
             _logService.Warning(

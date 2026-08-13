@@ -80,6 +80,42 @@ final class StayAwakeRepository {
         return verified;
     }
 
+    static Snapshot restore(Context context, String originalValue) {
+        if (!OverlayDisplayRepository.hasWritePermission(context)) {
+            return inspect(context);
+        }
+        ContentResolver resolver = context.getContentResolver();
+        try {
+            String normalized = originalValue == null
+                    ? "" : originalValue.trim();
+            boolean accepted;
+            if (normalized.isEmpty()
+                    || "null".equalsIgnoreCase(normalized)) {
+                accepted = Settings.Global.putString(
+                        resolver, SETTING_NAME, null);
+            } else {
+                long parsed = Long.parseLong(normalized);
+                accepted = Settings.Global.putLong(
+                        resolver, SETTING_NAME, parsed);
+            }
+            if (!accepted) {
+                return new Snapshot(Status.ERROR, true, null,
+                        "The Settings provider rejected the restore request.");
+            }
+        } catch (SecurityException denied) {
+            return new Snapshot(Status.PERMISSION_REQUIRED, true, null,
+                    denied.getMessage());
+        } catch (NumberFormatException invalidValue) {
+            return new Snapshot(Status.ERROR, true, originalValue,
+                    "Invalid original stay-awake setting value.");
+        } catch (RuntimeException exception) {
+            return new Snapshot(Status.ERROR, true, originalValue,
+                    exception.getClass().getSimpleName() + ": "
+                            + exception.getMessage());
+        }
+        return inspect(context);
+    }
+
     static boolean isStayAwakeActive(String value) {
         if (value == null || value.trim().isEmpty()) {
             return false;

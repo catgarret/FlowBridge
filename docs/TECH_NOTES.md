@@ -187,11 +187,36 @@ DeX는 `overlay_display_devices`로 만든다. 생성 전후 `dumpsys display`
 삭제는 Settings provider의 `DELETE_global` call을 사용하고 다시 읽어 실제
 제거 여부를 검증한다.
 
-앱은 인터넷 권한, 임의 shell과 상시 background service를 포함하지 않는다.
-파일은 사용자가 Android 공유 메뉴나 시스템 폴더 선택기에서 명시적으로 고른
-항목만 기기별 ADB reverse 수신 세션으로 전송한다. 메인 화면의 버튼 외에 Quick Settings `TileService`와
+앱은 임의 shell이나 외부 서버 통신을 제공하지 않는다. 파일은 사용자가 Android
+공유 메뉴나 시스템 폴더 선택기에서 명시적으로 고른 항목만 기기별 ADB reverse
+수신 세션으로 전송한다. 네트워크 권한은 파일 전송 및 DX Manager가 만든
+loopback ADB reverse 세션에만 사용한다. 메인 화면의 버튼 외에 Quick Settings `TileService`와
 `AppWidgetProvider`를 제공한다. 활성은 컬러 DX 아이콘, 비활성은 흑백,
 권한 없음/오류는 경고 상태로 구분한다.
+
+### Companion 종료 감시 세션
+
+`CompanionGuardianService`는 물리 기기 런타임마다 독립적인 임시 loopback
+listener, 256비트 임의 토큰과 ADB reverse를 만든다. DX Companion의
+`SessionGuardianService`는 package·인증서·versionCode·`WRITE_SECURE_SETTINGS`
+검증을 통과한 경우에만 ADB shell의 `DUMP` 권한으로 시작된다. 앱은 protocol
+magic·version·토큰을 모두 확인한 뒤 연결을 인정하며 3초 ping으로 세션 생존만
+감시한다.
+
+실제 Windows 종료는 일반 종료와 다르다. `WM_QUERYENDSESSION`에서 새 프로세스
+실행을 먼저 봉쇄하고, 이미 열린 guardian socket으로만 기기별 cleanup 메시지를
+보낸다. 이 단계에서는 `adb.exe`를 새로 실행하거나 종료하지 않는다. Companion이
+연결되지 않은 기기는 정리를 건너뛰므로 Windows 종료 중 ADB 네이티브 오류창을
+만들지 않는다. Alt+F8·트레이 종료는 기존 ADB 기반 overlay·stay-awake·reverse·
+소유 프로세스 정리를 그대로 수행한다.
+
+guardian 소켓만 잠시 끊어진 것은 cleanup 조건이 아니다. Companion은 DX Manager가
+지정한 전송 방식의 물리 USB 연결 또는 Wi-Fi 연결까지 사라진 것을 확인한 뒤에만
+기본 3분 유예를 시작한다. 같은 세션이 복구되면 예약을 취소하며, 사용자는
+30초·1분·3분·5분·10분 또는 자동 정리 안 함을 선택할 수 있다. 전송 방식을
+판별하지 못하면 오정리를 피하기 위해 자동 정리하지 않는다. 명시적인 Windows
+종료 메시지는 유예 없이 overlay를 제거하고 DX Manager가 기록한 stay-awake의
+원래 값을 복원한다.
 
 `overlay_display_devices`는 Android 전역 설정 하나이므로 생성 주체를 구분할
 수 없다. 정리 앱은 현재 값을 삭제한 뒤 다시 읽어 비활성을 확인하며, 앱을

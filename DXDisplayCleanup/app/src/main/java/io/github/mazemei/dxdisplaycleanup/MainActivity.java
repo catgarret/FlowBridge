@@ -19,6 +19,8 @@ import android.view.WindowInsets;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.AdapterView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,6 +46,7 @@ public final class MainActivity extends Activity {
     private Button cleanupBothButton;
     private CheckBox tileWidgetOverlay;
     private CheckBox tileWidgetStayAwake;
+    private Spinner guardianCleanupDelay;
     private TextView pcTransferStatus;
     private Button sendFilesButton;
     private Button sendFolderButton;
@@ -116,6 +119,7 @@ public final class MainActivity extends Activity {
         cleanupBothButton = findViewById(R.id.cleanup_both_button);
         tileWidgetOverlay = findViewById(R.id.tile_widget_overlay);
         tileWidgetStayAwake = findViewById(R.id.tile_widget_stay_awake);
+        guardianCleanupDelay = findViewById(R.id.guardian_cleanup_delay);
         pcTransferStatus = findViewById(R.id.pc_transfer_status);
         sendFilesButton = findViewById(R.id.send_files_button);
         sendFolderButton = findViewById(R.id.send_folder_button);
@@ -145,6 +149,7 @@ public final class MainActivity extends Activity {
                 savePreferenceChecks(button.getId()));
         tileWidgetStayAwake.setOnCheckedChangeListener((button, checked) ->
                 savePreferenceChecks(button.getId()));
+        configureGuardianCleanupDelay();
 
         settingObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
             @Override
@@ -177,6 +182,39 @@ public final class MainActivity extends Activity {
         refresh();
         transferStatusHandler.removeCallbacks(transferStatusPoll);
         transferStatusHandler.post(transferStatusPoll);
+    }
+
+    private void configureGuardianCleanupDelay() {
+        int saved = GuardianPreferences.loadDelaySeconds(this);
+        int selected = 0;
+        for (int index = 0;
+             index < GuardianPreferences.DELAY_VALUES.length;
+             index++) {
+            if (GuardianPreferences.DELAY_VALUES[index] == saved) {
+                selected = index;
+                break;
+            }
+        }
+        guardianCleanupDelay.setSelection(selected, false);
+        guardianCleanupDelay.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent,
+                                               View view,
+                                               int position,
+                                               long id) {
+                        if (position >= 0 && position <
+                                GuardianPreferences.DELAY_VALUES.length) {
+                            GuardianPreferences.saveDelaySeconds(
+                                    MainActivity.this,
+                                    GuardianPreferences.DELAY_VALUES[position]);
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
     }
 
     @Override

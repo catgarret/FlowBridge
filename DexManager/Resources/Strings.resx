@@ -429,8 +429,8 @@
   <data name="Settings.OpenEnvironment" xml:space="preserve"><value>Run environment check</value></data>
   <data name="Settings.DiagnosticsGuide" xml:space="preserve"><value>Open logs or check ADB, Scrcpy and device connectivity.</value></data>
   <data name="Settings.WindowsShutdownTest" xml:space="preserve"><value>Test Windows shutdown cleanup</value></data>
-  <data name="Settings.WindowsShutdownTestGuide" xml:space="preserve"><value>Run the same fast device-cleanup path used during Windows shutdown without shutting down Windows. DX Manager closes when the test finishes.</value></data>
-  <data name="Settings.WindowsShutdownTestConfirm" xml:space="preserve"><value>Test the Windows shutdown cleanup path? Active DeX, single-app, and file-transfer work will stop. DX Manager will clean virtual displays and stay-awake settings on connected phones, then close. Windows will remain running.</value></data>
+  <data name="Settings.WindowsShutdownTestGuide" xml:space="preserve"><value>Run the same fast cleanup path used during Windows shutdown without shutting down Windows. Connected DX Companion sessions perform cleanup, then DX Manager closes.</value></data>
+  <data name="Settings.WindowsShutdownTestConfirm" xml:space="preserve"><value>Test the Windows shutdown cleanup path? Active DeX, single-app, and file-transfer work will stop. Connected DX Companion sessions will clean virtual displays and stay-awake settings, then DX Manager will close. Phones without a connected Companion session are skipped, and Windows remains running.</value></data>
   <data name="Log.Main.SystemShutdownSimulationStarted" xml:space="preserve"><value>Starting the Windows shutdown cleanup test. Windows will remain running while the same fast device-cleanup path is executed.</value></data>
   <data name="Settings.StartWithWindows" xml:space="preserve"><value>Start with Windows</value></data>
   <data name="Settings.StartMinimized" xml:space="preserve"><value>Start minimized to the tray</value></data>

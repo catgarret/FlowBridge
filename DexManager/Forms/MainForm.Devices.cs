@@ -468,9 +468,16 @@ namespace DexManager.Forms
                 context.Runtime.ScreenOff.RequestShutdown();
                 context.Runtime.FileTransfers.RequestShutdown();
                 if (windowsShutdown)
+                {
                     context.Runtime.PhoneTransfers.RequestWindowsShutdown();
+                    context.Runtime.CompanionGuardian
+                        .RequestWindowsShutdown();
+                }
                 else
+                {
                     context.Runtime.PhoneTransfers.RequestShutdown();
+                    context.Runtime.CompanionGuardian.RequestShutdown();
+                }
             }
         }
 
@@ -593,6 +600,9 @@ namespace DexManager.Forms
                 TryCleanup(
                     "phone transfer receiver",
                     context.Runtime.PhoneTransfers.Dispose);
+                TryCleanup(
+                    "Companion guardian",
+                    context.Runtime.CompanionGuardian.Dispose);
             }
         }
 

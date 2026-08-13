@@ -204,6 +204,8 @@
     <Compile Include="Services\FileTransferPlanner.cs" />
     <Compile Include="Services\PhoneTransferProtocol.cs" />
     <Compile Include="Services\PhoneTransferReceiver.cs" />
+    <Compile Include="Services\CompanionGuardianProtocol.cs" />
+    <Compile Include="Services\CompanionGuardianService.cs" />
     <Compile Include="Services\DexOrchestrator.cs" />
     <Compile Include="Services\PathService.cs" />
     <Compile Include="Services\HotkeyService.cs" />

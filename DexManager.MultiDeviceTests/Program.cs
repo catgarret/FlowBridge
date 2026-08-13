@@ -53,6 +53,7 @@ namespace DexManager.MultiDeviceTests
                 KeepsWirelessSettingsIndependentPerPhysicalDevice,
                 SeedsSelectedWirelessDeviceFromLegacyConnection,
                 PersistsDeviceWirelessConnectionProfiles,
+                RoundTripsCompanionGuardianProtocolPayload,
                 BlocksNewProcessesAfterShutdown,
                 TerminatesActiveProcessOnShutdown,
                 TerminatesOnlyConfiguredBundledExecutablePath
@@ -853,6 +854,27 @@ namespace DexManager.MultiDeviceTests
                 "phone-a address must survive serialization");
             Equal(5566, loadedB.WirelessPort,
                 "phone-b port must survive serialization");
+        }
+
+        private static void RoundTripsCompanionGuardianProtocolPayload()
+        {
+            const string expected = "0|한글·Unicode/150";
+            using (var stream = new MemoryStream())
+            {
+                CompanionGuardianProtocol.WriteInt32(
+                    stream, CompanionGuardianProtocol.Magic);
+                CompanionGuardianProtocol.WriteString(stream, expected);
+                stream.Position = 0;
+
+                Equal(
+                    CompanionGuardianProtocol.Magic,
+                    CompanionGuardianProtocol.ReadInt32(stream),
+                    "guardian protocol must preserve the big-endian magic");
+                Equal(
+                    expected,
+                    CompanionGuardianProtocol.ReadString(stream),
+                    "guardian protocol must preserve Unicode payloads");
+            }
         }
 
         private static void BlocksNewProcessesAfterShutdown()

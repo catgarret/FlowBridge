@@ -64,6 +64,9 @@ namespace DexManager.Services
                 _settings,
                 _logService,
                 _runtimeSessions);
+            var companionGuardian = new CompanionGuardianService(
+                _adbService,
+                _logService);
             var scrcpy = new ScrcpyService(
                 _scrcpyPath,
                 _processTimeoutMs,
@@ -103,6 +106,7 @@ namespace DexManager.Services
             var services = new DeviceRuntimeServiceSet(
                 fileTransfers,
                 phoneTransfers,
+                companionGuardian,
                 scrcpy,
                 singleWindows,
                 screenOff,

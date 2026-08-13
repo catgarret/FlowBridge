@@ -11,6 +11,31 @@ namespace DexManager.Forms
 {
     public sealed partial class MainForm : Form
     {
+        private const int WmQueryEndSession = 0x0011;
+        private const int WmEndSession = 0x0016;
+
+        protected override void WndProc(ref Message message)
+        {
+            // This arrives before the ordinary Windows-shutdown FormClosing
+            // path. Flush the pre-opened Companion command while the desktop
+            // session and socket are still available.
+            if (message.Msg == WmQueryEndSession)
+                BeginSystemShutdown();
+            base.WndProc(ref message);
+
+            // If another application cancels Windows shutdown after the
+            // query, this process has already frozen every producer that
+            // could start ADB. Exit DX Manager instead of leaving a partially
+            // shut-down instance in the notification area.
+            if (message.Msg == WmEndSession &&
+                message.WParam == IntPtr.Zero &&
+                _systemShutdownInProgress &&
+                !IsDisposed)
+            {
+                BeginInvoke((Action)Close);
+            }
+        }
+
         private void CaptureCoordinator_ExitHotkeyPressed(object sender, EventArgs e) { RunOnUi(ExitApplication); }
         private void AutoHideService_IdleHideRequested(object sender, EventArgs e) { RunOnUi(HideApplicationForIdle); }
 
@@ -252,69 +277,37 @@ namespace DexManager.Forms
             BeginPhoneScreenWakeSuppression();
             _phoneScreenWakeTimer.Stop();
 
-            // Stop every producer first, without stopping child processes or
-            // sending companion detach commands. Only the essential overlay
-            // and phone power restoration commands are allowed below; Windows
-            // owns process termination after the short bounded wait.
+            // Freeze process creation first. The Companion command below uses
+            // an existing socket and therefore remains available without ADB.
+            _adbService.BlockNewProcessesForWindowsShutdown();
+
+            // The only device operation allowed during Windows shutdown is a
+            // write to the already-open Companion socket. Starting adb.exe at
+            // this point can surface native application-error dialogs while
+            // Windows is tearing down the desktop session.
+            foreach (var target in cleanupTargets)
+            {
+                var sent = target.Guardian != null &&
+                    target.Guardian.TrySendWindowsShutdown(
+                        target.RemoveOverlay,
+                        target.RestoreStayAwake,
+                        target.OriginalStayAwakeValue);
+                _logService.Info(DeviceLogFormatter.ForSerial(
+                    target.Serial,
+                    sent
+                        ? "Sent Windows shutdown cleanup to DX Companion."
+                        : "Skipped Windows shutdown device cleanup because " +
+                          "a verified DX Companion session was not connected."));
+            }
+
             RequestAllRuntimeShutdown(true);
             TryCleanup(
                 "device monitor shutdown request",
                 _deviceMonitor.RequestShutdown);
             StopAllInteractiveContextsForWindowsShutdown();
-
-            var cleanupTasks = new List<Task>();
-            foreach (var target in cleanupTargets)
-            {
-                var capturedTarget = target;
-                cleanupTasks.Add(Task.Run(delegate
-                {
-                    try
-                    {
-                        var result = _adbService.CleanupForWindowsShutdown(
-                            capturedTarget.Serial,
-                            capturedTarget.RemoveOverlay,
-                            capturedTarget.RestoreStayAwake,
-                            capturedTarget.OriginalStayAwakeValue);
-                        if (!result.IsSuccess)
-                        {
-                            _logService.Warning(DeviceLogFormatter.ForSerial(
-                                capturedTarget.Serial,
-                                LocalizationService.Format(
-                                    "Log.Main.SystemShutdownDeviceCleanupFailed",
-                                    result.StandardError)));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logService.Error(
-                            DeviceLogFormatter.ForSerial(
-                                capturedTarget.Serial,
-                                LocalizationService.Get(
-                                    "Log.Main.SystemShutdownDeviceCleanupException")),
-                            ex);
-                    }
-                }));
-            }
-            // The essential device commands are already in flight. Persist
-            // only a dirty main-window mode while they run in parallel.
+            // This only serializes values already held in memory and never
+            // starts ADB, so it is safe after process creation is blocked.
             TrySavePendingRunSettingsForSystemShutdown();
-            try
-            {
-                if (cleanupTasks.Count > 0 &&
-                    !Task.WaitAll(cleanupTasks.ToArray(), 1500))
-                {
-                    _logService.Warning(LocalizationService.Get(
-                        "Log.Main.SystemShutdownCleanupTimedOut"));
-                }
-            }
-            catch (AggregateException ex)
-            {
-                _logService.Error(
-                    LocalizationService.Format(
-                        "Log.Main.CleanupFailed",
-                        "Windows shutdown"),
-                    ex.GetBaseException());
-            }
         }
 
         private void TrySavePendingRunSettingsForSystemShutdown()
@@ -367,6 +360,7 @@ namespace DexManager.Forms
                 targets.Add(new WindowsShutdownCleanupTarget
                 {
                     Serial = serial,
+                    Guardian = context.Runtime.CompanionGuardian,
                     RemoveOverlay = removeOverlay,
                     RestoreStayAwake = restoreStayAwake,
                     OriginalStayAwakeValue = restoreStayAwake &&
@@ -422,6 +416,7 @@ namespace DexManager.Forms
         private sealed class WindowsShutdownCleanupTarget
         {
             public string Serial;
+            public CompanionGuardianService Guardian;
             public bool RemoveOverlay;
             public bool RestoreStayAwake;
             public string OriginalStayAwakeValue;

@@ -51,6 +51,14 @@ namespace DexManager.Utils
                 TryTerminateForShutdown(process);
         }
 
+        public void BlockNewProcessesForWindowsShutdown()
+        {
+            if (Interlocked.Exchange(ref _shutdownRequested, 1) != 0)
+                return;
+            _logService.Info(LocalizationService.Get(
+                "Log.Process.ShutdownRequested"));
+        }
+
         public ProcessResult Run(
             string fileName,
             string arguments,

@@ -90,6 +90,9 @@
     <Compile Include="..\DexManager\Services\BundledProcessCleanupService.cs">
       <Link>Services\BundledProcessCleanupService.cs</Link>
     </Compile>
+    <Compile Include="..\DexManager\Services\CompanionGuardianProtocol.cs">
+      <Link>Services\CompanionGuardianProtocol.cs</Link>
+    </Compile>
     <Compile Include="..\DexManager\Services\DeviceSerialScope.cs">
       <Link>Services\DeviceSerialScope.cs</Link>
     </Compile>

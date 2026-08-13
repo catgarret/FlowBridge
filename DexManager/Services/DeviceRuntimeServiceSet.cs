@@ -7,6 +7,7 @@ namespace DexManager.Services
         internal DeviceRuntimeServiceSet(
             FileTransferCoordinator fileTransfers,
             PhoneTransferReceiver phoneTransfers,
+            CompanionGuardianService companionGuardian,
             ScrcpyService scrcpy,
             SingleWindowService singleWindows,
             ScreenOffService screenOff,
@@ -18,6 +19,8 @@ namespace DexManager.Services
                 throw new ArgumentNullException("fileTransfers");
             PhoneTransfers = phoneTransfers ??
                 throw new ArgumentNullException("phoneTransfers");
+            CompanionGuardian = companionGuardian ??
+                throw new ArgumentNullException("companionGuardian");
             Scrcpy = scrcpy ?? throw new ArgumentNullException("scrcpy");
             SingleWindows = singleWindows ??
                 throw new ArgumentNullException("singleWindows");
@@ -31,6 +34,7 @@ namespace DexManager.Services
         public Guid InstanceId { get; private set; }
         public FileTransferCoordinator FileTransfers { get; private set; }
         public PhoneTransferReceiver PhoneTransfers { get; private set; }
+        public CompanionGuardianService CompanionGuardian { get; private set; }
         public ScrcpyService Scrcpy { get; private set; }
         public SingleWindowService SingleWindows { get; private set; }
         public ScreenOffService ScreenOff { get; private set; }

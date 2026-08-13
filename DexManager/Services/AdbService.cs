@@ -51,6 +51,11 @@ namespace DexManager.Services
             TerminateSelectedAdbProcesses();
         }
 
+        public void BlockNewProcessesForWindowsShutdown()
+        {
+            _processRunner.BlockNewProcessesForWindowsShutdown();
+        }
+
         private void TerminateSelectedAdbProcesses()
         {
             var processName = Path.GetFileNameWithoutExtension(_adbPath);

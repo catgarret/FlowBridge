@@ -152,7 +152,17 @@ namespace DexManager.Forms
                 {
                     var serial = GetContextSerial(context);
                     if (!string.IsNullOrWhiteSpace(serial))
-                        ConfigurePhoneTransferReceiver(context, serial);
+                    {
+                        var transport = context.Device == null
+                            ? null
+                            : context.Device.FindTransport(serial);
+                        ConfigurePhoneTransferReceiver(
+                            context,
+                            serial,
+                            transport == null
+                                ? DeviceTransportKind.Unknown
+                                : transport.Kind);
+                    }
                 }
             }
 
