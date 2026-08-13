@@ -92,6 +92,16 @@ namespace DexManager.Services
             }
         }
 
+        public void RequestShutdown()
+        {
+            lock (_lifecycleLock)
+            {
+                Interlocked.Exchange(ref _stopping, 1);
+                if (_timer != null)
+                    _timer.Change(Timeout.Infinite, Timeout.Infinite);
+            }
+        }
+
         public void Dispose()
         {
             lock (_lifecycleLock)

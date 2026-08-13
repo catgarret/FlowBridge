@@ -129,6 +129,7 @@ namespace DexManager.Forms
             if (!cleanupStillRunning)
                 TryCleanup("device monitor", _deviceMonitor.Dispose);
             TryCleanup("phone screen timer", _phoneScreenWakeTimer.Dispose);
+            TryCleanup("device tooltips", _deviceTabToolTip.Dispose);
             TryCleanup("app profile menu", _appProfileMenu.Dispose);
             if (_fileTransferStatusForm != null)
                 TryCleanup(
@@ -155,6 +156,14 @@ namespace DexManager.Forms
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (e.CloseReason == CloseReason.WindowsShutDown ||
+                e.CloseReason == CloseReason.TaskManagerClosing ||
+                _systemShutdownInProgress)
+            {
+                BeginSystemShutdown();
+                e.Cancel = false;
+                return;
+            }
             if (_allowExit) return;
             if (e.CloseReason == CloseReason.UserClosing)
             {
@@ -200,6 +209,68 @@ namespace DexManager.Forms
                         "Log.Main.CleanupFailed",
                         "system shutdown"),
                     ex.GetBaseException());
+            }
+        }
+
+        private void BeginSystemShutdown()
+        {
+            if (_systemShutdownInProgress) return;
+
+            _systemShutdownInProgress = true;
+            _exitInProgress = true;
+            _allowExit = true;
+            _logService.Info(LocalizationService.Get(
+                "Log.Main.SystemShutdownDetected"));
+
+            var wakeSerials = CaptureWakeSerials();
+            var cleanupSerial = GetSelectedDeviceSerial();
+            BeginPhoneScreenWakeSuppression();
+            _phoneScreenWakeTimer.Stop();
+
+            // Stop all producers first, then give the normal per-device
+            // restoration flow a short opportunity to remove overlays and
+            // restore phone power settings. The final process gate is always
+            // closed below so a slow or failing device cannot keep launching
+            // ADB while Windows tears the desktop session down.
+            RequestAllRuntimeShutdown();
+            TryCleanup(
+                "device monitor shutdown request",
+                _deviceMonitor.RequestShutdown);
+            TryCleanup(
+                "mini control bar",
+                _miniControlBarManager.Dispose);
+            TryCleanup("capture coordinator", _captureCoordinator.Stop);
+            TryCleanup("key mapping", _keyMappingService.Stop);
+
+            if (_exitCleanupTask == null)
+            {
+                _exitCleanupTask = RunExitCleanupAsync(
+                    wakeSerials,
+                    cleanupSerial);
+            }
+
+            try
+            {
+                if (!_exitCleanupTask.Wait(5000))
+                {
+                    _logService.Warning(LocalizationService.Get(
+                        "Log.Main.SystemShutdownCleanupTimedOut"));
+                }
+            }
+            catch (AggregateException ex)
+            {
+                _logService.Error(
+                    LocalizationService.Format(
+                        "Log.Main.CleanupFailed",
+                        "Windows shutdown"),
+                    ex.GetBaseException());
+            }
+            finally
+            {
+                // RunExitCleanupAsync normally closes this gate after
+                // kill-server. Close it here as well when Windows' five-second
+                // budget expires, terminating only DX Manager's selected ADB.
+                _adbService.BeginProcessShutdown();
             }
         }
 

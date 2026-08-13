@@ -48,11 +48,26 @@ namespace DexManager.Utils
         internal const uint KeyeventfScanCodeInput = 0x0008;
         internal const uint KeyeventfKeyUpInput = 0x0002;
         internal const int DwmwaExtendedFrameBounds = 9;
+        internal const uint SemNoGpFaultErrorBox = 0x0002;
 
         internal delegate IntPtr LowLevelKeyboardProc(
             int code,
             IntPtr wParam,
             IntPtr lParam);
+
+        [DllImport("kernel32.dll")]
+        internal static extern uint GetErrorMode();
+
+        [DllImport("kernel32.dll")]
+        internal static extern uint SetErrorMode(uint mode);
+
+        internal static void SuppressNativeCrashDialogs()
+        {
+            // The process error mode is inherited by ADB and other child
+            // processes. This prevents Windows 7 from showing repeated native
+            // crash dialogs if it tears a helper down during logoff/shutdown.
+            SetErrorMode(GetErrorMode() | SemNoGpFaultErrorBox);
+        }
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]

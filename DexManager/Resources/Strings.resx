@@ -13,6 +13,7 @@
   <data name="Common.Browse" xml:space="preserve"><value>Browse</value></data>
   <data name="Common.Error" xml:space="preserve"><value>Error</value></data>
   <data name="Main.Mode" xml:space="preserve"><value>MODE</value></data>
+  <data name="Main.ConnectedDevices" xml:space="preserve"><value>CONNECTED DEVICES</value></data>
   <data name="Main.Dex" xml:space="preserve"><value>DeX</value></data>
   <data name="Main.SingleWindow" xml:space="preserve"><value>Window {0}</value></data>
   <data name="Main.SidebarHint" xml:space="preserve"><value>Each slot remembers a different app and its settings.</value></data>
@@ -173,6 +174,8 @@
   <data name="Log.Process.TerminationDeferred" xml:space="preserve"><value>The timed-out process did not exit after Kill. Background cleanup will retry.</value></data>
   <data name="Log.Process.TerminationFailed" xml:space="preserve"><value>The timed-out process still did not exit after repeated cleanup attempts.</value></data>
   <data name="Log.Process.End" xml:space="preserve"><value>Process exited: ExitCode={0}, Timeout={1}, Duration={2}ms</value></data>
+  <data name="Log.Process.ShutdownRequested" xml:space="preserve"><value>Process shutdown requested. New ADB and helper process launches are now blocked.</value></data>
+  <data name="Log.Process.FinalSweepTerminated" xml:space="preserve"><value>Final process cleanup terminated {0} remaining process(es) from DX Manager bundled paths.</value></data>
   <data name="Error.Adb.PathEmpty" xml:space="preserve"><value>The ADB path is empty.</value></data>
   <data name="Error.Adb.ShellCommandEmpty" xml:space="preserve"><value>The ADB shell command is empty.</value></data>
   <data name="Error.Adb.SerialEmpty" xml:space="preserve"><value>The ADB serial is empty.</value></data>
@@ -186,6 +189,7 @@
   <data name="Log.Adb.StartServerResult" xml:space="preserve"><value>ADB start-server result</value></data>
   <data name="Log.Adb.SelectedPath" xml:space="preserve"><value>Selected ADB path: {0}</value></data>
   <data name="Log.Adb.VersionResult" xml:space="preserve"><value>ADB version result</value></data>
+  <data name="Log.Adb.ShutdownProcessesTerminated" xml:space="preserve"><value>Terminated {0} ADB process(es) launched from the selected DX Manager ADB path.</value></data>
   <data name="Log.Adb.PairingAttempt" xml:space="preserve"><value>Attempting wireless ADB pairing: {0}</value></data>
   <data name="Log.Adb.PairResult" xml:space="preserve"><value>ADB pair result</value></data>
   <data name="Log.Adb.DevicesResult" xml:space="preserve"><value>ADB devices result</value></data>
@@ -214,6 +218,8 @@
   <data name="Log.Main.PhoneScreenWakeFailed" xml:space="preserve"><value>Could not turn on the phone screen.</value></data>
   <data name="Log.Main.CleanupFailed" xml:space="preserve"><value>The cleanup step '{0}' failed while exiting.</value></data>
   <data name="Log.Main.CleanupDeferredForShutdown" xml:space="preserve"><value>Shutdown cleanup exceeded five seconds. DX Manager will close after owned processes and device state are cleaned up.</value></data>
+  <data name="Log.Main.SystemShutdownDetected" xml:space="preserve"><value>Windows session shutdown detected. Stopping active work and attempting bounded device cleanup.</value></data>
+  <data name="Log.Main.SystemShutdownCleanupTimedOut" xml:space="preserve"><value>Windows shutdown cleanup exceeded five seconds. Blocking new ADB work and terminating the selected DX Manager ADB processes.</value></data>
   <data name="Log.Main.SettingsDeferredNoDevice" xml:space="preserve"><value>Saved the run settings. No ADB device is connected, so they will be applied the next time DeX starts.</value></data>
   <data name="Log.Main.SettingsImmediateApplyFailed" xml:space="preserve"><value>The run settings were saved but could not be applied immediately.</value></data>
   <data name="Main.ApplyFailedShort" xml:space="preserve"><value>Could not apply run settings immediately: {0}</value></data>
@@ -503,6 +509,13 @@
   <data name="Settings.UsbWaiting" xml:space="preserve"><value>Waiting for a USB device</value></data>
   <data name="Settings.WirelessTarget" xml:space="preserve"><value>Wireless target: {0}</value></data>
   <data name="Settings.UsbTarget" xml:space="preserve"><value>USB target: {0}</value></data>
+  <data name="Settings.ObservedUsb" xml:space="preserve"><value>Detected connection: USB ({0})</value></data>
+  <data name="Settings.ObservedWireless" xml:space="preserve"><value>Detected connection: Wireless ({0})</value></data>
+  <data name="Settings.ObservedUsbWireless" xml:space="preserve"><value>Detected connections: USB ({0}) + Wireless ({1})</value></data>
+  <data name="Settings.ObservedDisconnected" xml:space="preserve"><value>No active USB or wireless ADB connection</value></data>
+  <data name="Device.WaitingUsb" xml:space="preserve"><value>Waiting for USB</value></data>
+  <data name="Device.WaitingWireless" xml:space="preserve"><value>Waiting for wireless</value></data>
+  <data name="Main.WaitingConfiguredTransport" xml:space="preserve"><value>{0} · {1}</value></data>
   <data name="Settings.CheckFailed" xml:space="preserve"><value>Check failed: {0}</value></data>
   <data name="Settings.NoVersionOutput" xml:space="preserve"><value>No version output</value></data>
   <data name="Settings.ExecutableFilter" xml:space="preserve"><value>Executable files (*.exe)|*.exe|All files (*.*)|*.*</value></data>

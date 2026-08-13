@@ -14,6 +14,7 @@ namespace DexManager.Forms
         private sealed class DeviceUiContext
         {
             public string Identity;
+            public string DisplayName = string.Empty;
             public PhysicalDeviceInfo Device;
             public DeviceRuntimeServiceSet Runtime;
             public CaptureCoordinator Capture;
@@ -23,6 +24,7 @@ namespace DexManager.Forms
             public MiniControlBarManager MiniBar;
             public bool WasConnected;
             public string ActiveSerial = string.Empty;
+            public int ConnectionGeneration;
             public int SelectedMode;
             public bool[] ModeSettingsDirty = new bool[4];
         }
@@ -88,257 +90,9 @@ namespace DexManager.Forms
             return context;
         }
 
-        private void PhysicalDeviceRegistry_SnapshotChanged(
-            object sender,
-            DeviceRegistrySnapshotChangedEventArgs e)
-        {
-            if (e == null || e.Current == null) return;
-            RunOnUi(delegate { ReconcileDeviceTabs(e.Current); });
-        }
-
-        private void ReconcileDeviceTabs(DeviceRegistrySnapshot snapshot)
-        {
-            if (_exitInProgress || IsDisposed) return;
-
-            foreach (var context in _deviceContexts.Values)
-                context.Device = null;
-
-            foreach (var device in snapshot.Devices)
-            {
-                if (device == null ||
-                    string.IsNullOrWhiteSpace(device.Identity)) continue;
-
-                var context = EnsureDeviceContext(device);
-                context.Device = device.Clone();
-                ConfigureContextPresentation(context);
-                ConfigureContextConnection(context);
-            }
-
-            foreach (var context in _deviceContexts.Values)
-            {
-                if (context.Device == null && context.WasConnected)
-                    HandleContextDisconnected(context);
-            }
-
-            if (_selectedDeviceContext == null ||
-                string.IsNullOrWhiteSpace(_selectedDeviceContext.Identity))
-            {
-                foreach (var device in snapshot.Devices)
-                {
-                    DeviceUiContext context;
-                    if (device != null && device.IsConnected &&
-                        _deviceContexts.TryGetValue(
-                            device.Identity,
-                            out context))
-                    {
-                        SelectDeviceContext(context);
-                        break;
-                    }
-                }
-            }
-
-            RebuildDeviceTabs();
-            RefreshSelectedDeviceState();
-            if (_settingsForm != null && !_settingsForm.IsDisposed)
-                _settingsForm.RefreshSelectedDeviceContext();
-        }
-
-        private DeviceUiContext EnsureDeviceContext(PhysicalDeviceInfo device)
-        {
-            DeviceUiContext context;
-            lock (_deviceContextsSync)
-            {
-                if (_deviceContexts.TryGetValue(
-                        device.Identity,
-                        out context))
-                {
-                    return context;
-                }
-            }
-
-            var session = _runtimeSessions.Current.FindByIdentity(
-                device.Identity);
-            var runtime = session == null
-                ? null
-                : _runtimeServiceFactory.Find(session.ServiceInstanceId);
-
-            if (runtime == null &&
-                _initialDeviceContext != null &&
-                string.IsNullOrWhiteSpace(_initialDeviceContext.Identity))
-            {
-                context = _initialDeviceContext;
-                runtime = context.Runtime;
-            }
-            else
-            {
-                runtime = runtime ?? _runtimeServiceFactory.Create();
-                context = CreateDeviceContext(runtime);
-                AttachContextEvents(context);
-                context.MiniBar.Start();
-            }
-
-            context.Identity = device.Identity;
-            context.Device = device.Clone();
-            context.Runtime.Dex.DeviceIdentity = device.Identity;
-            ConfigureContextPresentation(context);
-            lock (_deviceContextsSync)
-                _deviceContexts.Add(device.Identity, context);
-            if (ReferenceEquals(context, _selectedDeviceContext))
-                _selectedDeviceIdentity = device.Identity;
-
-            var transport = device.SelectPreferredTransport(string.Empty);
-            if (transport != null &&
-                !string.IsNullOrWhiteSpace(transport.Serial))
-            {
-                _runtimeSessions.BindServiceInstance(
-                    transport.Serial,
-                    runtime.InstanceId);
-            }
-            _logService.Info(LocalizationService.Format(
-                "Log.DeviceContext.Registered",
-                GetContextDisplayName(context),
-                transport == null ? device.Identity : transport.Serial,
-                GetTransportText(transport)));
-            return context;
-        }
-
-        private void AttachContextEvents(DeviceUiContext context)
-        {
-            context.Runtime.Scrcpy.RunningChanged +=
-                ScrcpyService_RunningChanged;
-            context.Runtime.SingleWindows.RunningChanged +=
-                SingleWindowService_RunningChanged;
-            context.Capture.ExitHotkeyPressed +=
-                CaptureCoordinator_ExitHotkeyPressed;
-            context.AutoHide.IdleHideRequested +=
-                AutoHideService_IdleHideRequested;
-            context.Runtime.FileTransfers.ProgressChanged +=
-                FileTransferCoordinator_ProgressChanged;
-            context.Runtime.PhoneTransfers.ProgressChanged +=
-                PhoneTransferReceiver_ProgressChanged;
-        }
-
-        private void ConfigureContextConnection(DeviceUiContext context)
-        {
-            if (context == null || context.Device == null ||
-                !context.Device.IsConnected)
-            {
-                if (context != null && context.WasConnected)
-                    HandleContextDisconnected(context);
-                return;
-            }
-
-            var serial = GetContextSerial(context);
-            if (string.IsNullOrWhiteSpace(serial)) return;
-            _runtimeSessions.BindServiceInstance(
-                serial,
-                context.Runtime.InstanceId);
-            var newlyConnected = !context.WasConnected;
-            var connectionChanged = newlyConnected ||
-                !string.Equals(
-                    context.ActiveSerial,
-                    serial,
-                    StringComparison.OrdinalIgnoreCase);
-            var previousSerial = context.ActiveSerial;
-            if (context.WasConnected && connectionChanged &&
-                !string.IsNullOrWhiteSpace(previousSerial))
-            {
-                context.Runtime.FileTransfers.CancelSerial(previousSerial);
-                var detachTask = context.Runtime.PhoneTransfers.DetachAsync(
-                    previousSerial);
-                ForgetDeviceConnectionTimestamp(previousSerial);
-            }
-            context.WasConnected = true;
-            context.ActiveSerial = serial;
-            if (connectionChanged)
-            {
-                RecordDeviceConnected(serial);
-                MarkSerialReconnected(serial);
-                ConfigurePhoneTransferReceiver(context, serial);
-                RetryContextCleanupAsync(
-                    context,
-                    serial,
-                    newlyConnected);
-            }
-        }
-
-        private async void RetryContextCleanupAsync(
-            DeviceUiContext context,
-            string serial,
-            bool allowAutoStart)
-        {
-            try
-            {
-                var cleanupReady = await context.Runtime.Dex
-                    .RetryDeferredCleanupAsync(serial);
-                if (cleanupReady && allowAutoStart &&
-                    _settings.Features.AutoStartDexOnDeviceConnected &&
-                    ReferenceEquals(context, _selectedDeviceContext) &&
-                    await WaitForDeviceStartDelayAsync(serial))
-                {
-                    await StartDexAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logService.Error(
-                    "Could not retry deferred cleanup for " + serial + ".",
-                    ex);
-            }
-        }
-
-        private void HandleContextDisconnected(DeviceUiContext context)
-        {
-            context.WasConnected = false;
-            var serial = context.ActiveSerial;
-            context.ActiveSerial = string.Empty;
-            if (string.IsNullOrWhiteSpace(serial)) return;
-            ForgetDeviceConnection(serial);
-            MarkSerialDisconnected(serial);
-            context.Runtime.FileTransfers.CancelSerial(serial);
-            var detachTask = context.Runtime.PhoneTransfers.DetachAsync(serial);
-            Task.Run(async delegate
-            {
-                try
-                {
-                    if (context.Runtime.Dex.IsRunning)
-                        await context.Runtime.Dex.StopAsync()
-                            .ConfigureAwait(false);
-                    context.Runtime.SingleWindows.StopAll();
-                }
-                catch (Exception ex)
-                {
-                    _logService.Error(
-                        "Could not clean the disconnected device runtime " +
-                        serial + ".",
-                        ex);
-                }
-            });
-        }
-
-        private async void ConfigurePhoneTransferReceiver(
-            DeviceUiContext context,
-            string serial)
-        {
-            if (_exitInProgress || context == null ||
-                string.IsNullOrWhiteSpace(serial)) return;
-            try
-            {
-                await context.Runtime.PhoneTransfers.AttachAsync(
-                    serial,
-                    GetContextDisplayName(context));
-            }
-            catch (Exception ex)
-            {
-                _logService.Error(
-                    "Could not prepare phone-to-PC transfer for " + serial +
-                    ".",
-                    ex);
-            }
-        }
-
         private void RebuildDeviceTabs()
         {
+            _deviceTabsPanel.Visible = _deviceTabsVisibleForRun;
             _deviceTabsPanel.SuspendLayout();
             try
             {
@@ -350,31 +104,47 @@ namespace DexManager.Forms
                 {
                     var context = item.Value;
                     var device = context.Device;
-                    var connected = device != null && device.IsConnected;
-                    var transport = device == null
-                        ? null
-                        : device.SelectPreferredTransport(
-                            GetContextSerial(context));
+                    var transport = GetContextTransport(context);
+                    var connected = transport != null &&
+                        transport.IsAuthorized;
                     var transportText = GetTransportText(transport);
+                    var statusText = connected
+                        ? LocalizationService.Format(
+                            "Device.Connected",
+                            transportText)
+                        : device != null && device.IsConnected
+                            ? GetConfiguredTransportWaitingText(context)
+                            : LocalizationService.Get(
+                                "Device.Disconnected");
                     var button = new ThemedButton
                     {
-                        Size = new Size(154, 38),
-                        Margin = new Padding(0, 0, 6, 0),
+                        Size = new Size(158, 52),
+                        Margin = new Padding(0, 0, 0, 6),
                         NavigationStyle = true,
-                        ShowNavigationDot = true,
+                        DeviceNavigationStyle = true,
                         Primary = ReferenceEquals(
                             context,
                             _selectedDeviceContext),
                         Text = GetContextDisplayName(context),
-                        TrailingText = connected
-                            ? transportText
-                            : LocalizationService.Get(
-                                "Device.Disconnected")
+                        SecondaryText = statusText,
+                        StatusColor = connected
+                            ? Color.FromArgb(40, 156, 72)
+                            : device != null && device.IsConnected
+                                ? Color.FromArgb(224, 143, 24)
+                                : _theme.TextTertiary,
+                        CornerRadius = 10,
+                        BackColor = _theme.NavigationBackground,
+                        ForeColor = _theme.TextSecondary,
+                        TabStop = false
                     };
                     button.Click += delegate
                     {
                         SelectDeviceContext(context);
                     };
+                    _deviceTabToolTip.SetToolTip(
+                        button,
+                        GetContextDisplayName(context) +
+                            Environment.NewLine + statusText);
                     _deviceTabButtons[item.Key] = button;
                     _deviceTabsPanel.Controls.Add(button);
                 }
@@ -383,6 +153,19 @@ namespace DexManager.Forms
             {
                 _deviceTabsPanel.ResumeLayout();
             }
+            LayoutSidebarNavigation();
+        }
+
+        private static int CountConnectedPhysicalDevices(
+            DeviceRegistrySnapshot snapshot)
+        {
+            var count = 0;
+            if (snapshot == null || snapshot.Devices == null) return count;
+            foreach (var device in snapshot.Devices)
+            {
+                if (device != null && device.IsConnected) count++;
+            }
+            return count;
         }
 
         private void SelectDeviceContext(DeviceUiContext context)
@@ -419,9 +202,7 @@ namespace DexManager.Forms
             }
             _connectionError = null;
             var serial = GetContextSerial(context);
-            var transport = context.Device == null
-                ? null
-                : context.Device.SelectPreferredTransport(serial);
+            var transport = GetContextTransport(context);
             _logService.Info(LocalizationService.Format(
                 "Log.DeviceContext.Selected",
                 GetContextDisplayName(context),
@@ -485,9 +266,7 @@ namespace DexManager.Forms
         {
             var context = _selectedDeviceContext;
             var device = context == null ? null : context.Device;
-            var transport = device == null
-                ? null
-                : device.SelectPreferredTransport(GetContextSerial(context));
+            var transport = GetContextTransport(context);
             _lastDeviceState = transport == null
                 ? DeviceState.Disconnected()
                 : new DeviceState
@@ -499,10 +278,15 @@ namespace DexManager.Forms
                 };
             _deviceInfoLabel.Text = device == null
                 ? LocalizationService.Get("Main.WaitingPhone")
-                : LocalizationService.Format(
-                    "Main.ConnectedDevice",
-                    GetContextDisplayName(context),
-                    GetTransportText(transport));
+                : transport == null || !transport.IsAuthorized
+                    ? LocalizationService.Format(
+                        "Main.WaitingConfiguredTransport",
+                        GetContextDisplayName(context),
+                        GetConfiguredTransportWaitingText(context))
+                    : LocalizationService.Format(
+                        "Main.ConnectedDevice",
+                        GetContextDisplayName(context),
+                        GetTransportText(transport));
             _adbStatusValue.Text = _lastDeviceState.IsConnected
                 ? LocalizationService.Get("Status.Ready")
                 : LocalizationService.Get("Status.Idle");
@@ -513,56 +297,81 @@ namespace DexManager.Forms
 
         private string GetContextSerial(DeviceUiContext context)
         {
-            if (context == null || context.Device == null)
-                return context == null
-                    ? string.Empty
-                    : context.ActiveSerial ?? string.Empty;
-            var session = _runtimeSessions.Current.FindByIdentity(
-                context.Identity);
-            var configuredSerial = GetConfiguredTransportSerial(context);
-            var preferred = context.Device.SelectPreferredTransport(
-                !string.IsNullOrWhiteSpace(configuredSerial)
-                    ? configuredSerial
-                    : session == null
-                        ? string.Empty
-                        : session.ActiveTransportSerial);
-            return preferred == null ? string.Empty : preferred.Serial;
+            var transport = GetContextTransport(context);
+            return transport == null
+                ? string.Empty
+                : transport.Serial ?? string.Empty;
         }
 
-        private string GetConfiguredTransportSerial(
+        private DeviceTransportInfo GetContextTransport(
             DeviceUiContext context)
         {
             if (context == null || context.Device == null ||
                 string.IsNullOrWhiteSpace(context.Identity))
             {
-                return string.Empty;
+                return null;
             }
+
             var profile = _settings.FindDeviceWirelessConnection(
                 context.Identity);
-            if (profile == null) return string.Empty;
-
-            if (profile.Mode == AdbConnectionMode.Wireless)
+            var mode = profile == null
+                ? AdbConnectionMode.Usb
+                : profile.Mode;
+            var preferredSerial = context.ActiveSerial ?? string.Empty;
+            if (profile != null &&
+                profile.Mode == AdbConnectionMode.Wireless)
             {
-                var endpoint = WirelessAdbService.BuildEndpoint(
+                preferredSerial = WirelessAdbService.BuildEndpoint(
                     profile.WirelessHost,
                     profile.WirelessPort);
-                var wireless = context.Device.FindTransport(endpoint);
-                return wireless != null && wireless.IsAuthorized
-                    ? wireless.Serial
-                    : string.Empty;
             }
-
-            if (context.Device.Transports == null) return string.Empty;
-            foreach (var transport in context.Device.Transports)
+            else if (profile == null &&
+                _settings.Connection != null &&
+                _settings.Connection.Mode ==
+                    AdbConnectionMode.Wireless)
             {
-                if (transport != null &&
-                    transport.Kind == DeviceTransportKind.Usb &&
-                    transport.IsAuthorized)
+                var legacyEndpoint = WirelessAdbService.BuildEndpoint(
+                    _settings.Connection.WirelessHost,
+                    _settings.Connection.WirelessPort);
+                if (context.Device.FindTransport(legacyEndpoint) != null)
                 {
-                    return transport.Serial ?? string.Empty;
+                    mode = AdbConnectionMode.Wireless;
+                    preferredSerial = legacyEndpoint;
                 }
             }
-            return string.Empty;
+
+            return context.Device.SelectAuthorizedTransport(
+                mode == AdbConnectionMode.Wireless
+                    ? DeviceTransportKind.Wireless
+                    : DeviceTransportKind.Usb,
+                preferredSerial);
+        }
+
+        private string GetConfiguredTransportWaitingText(
+            DeviceUiContext context)
+        {
+            var profile = context == null
+                ? null
+                : _settings.FindDeviceWirelessConnection(
+                    context.Identity);
+            var wireless = profile != null &&
+                profile.Mode == AdbConnectionMode.Wireless;
+            if (profile == null && context != null &&
+                context.Device != null &&
+                _settings.Connection != null &&
+                _settings.Connection.Mode ==
+                    AdbConnectionMode.Wireless)
+            {
+                var legacyEndpoint = WirelessAdbService.BuildEndpoint(
+                    _settings.Connection.WirelessHost,
+                    _settings.Connection.WirelessPort);
+                wireless = context.Device.FindTransport(
+                    legacyEndpoint) != null;
+            }
+            return LocalizationService.Get(
+                wireless
+                    ? "Device.WaitingWireless"
+                    : "Device.WaitingUsb");
         }
 
         private static string GetContextDisplayName(DeviceUiContext context)
@@ -573,7 +382,21 @@ namespace DexManager.Forms
             {
                 return context.Device.DisplayName;
             }
+            if (!string.IsNullOrWhiteSpace(context.DisplayName))
+                return context.DisplayName;
             return context.Identity ?? string.Empty;
+        }
+
+        private static void RememberContextDisplayName(
+            DeviceUiContext context,
+            PhysicalDeviceInfo device)
+        {
+            if (context == null || device == null ||
+                string.IsNullOrWhiteSpace(device.DisplayName))
+            {
+                return;
+            }
+            context.DisplayName = device.DisplayName.Trim();
         }
 
         private static void ConfigureContextPresentation(
@@ -663,8 +486,26 @@ namespace DexManager.Forms
         {
             lock (_deviceContextsSync)
             {
-                return new List<KeyValuePair<string, DeviceUiContext>>(
-                    _deviceContexts);
+                var result = new List<KeyValuePair<string, DeviceUiContext>>();
+                var added = new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase);
+                foreach (var identity in
+                    _devicePresentationOrder.GetIdentities())
+                {
+                    DeviceUiContext context;
+                    if (_deviceContexts.TryGetValue(identity, out context))
+                    {
+                        result.Add(new KeyValuePair<string, DeviceUiContext>(
+                            identity,
+                            context));
+                        added.Add(identity);
+                    }
+                }
+                foreach (var item in _deviceContexts)
+                {
+                    if (added.Add(item.Key)) result.Add(item);
+                }
+                return result;
             }
         }
 

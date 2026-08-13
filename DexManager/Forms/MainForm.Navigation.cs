@@ -266,6 +266,26 @@ namespace DexManager.Forms
                     })
             };
             await Task.WhenAll(supplementalCleanup).ConfigureAwait(false);
+
+            try
+            {
+                await TryCleanupAsync(
+                    "ADB server",
+                    delegate
+                    {
+                        return Task.Run(delegate
+                        {
+                            _adbService.KillServer();
+                        });
+                    }).ConfigureAwait(false);
+            }
+            finally
+            {
+                // The monitor and all device restoration work have finished.
+                // Prevent a late callback from starting the ADB server again
+                // between kill-server and process exit.
+                _adbService.BeginProcessShutdown();
+            }
         }
 
         private async Task TryCleanupAsync(

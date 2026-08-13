@@ -399,6 +399,17 @@ namespace DexManager.Forms
         private void UpdatePhoneScreenWakeSchedule()
         {
             _phoneScreenWakeTimer.Stop();
+            var unavailable = new List<string>();
+            foreach (var serial in _managedSerialHistory)
+            {
+                if (IsSerialMarkedDisconnected(serial))
+                    unavailable.Add(serial);
+            }
+            foreach (var serial in unavailable)
+            {
+                _managedSerialHistory.Remove(serial);
+                _phoneScreenWakeInProgress.Remove(serial);
+            }
             if (_managedSerialHistory.Count == 0 ||
                 System.Threading.Interlocked.CompareExchange(
                     ref _phoneScreenWakeSuppression,
@@ -425,7 +436,8 @@ namespace DexManager.Forms
             var serials = new List<string>();
             foreach (var serial in _managedSerialHistory)
             {
-                if (!IsScreenOffRequestedForSerial(serial) &&
+                if (!IsSerialMarkedDisconnected(serial) &&
+                    !IsScreenOffRequestedForSerial(serial) &&
                     !_phoneScreenWakeInProgress.Contains(serial))
                 {
                     AddSerial(serials, serial);
@@ -484,7 +496,8 @@ namespace DexManager.Forms
 
         private bool WakePhoneScreen(string serial)
         {
-            if (string.IsNullOrWhiteSpace(serial)) return false;
+            if (string.IsNullOrWhiteSpace(serial) ||
+                IsSerialMarkedDisconnected(serial)) return false;
             try
             {
                 var result = _adbService.ShellForSerial(

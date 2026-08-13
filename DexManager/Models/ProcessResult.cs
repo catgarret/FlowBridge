@@ -10,11 +10,12 @@ namespace DexManager.Models
         public string StandardOutput { get; set; }
         public string StandardError { get; set; }
         public bool TimedOut { get; set; }
+        public bool Canceled { get; set; }
         public TimeSpan Duration { get; set; }
 
         public bool IsSuccess
         {
-            get { return !TimedOut && ExitCode == 0; }
+            get { return !TimedOut && !Canceled && ExitCode == 0; }
         }
     }
 }

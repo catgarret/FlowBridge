@@ -98,6 +98,11 @@ namespace DexManager.Forms
         private ThemedButton _singleModeButton1;
         private ThemedButton _singleModeButton2;
         private ThemedButton _singleModeButton3;
+        private ThemedButton _settingsSidebarButton;
+        private Label _deviceSectionLabel;
+        private Label _modeSectionLabel;
+        private Label _sidebarHintLabel;
+        private Panel _deviceSectionDivider;
         private int _selectedMode;
         private int _phoneScreenWakeSuppression;
         private int _screenOffReapplyGeneration;
@@ -124,6 +129,7 @@ namespace DexManager.Forms
         private string _connectionError;
         private bool _allowExit;
         private bool _exitInProgress;
+        private bool _systemShutdownInProgress;
         private Task _exitCleanupTask;
         private bool _forcedCloseContinuationScheduled;
         private bool[] _modeSettingsDirty = new bool[4];
@@ -143,11 +149,21 @@ namespace DexManager.Forms
         private readonly Dictionary<string, ThemedButton> _deviceTabButtons =
             new Dictionary<string, ThemedButton>(
                 StringComparer.OrdinalIgnoreCase);
+        private readonly ToolTip _deviceTabToolTip = new ToolTip
+        {
+            InitialDelay = 350,
+            ReshowDelay = 100,
+            AutoPopDelay = 5000,
+            ShowAlways = true
+        };
+        private readonly DevicePresentationOrder _devicePresentationOrder =
+            new DevicePresentationOrder();
         private readonly FlowLayoutPanel _deviceTabsPanel;
         private DeviceUiContext _selectedDeviceContext;
         private DeviceUiContext _initialDeviceContext;
         private string _selectedDeviceIdentity = string.Empty;
         private bool _interactiveServicesStarted;
+        private bool _deviceTabsVisibleForRun;
 
         public MainForm(
             SettingsService settingsService,
@@ -240,16 +256,15 @@ namespace DexManager.Forms
 
             _deviceTabsPanel = new FlowLayoutPanel
             {
-                Location = new Point(430, 10),
-                Size = new Size(476, 46),
-                FlowDirection = FlowDirection.LeftToRight,
+                Location = new Point(10, 42),
+                Size = new Size(168, 116),
+                FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
                 AutoScroll = true,
-                BackColor = _theme.WindowBackground,
+                BackColor = _theme.NavigationBackground,
                 Padding = new Padding(0),
                 Margin = new Padding(0)
             };
-            Controls.Add(_deviceTabsPanel);
 
             _indicatorDot = new StatusRing
             {

@@ -137,8 +137,13 @@ Windows 폴더 이름으로 안전하게 정규화하고 `상위 폴더\휴대�
   transport 전환을 거부한다.
 - 성공 시 해당 물리 기기의 선호 transport를 `IP:PORT`로 바꾼다.
 - 설정 창은 메인 화면의 기기 탭 전환과 registry 변경을 따라 대상 목록을 다시
-  읽는다. 승인된 transport가 한 종류뿐이면 실제 USB·무선 상태로 라디오 선택과
-  무선 endpoint를 보정하고, 두 종류가 모두 있으면 저장된 선호값을 유지한다.
+  읽는다. 라디오 버튼은 실제 연결 감지 결과가 아니라 사용자가 저장한 연결 정책을
+  표시한다. 별도 상태 문구에는 현재 감지된 USB·무선 transport를 모두 표시한다.
+- USB 모드는 무선 transport가 살아 있어도 사용하지 않고 승인된 USB가 나타날
+  때까지 기다린다. 무선 모드도 USB로 대체하지 않으며 저장한 무선 transport를
+  기다린다. 선택한 방식이 사라지면 해당 기기의 실행 세션과 전송을 정리한다.
+- 두 transport가 모두 연결된 상태에서 연결 정책을 바꾸면 물리 기기 런타임은
+  유지하되 이전 Scrcpy 세션·전송·ADB reverse를 정리한 뒤 새 serial을 사용한다.
 - 자동 재연결은 최소 5초 간격이며 저장된 모든 기기별 무선 endpoint를 중복 없이
   순회한다.
 - 페어링 포트와 실제 연결 포트는 다를 수 있다.
@@ -284,6 +289,60 @@ Win32 `INPUT` 구조체 정렬을 임의로 바꾸면 32비트 Windows에서 Sen
   INFO로 분류한다. 설정상 정상인 Enter 변환 비활성화 상태는 최초 1회만
   INFO로 기록해 반복 경고를 만들지 않는다.
 
+## 다중 기기 자동 시작과 기기 선택 표시
+
+물리 기기 snapshot에서 선택 transport가 새로 연결되면 해당
+`DeviceUiContext.ConnectionGeneration`과 serial을 캡처한다. deferred overlay 정리와
+사용자 지정 연결 후 대기 시간이 끝난 뒤에도 세대, `ActiveSerial`, 저장된 transport
+정책과 연결 상태가 모두 같을 때만 그 컨텍스트의 `DexOrchestrator.StartAsync(serial)`을
+호출한다. 따라서 대기 중 탭 선택이 바뀌어도 올바른 기기가 시작되고, 연결 해제나
+USB·무선 정책 변경 뒤에는 오래된 비동기 작업이 새 연결에 개입하지 않는다.
+
+자동 시작 설정은 `GetDeviceRunSettings(settings, identity)`로 읽어 각 기기의
+해상도·DPI·Scrcpy 옵션을 사용한다. 선택된 탭의 전역 편의 필드나 UI 저장 동작을
+거치지 않으며, 시작 결과가 현재 선택 컨텍스트일 때만 메인 화면 상태를 갱신한다.
+
+`_deviceTabsVisibleForRun`은 프로세스 실행 중 연결된 물리 기기가 두 대 이상인
+snapshot을 한 번이라도 관찰하면 true로 고정되는 UI 수명 상태다. 연결이 한 대로
+줄어도 분리된 컨텍스트 항목을 유지하지만 프로세스를 다시 시작하면 false에서 다시
+계산한다.
+
+`DevicePresentationOrder`는 registry 열거 순서와 별도로 사이드바 표시 순서를
+보존한다. 첫 snapshot에 여러 기기가 있으면 모델 세대가 최신인 기기를 먼저 배치하고,
+실행 중 새로 발견된 identity는 기존 항목 아래에만 추가한다. 따라서 ADB serial의
+사전 순서가 UI 위치를 결정하지 않으며, 재연결과 transport 전환으로 기존 기기의
+위치가 흔들리지 않는다. 세 대 이상은 제한된 기기 영역 안에서 스크롤한다.
+
+## 정상 종료와 Windows 세션 종료
+
+DX Manager 자체 종료 명령은 기기와 통신할 시간이 보장되는 정상 종료다. 모든
+런타임을 순회해 화면 전원, 절전모드 해제, overlay와 ADB reverse를 정리한 뒤
+`adb kill-server`를 실행한다. 그 다음 `ProcessRunner.BeginShutdown()`으로 새
+프로세스 실행을 영구 차단한다.
+
+`FormClosing`의 `WindowsShutDown` 또는 `TaskManagerClosing`은 제한 시간 종료 경로를
+사용한다. 먼저 런타임과 기기 감시의 신규 작업을 차단한 뒤, 최대 5초 동안 일반 종료와
+같은 기기별 overlay 제거·`절전모드 해제` 복원·화면 전원 복원을 시도한다. 정리가
+끝나거나 제한 시간을 넘으면 process shutdown gate를 닫아 늦은 ADB·보조 프로세스
+실행을 취소한다. 이후 프로세스 실행 파일의 절대 경로가 `AdbService.AdbPath`와 정확히
+같은 `adb.exe`만 종료한다. 이름만 같은 다른 경로의 ADB는 대상이 아니다.
+
+일반 종료와 Windows 세션 종료 모두 `Application.Run()`이 반환된 뒤 최종 프로세스
+정리를 한 번 더 수행한다. 선택한 ADB, 번들 scrcpy 폴더의 ADB·scrcpy, ADB 전송
+프록시의 절대 실행 경로만 등록해 같은 경로에 남은 프로세스를 종료한다. 따라서 ADB
+서버처럼 원래 명령 프로세스에서 분리된 백그라운드 프로세스도 설치 폴더를 잠그지
+않으며, 이름이 같아도 Android Studio나 다른 폴더에서 실행한 프로세스는 건드리지
+않는다. 서비스가 보유한 PID/`Process` 정리가 주 경로이고 이 경로 비교는 종료 시의
+최종 안전망이다.
+
+프로그램 시작 시 `SEM_NOGPFAULTERRORBOX` 프로세스 오류 모드를 적용한다. 이 설정은
+자식 프로세스에도 상속되므로 Windows 7이 세션 종료 중 ADB를 강제로 정리하더라도
+네이티브 오류 대화상자가 반복해서 종료를 가로막지 않는다.
+
+shutdown gate 이후 요청은 예외 창 대신 `Canceled` 결과를 반환한다. 이 취소는
+오류 로그와 초기화 실패 대화상자를 만들지 않으며 Windows 종료를 취소하지 않는다.
+반면 일반 실행 중 timeout과 실제 실패는 기존처럼 오류로 기록한다.
+
 ## 캡처, 숨김, 설정
 
 F8 캡처는 Scrcpy를 전면으로 가져오고 오버레이를 표시한다. 캡처 직전
@@ -302,3 +361,21 @@ Scrcpy 프로세스가 종료되는 순간과 타이머가 겹쳐도 프로세�
 - 로그는 현재 실행 세션만 유지하고 수동으로 저장
 - 경로/추가 인자 필드는 커스텀 프레임 안의 네이티브 TextBox를 사용해
   드래그 선택, 긴 문자열 가로 스크롤, `Ctrl+Z`와 IME를 지원
+
+## 구조 감사 기준
+
+`MainForm`은 기능별 partial을 사용하되 파일 이름이 책임을 나타내도록 유지한다.
+기기 선택 영역과 현재 선택 UI는 `MainForm.Devices`, snapshot 조정·transport 전환·기기별
+자동 시작은 `MainForm.DeviceConnections`, 연결 시각·연결 해제 표식·시작 대기는
+`MainForm.DeviceConnectionState`가 담당한다. 실행 버튼과 세션 시작·중지는
+`MainForm.Sessions`에 남긴다.
+
+`AppSettings`는 기본값 생성과 마이그레이션·정규화 동작만 보유하고, 직렬화되는
+설정 DTO와 열거형은 `AppSettings.Types`에 둔다. 사용자 입력 컨트롤은 기본 입력,
+숫자·단축키 입력, 드롭다운 팝업 구현을 서로 다른 파일로 분리한다.
+
+Scrcpy 주 창과 단일창 서비스에는 프로세스 종료, 출력 drain, 늦게 도착한 Exited
+이벤트를 처리하는 비슷한 코드가 있다. 그러나 두 서비스의 슬롯 상태와 명시적 종료
+규칙이 다르고 과거 종료 경합 회귀가 있었으므로 단순 공통 helper 추출은 하지 않는다.
+공통화는 비정상 분리·사용자 창 닫기·동시 종료를 검증하는 전용 테스트를 먼저 만든
+뒤 진행한다.

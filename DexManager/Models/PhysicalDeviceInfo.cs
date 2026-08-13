@@ -72,6 +72,21 @@ namespace DexManager.Models
                 : null;
         }
 
+        public DeviceTransportInfo SelectAuthorizedTransport(
+            DeviceTransportKind requiredKind,
+            string preferredSerial)
+        {
+            var preferred = FindTransport(preferredSerial);
+            if (preferred != null &&
+                preferred.Kind == requiredKind &&
+                preferred.IsAuthorized)
+            {
+                return preferred;
+            }
+
+            return FindFirstAuthorized(requiredKind);
+        }
+
         public PhysicalDeviceInfo Clone()
         {
             var copy = new PhysicalDeviceInfo

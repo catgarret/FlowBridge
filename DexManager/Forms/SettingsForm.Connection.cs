@@ -182,27 +182,39 @@ namespace DexManager.Forms
                 : WirelessAdbService.BuildEndpoint(
                     profile.WirelessHost,
                     profile.WirelessPort);
-            var target = option.FindAuthorizedWirelessSerial(
+            var wirelessTarget = option.FindAuthorizedWirelessSerial(
                 expectedEndpoint);
-            if (string.IsNullOrWhiteSpace(target))
-                target = option.UsbSerial;
-            if (string.IsNullOrWhiteSpace(target))
+            var usbTarget = option.UsbSerial;
+            if (!string.IsNullOrWhiteSpace(usbTarget) &&
+                !string.IsNullOrWhiteSpace(wirelessTarget))
             {
-                _wirelessStatusLabel.Text =
-                    profile != null &&
-                    profile.Mode == AdbConnectionMode.Wireless
-                        ? LocalizationService.Get(
-                            "Settings.WirelessWaiting")
-                        : LocalizationService.Get(
-                            "Settings.UsbWaiting");
+                _wirelessStatusLabel.Text = LocalizationService.Format(
+                    "Settings.ObservedUsbWireless",
+                    usbTarget,
+                    wirelessTarget);
                 return;
             }
-            _wirelessStatusLabel.Text =
-                LocalizationService.Format(
-                    AdbService.IsTcpIpSerial(target)
-                        ? "Settings.WirelessTarget"
-                        : "Settings.UsbTarget",
-                    target);
+            if (!string.IsNullOrWhiteSpace(usbTarget))
+            {
+                _wirelessStatusLabel.Text = LocalizationService.Format(
+                    "Settings.ObservedUsb",
+                    usbTarget);
+                return;
+            }
+            if (!string.IsNullOrWhiteSpace(wirelessTarget))
+            {
+                _wirelessStatusLabel.Text = LocalizationService.Format(
+                    "Settings.ObservedWireless",
+                    wirelessTarget);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(usbTarget) &&
+                string.IsNullOrWhiteSpace(wirelessTarget))
+            {
+                _wirelessStatusLabel.Text = LocalizationService.Get(
+                    "Settings.ObservedDisconnected");
+                return;
+            }
         }
 
         private void PopulateWirelessDevices()
@@ -308,7 +320,6 @@ namespace DexManager.Forms
                     var profile = _wirelessAdbService.GetDeviceProfile(
                         option.DeviceIdentity,
                         ShouldSeedLegacyConnection(option));
-                    ApplyObservedConnection(option, profile);
                     _loadedWirelessDeviceIdentity = option.DeviceIdentity;
                     _usbConnectionBox.Checked =
                         profile.Mode == AdbConnectionMode.Usb;
@@ -330,66 +341,6 @@ namespace DexManager.Forms
             }
             if (updateStatus) UpdateWirelessStatus();
             UpdateWirelessControls();
-        }
-
-        private static void ApplyObservedConnection(
-            WirelessDeviceOption option,
-            DeviceWirelessConnectionProfile profile)
-        {
-            if (option == null || profile == null) return;
-            var hasUsb = option.HasAuthorizedUsb;
-            var wirelessSerial = option.FindAuthorizedWirelessSerial(
-                WirelessAdbService.BuildEndpoint(
-                    profile.WirelessHost,
-                    profile.WirelessPort));
-            var hasWireless = !string.IsNullOrWhiteSpace(wirelessSerial);
-
-            // If only one authorized transport is currently present, show
-            // that real connection. If both are present, preserve the user's
-            // saved preference so transport switching remains deterministic.
-            if (hasWireless && !hasUsb)
-            {
-                profile.Mode = AdbConnectionMode.Wireless;
-                string host;
-                int port;
-                if (TryParseWirelessEndpoint(wirelessSerial, out host,
-                        out port))
-                {
-                    profile.WirelessHost = host;
-                    profile.WirelessPort = port;
-                }
-            }
-            else if (hasUsb && !hasWireless)
-            {
-                profile.Mode = AdbConnectionMode.Usb;
-            }
-        }
-
-        private static bool TryParseWirelessEndpoint(
-            string endpoint,
-            out string host,
-            out int port)
-        {
-            host = string.Empty;
-            port = 0;
-            var value = (endpoint ?? string.Empty).Trim();
-            if (value.Length == 0) return false;
-
-            var separator = value.LastIndexOf(':');
-            if (separator <= 0 || separator >= value.Length - 1 ||
-                !int.TryParse(value.Substring(separator + 1), out port) ||
-                port < 1 || port > 65535)
-            {
-                return false;
-            }
-
-            host = value.Substring(0, separator).Trim();
-            if (host.Length >= 2 && host[0] == '[' &&
-                host[host.Length - 1] == ']')
-            {
-                host = host.Substring(1, host.Length - 2);
-            }
-            return host.Length > 0;
         }
 
         private void SaveLoadedWirelessProfileToMemory()

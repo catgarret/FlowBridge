@@ -79,6 +79,12 @@
     <Compile Include="Forms\MainForm.Devices.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\MainForm.DeviceConnections.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\MainForm.DeviceConnectionState.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\MainForm.DeviceRunSettings.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
@@ -146,11 +152,15 @@
     <Compile Include="Forms\UiWindowStyle.cs" />
     <Compile Include="Forms\ThemedControls.cs" />
     <Compile Include="Forms\CustomInputControls.cs" />
+    <Compile Include="Forms\CustomValueInputControls.cs" />
+    <Compile Include="Forms\CustomDropDownControls.cs" />
     <Compile Include="Forms\ThemeColors.cs" />
     <Compile Include="Models\AppSettings.cs" />
+    <Compile Include="Models\AppSettings.Types.cs" />
     <Compile Include="Models\AdbDeviceInfo.cs" />
     <Compile Include="Models\DeviceTransportInfo.cs" />
     <Compile Include="Models\PhysicalDeviceInfo.cs" />
+    <Compile Include="Models\DevicePresentationOrder.cs" />
     <Compile Include="Models\DeviceRegistrySnapshot.cs" />
     <Compile Include="Models\DeviceRuntimeSessionSnapshot.cs" />
     <Compile Include="Models\DeviceRuntimeRegistrySnapshot.cs" />
@@ -171,6 +181,7 @@
     <Compile Include="Services\AdbCommandBuilder.cs" />
     <Compile Include="Services\AutoHideService.cs" />
     <Compile Include="Services\AutoStartService.cs" />
+    <Compile Include="Services\BundledProcessCleanupService.cs" />
     <Compile Include="Services\CaptureCoordinator.cs" />
     <Compile Include="Services\CaptureService.cs" />
     <Compile Include="Services\DeviceMonitorService.cs" />

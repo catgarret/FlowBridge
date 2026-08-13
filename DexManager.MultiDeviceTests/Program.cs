@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using DexManager.Models;
 using DexManager.Services;
+using DexManager.Utils;
 
 namespace DexManager.MultiDeviceTests
 {
@@ -17,7 +21,11 @@ namespace DexManager.MultiDeviceTests
             {
                 MergesUsbAndWirelessForSamePhysicalDevice,
                 HonorsExplicitAuthorizedTransport,
+                UsbPolicyDoesNotFallBackToWireless,
+                WirelessPolicyDoesNotFallBackToUsb,
                 KeepsDifferentPhysicalDevicesSeparate,
+                OrdersStartupDevicesByModelGeneration,
+                PreservesSequentialConnectionOrder,
                 CreatesTemporaryIdentityWhenStableIdentityIsMissing,
                 IgnoresTimestampOnlyRefreshes,
                 PublishesMeaningfulStatusChanges,
@@ -43,7 +51,10 @@ namespace DexManager.MultiDeviceTests
                 PersistsDeviceRunSettingsProfiles,
                 KeepsWirelessSettingsIndependentPerPhysicalDevice,
                 SeedsSelectedWirelessDeviceFromLegacyConnection,
-                PersistsDeviceWirelessConnectionProfiles
+                PersistsDeviceWirelessConnectionProfiles,
+                BlocksNewProcessesAfterShutdown,
+                TerminatesActiveProcessOnShutdown,
+                TerminatesOnlyConfiguredBundledExecutablePath
             };
 
             try
@@ -101,6 +112,44 @@ namespace DexManager.MultiDeviceTests
                 "explicit authorized transport must win");
         }
 
+        private static void UsbPolicyDoesNotFallBackToWireless()
+        {
+            var registry = new PhysicalDeviceRegistry();
+            var snapshot = registry.Reconcile(new[]
+            {
+                Device(
+                    "phone-a",
+                    "Galaxy A",
+                    "192.168.0.2:5555",
+                    DeviceTransportKind.Wireless)
+            });
+
+            True(
+                snapshot.Devices[0].SelectAuthorizedTransport(
+                    DeviceTransportKind.Usb,
+                    string.Empty) == null,
+                "USB policy must wait for USB instead of using wireless");
+        }
+
+        private static void WirelessPolicyDoesNotFallBackToUsb()
+        {
+            var registry = new PhysicalDeviceRegistry();
+            var snapshot = registry.Reconcile(new[]
+            {
+                Device(
+                    "phone-a",
+                    "Galaxy A",
+                    "USB-A",
+                    DeviceTransportKind.Usb)
+            });
+
+            True(
+                snapshot.Devices[0].SelectAuthorizedTransport(
+                    DeviceTransportKind.Wireless,
+                    "192.168.0.2:5555") == null,
+                "wireless policy must wait instead of using USB");
+        }
+
         private static void KeepsDifferentPhysicalDevicesSeparate()
         {
             var registry = new PhysicalDeviceRegistry();
@@ -113,6 +162,72 @@ namespace DexManager.MultiDeviceTests
             Equal(2, snapshot.Devices.Count, "display name must not merge devices");
             NotNull(snapshot.FindByIdentity("phone-a"), "phone-a missing");
             NotNull(snapshot.FindByIdentity("phone-b"), "phone-b missing");
+        }
+
+        private static void OrdersStartupDevicesByModelGeneration()
+        {
+            var order = new DevicePresentationOrder();
+            var registry = new PhysicalDeviceRegistry();
+            var snapshot = registry.Reconcile(new[]
+            {
+                Device(
+                    "phone-old",
+                    "현호의 Galaxy S20 FE 5G",
+                    "USB-OLD",
+                    DeviceTransportKind.Usb),
+                Device(
+                    "phone-new",
+                    "현호의 S26 Ultra",
+                    "USB-NEW",
+                    DeviceTransportKind.Usb)
+            });
+            order.Reconcile(snapshot.Devices);
+
+            var identities = order.GetIdentities();
+            Equal(2, identities.Count, "both startup devices must be ordered");
+            Equal(
+                "phone-new",
+                identities[0],
+                "newer Galaxy generation must be shown first at startup");
+        }
+
+        private static void PreservesSequentialConnectionOrder()
+        {
+            var order = new DevicePresentationOrder();
+            var registry = new PhysicalDeviceRegistry();
+            var first = registry.Reconcile(new[]
+            {
+                Device(
+                    "phone-old",
+                    "현호의 Galaxy S20 FE 5G",
+                    "USB-OLD",
+                    DeviceTransportKind.Usb)
+            });
+            order.Reconcile(first.Devices);
+            var second = registry.Reconcile(new[]
+            {
+                Device(
+                    "phone-new",
+                    "현호의 S26 Ultra",
+                    "USB-NEW",
+                    DeviceTransportKind.Usb),
+                Device(
+                    "phone-old",
+                    "현호의 Galaxy S20 FE 5G",
+                    "USB-OLD",
+                    DeviceTransportKind.Usb)
+            });
+            order.Reconcile(second.Devices);
+
+            var identities = order.GetIdentities();
+            Equal(
+                "phone-old",
+                identities[0],
+                "first connected phone must keep the first position");
+            Equal(
+                "phone-new",
+                identities[1],
+                "later connection must be appended");
         }
 
         private static void CreatesTemporaryIdentityWhenStableIdentityIsMissing()
@@ -719,6 +834,132 @@ namespace DexManager.MultiDeviceTests
                 "phone-a address must survive serialization");
             Equal(5566, loadedB.WirelessPort,
                 "phone-b port must survive serialization");
+        }
+
+        private static void BlocksNewProcessesAfterShutdown()
+        {
+            var runner = new ProcessRunner(new LogService());
+            runner.BeginShutdown();
+
+            var result = runner.Run(
+                GetCommandProcessorPath(),
+                "/d /c exit 0",
+                null,
+                5000,
+                false);
+
+            True(result.Canceled,
+                "shutdown gate must cancel new child process launches");
+            True(!result.IsSuccess,
+                "a shutdown-canceled process must not report success");
+        }
+
+        private static void TerminatesActiveProcessOnShutdown()
+        {
+            var runner = new ProcessRunner(new LogService());
+            var task = Task.Run(delegate
+            {
+                return runner.Run(
+                    GetSystemExecutablePath("ping.exe"),
+                    "127.0.0.1 -n 30",
+                    null,
+                    30000,
+                    false);
+            });
+
+            Thread.Sleep(300);
+            runner.BeginShutdown();
+
+            True(task.Wait(5000),
+                "active child process must end promptly during shutdown");
+            True(task.Result.Canceled,
+                "terminated child process must report shutdown cancellation");
+        }
+
+        private static void TerminatesOnlyConfiguredBundledExecutablePath()
+        {
+            var root = Path.Combine(
+                Path.GetTempPath(),
+                "DXManager.ProcessCleanup." + Guid.NewGuid().ToString("N"));
+            var firstDirectory = Path.Combine(root, "owned");
+            var secondDirectory = Path.Combine(root, "unrelated");
+            Directory.CreateDirectory(firstDirectory);
+            Directory.CreateDirectory(secondDirectory);
+
+            var executableName = "dxmtest" +
+                Guid.NewGuid().ToString("N").Substring(0, 8) + ".exe";
+            var firstPath = Path.Combine(firstDirectory, executableName);
+            var secondPath = Path.Combine(secondDirectory, executableName);
+            File.Copy(GetSystemExecutablePath("ping.exe"), firstPath);
+            File.Copy(GetSystemExecutablePath("ping.exe"), secondPath);
+
+            Process first = null;
+            Process second = null;
+            try
+            {
+                first = Process.Start(new ProcessStartInfo
+                {
+                    FileName = firstPath,
+                    Arguments = "127.0.0.1 -n 30",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                second = Process.Start(new ProcessStartInfo
+                {
+                    FileName = secondPath,
+                    Arguments = "127.0.0.1 -n 30",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+
+                Thread.Sleep(200);
+                var cleanup = new BundledProcessCleanupService(
+                    new LogService());
+                cleanup.AddExecutablePath(firstPath);
+                Equal(1, cleanup.TerminateRemainingProcesses(),
+                    "only the configured bundled executable must terminate");
+
+                True(first.WaitForExit(3000),
+                    "configured executable must exit during final cleanup");
+                True(!second.HasExited,
+                    "same-named executable in another path must remain alive");
+            }
+            finally
+            {
+                if (first != null)
+                {
+                    try { if (!first.HasExited) first.Kill(); }
+                    catch { }
+                    first.Dispose();
+                }
+                if (second != null)
+                {
+                    try
+                    {
+                        if (!second.HasExited)
+                        {
+                            second.Kill();
+                            second.WaitForExit(3000);
+                        }
+                    }
+                    catch { }
+                    second.Dispose();
+                }
+                try { Directory.Delete(root, true); }
+                catch { }
+            }
+        }
+
+        private static string GetCommandProcessorPath()
+        {
+            return GetSystemExecutablePath("cmd.exe");
+        }
+
+        private static string GetSystemExecutablePath(string fileName)
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                fileName);
         }
 
         private static DiscoveredDeviceTransport Device(

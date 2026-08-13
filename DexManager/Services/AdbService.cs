@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -37,6 +38,63 @@ namespace DexManager.Services
         public string AdbPath
         {
             get { return _adbPath; }
+        }
+
+        public bool IsProcessShutdownRequested
+        {
+            get { return _processRunner.IsShutdownRequested; }
+        }
+
+        public void BeginProcessShutdown()
+        {
+            _processRunner.BeginShutdown();
+            TerminateSelectedAdbProcesses();
+        }
+
+        private void TerminateSelectedAdbProcesses()
+        {
+            var processName = Path.GetFileNameWithoutExtension(_adbPath);
+            if (string.IsNullOrWhiteSpace(processName)) return;
+
+            var terminatedCount = 0;
+            foreach (var process in Process.GetProcessesByName(processName))
+            {
+                using (process)
+                {
+                    try
+                    {
+                        var executablePath = process.MainModule == null
+                            ? null
+                            : process.MainModule.FileName;
+                        if (string.IsNullOrWhiteSpace(executablePath)) continue;
+
+                        var fullPath = Path.GetFullPath(executablePath);
+                        if (!string.Equals(
+                            fullPath,
+                            _adbPath,
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        if (process.HasExited) continue;
+                        process.Kill();
+                        terminatedCount++;
+                    }
+                    catch
+                    {
+                        // Windows session shutdown must continue even when a
+                        // process exits between enumeration and inspection.
+                    }
+                }
+            }
+
+            if (terminatedCount > 0)
+            {
+                _logService.Info(LocalizationService.Format(
+                    "Log.Adb.ShutdownProcessesTerminated",
+                    terminatedCount));
+            }
         }
 
         public ProcessResult StartServer()
@@ -571,6 +629,7 @@ namespace DexManager.Services
                 StandardOutput = result.StandardOutput,
                 StandardError = result.StandardError,
                 TimedOut = result.TimedOut,
+                Canceled = result.Canceled,
                 Duration = result.Duration
             };
         }
@@ -596,6 +655,7 @@ namespace DexManager.Services
         private void LogCommandResult(string title, ProcessResult result)
         {
             if (result == null) return;
+            if (result.Canceled && IsProcessShutdownRequested) return;
 
             var text = !string.IsNullOrWhiteSpace(result.StandardOutput)
                 ? result.StandardOutput

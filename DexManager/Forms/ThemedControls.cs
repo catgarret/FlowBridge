@@ -34,9 +34,12 @@ namespace DexManager.Forms
 
         public int CornerRadius { get; set; }
         public bool NavigationStyle { get; set; }
+        public bool DeviceNavigationStyle { get; set; }
         public bool ShowNavigationDot { get; set; }
         public bool ShowSettingsIcon { get; set; }
         public string TrailingText { get; set; }
+        public string SecondaryText { get; set; }
+        public Color StatusColor { get; set; }
 
         protected override void OnMouseEnter(System.EventArgs e)
         {
@@ -84,12 +87,18 @@ namespace DexManager.Forms
             bounds.Width--;
             bounds.Height--;
             var colors = ThemeColors.Current;
-            var fill = NavigationStyle
+            var fill = DeviceNavigationStyle
+                ? (_hovered
+                    ? colors.AccentSoft
+                    : (Primary ? colors.CardBackground : background))
+                : NavigationStyle
                 ? (Primary || _hovered ? colors.AccentSoft : background)
                 : (Primary
                     ? (_hovered ? colors.AccentHover : colors.Accent)
                     : (_hovered ? colors.AccentSoft : colors.CardSoft));
-            var border = NavigationStyle
+            var border = DeviceNavigationStyle
+                ? (Primary ? colors.Accent : colors.CardBorder)
+                : NavigationStyle
                 ? fill
                 : (Primary ? fill : colors.ControlBorder);
             var text = NavigationStyle
@@ -104,7 +113,9 @@ namespace DexManager.Forms
 
             using (var path = RoundedPath(bounds, CornerRadius))
             using (var brush = new SolidBrush(fill))
-            using (var pen = new Pen(border))
+            using (var pen = new Pen(
+                border,
+                DeviceNavigationStyle && Primary ? 1.5F : 1F))
             {
                 e.Graphics.FillPath(brush, path);
                 e.Graphics.DrawPath(pen, path);
@@ -123,6 +134,12 @@ namespace DexManager.Forms
                 {
                     e.Graphics.DrawPath(pen, path);
                 }
+            }
+
+            if (DeviceNavigationStyle)
+            {
+                DrawDeviceNavigationContent(e.Graphics, colors, text);
+                return;
             }
 
             if (NavigationStyle && ShowNavigationDot)
@@ -186,6 +203,51 @@ namespace DexManager.Forms
                     : TextFormatFlags.HorizontalCenter |
                         TextFormatFlags.VerticalCenter |
                         TextFormatFlags.EndEllipsis);
+        }
+
+        private void DrawDeviceNavigationContent(
+            Graphics graphics,
+            ThemePalette colors,
+            Color textColor)
+        {
+            var statusColor = StatusColor.IsEmpty
+                ? colors.TextTertiary
+                : StatusColor;
+            if (!Enabled) statusColor = colors.DisabledText;
+
+            using (var brush = new SolidBrush(statusColor))
+                graphics.FillEllipse(brush, 13, Height - 20, 7, 7);
+
+            var nameBounds = new Rectangle(13, 6, Width - 25, 23);
+            TextRenderer.DrawText(
+                graphics,
+                Text,
+                Font,
+                nameBounds,
+                textColor,
+                TextFormatFlags.Left |
+                    TextFormatFlags.VerticalCenter |
+                    TextFormatFlags.EndEllipsis |
+                    TextFormatFlags.NoPrefix);
+
+            using (var statusFont = UiFonts.Create(8.25F))
+            {
+                var statusBounds = new Rectangle(
+                    26,
+                    Height - 26,
+                    Width - 38,
+                    20);
+                TextRenderer.DrawText(
+                    graphics,
+                    SecondaryText ?? string.Empty,
+                    statusFont,
+                    statusBounds,
+                    Enabled ? colors.TextTertiary : colors.DisabledText,
+                    TextFormatFlags.Left |
+                        TextFormatFlags.VerticalCenter |
+                        TextFormatFlags.EndEllipsis |
+                        TextFormatFlags.NoPrefix);
+            }
         }
 
         private void DrawSettingsIcon(Graphics graphics, Color color)

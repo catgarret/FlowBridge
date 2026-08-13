@@ -145,7 +145,7 @@ namespace DexManager.Forms
         private void ApplyTheme()
         {
             BackColor = _theme.WindowBackground;
-            _deviceTabsPanel.BackColor = _theme.WindowBackground;
+            _deviceTabsPanel.BackColor = _theme.NavigationBackground;
             _pageTitle.ForeColor = _theme.TextPrimary;
             _indicatorStatus.ForeColor = _theme.TextPrimary;
             _indicatorDetail.ForeColor = _theme.TextTertiary;
@@ -213,6 +213,11 @@ namespace DexManager.Forms
             _sidebar.BorderColor = _theme.CardBorder;
             foreach (Control control in _sidebar.Controls)
             {
+                if (ReferenceEquals(control, _deviceSectionDivider))
+                {
+                    control.BackColor = _theme.CardBorder;
+                    continue;
+                }
                 control.BackColor = _theme.NavigationBackground;
                 var label = control as Label;
                 if (label != null)
@@ -288,7 +293,28 @@ namespace DexManager.Forms
                 BorderColor = _theme.CardBorder
             };
 
-            _sidebar.Controls.Add(new Label
+            _deviceSectionLabel = new Label
+            {
+                AutoSize = true,
+                Font = UiFonts.Create(9.5F, FontStyle.Bold),
+                ForeColor = _theme.TextTertiary,
+                BackColor = _theme.NavigationBackground,
+                Location = new Point(20, 18),
+                Text = LocalizationService.Get("Main.ConnectedDevices")
+            };
+            _sidebar.Controls.Add(_deviceSectionLabel);
+            _deviceTabsPanel.BackColor = _theme.NavigationBackground;
+            _sidebar.Controls.Add(_deviceTabsPanel);
+
+            _deviceSectionDivider = new Panel
+            {
+                BackColor = _theme.CardBorder,
+                Location = new Point(20, 166),
+                Size = new Size(148, 1)
+            };
+            _sidebar.Controls.Add(_deviceSectionDivider);
+
+            _modeSectionLabel = new Label
             {
                 AutoSize = true,
                 Font = UiFonts.Create(9.5F, FontStyle.Bold),
@@ -296,7 +322,8 @@ namespace DexManager.Forms
                 BackColor = _theme.NavigationBackground,
                 Location = new Point(20, 18),
                 Text = LocalizationService.Get("Main.Mode")
-            });
+            };
+            _sidebar.Controls.Add(_modeSectionLabel);
 
             _dexModeButton = CreateSidebarButton(
                 LocalizationService.Get("Main.Dex"), 52, true);
@@ -324,7 +351,7 @@ namespace DexManager.Forms
             _singleModeButton3.Click += delegate { SelectSingleWindowPreview(3); };
             _sidebar.Controls.Add(_singleModeButton3);
 
-            _sidebar.Controls.Add(new Label
+            _sidebarHintLabel = new Label
             {
                 AutoEllipsis = true,
                 ForeColor = _theme.TextTertiary,
@@ -332,23 +359,59 @@ namespace DexManager.Forms
                 Location = new Point(20, 238),
                 Size = new Size(148, 70),
                 Text = LocalizationService.Get("Main.SidebarHint")
-            });
+            };
+            _sidebar.Controls.Add(_sidebarHintLabel);
 
-            var settingsButton = CreateSidebarButton(
+            _settingsSidebarButton = CreateSidebarButton(
                 LocalizationService.Get("Main.Settings"),
                 _sidebar.Height - 48,
                 false,
                 false);
-            settingsButton.ShowSettingsIcon = true;
-            settingsButton.TrailingText =
+            _settingsSidebarButton.ShowSettingsIcon = true;
+            _settingsSidebarButton.TrailingText =
                 "v" + Application.ProductVersion;
-            settingsButton.Anchor =
+            _settingsSidebarButton.Anchor =
                 AnchorStyles.Left | AnchorStyles.Bottom;
-            settingsButton.Click += delegate { ShowSettingsForm(); };
-            _sidebar.Controls.Add(settingsButton);
+            _settingsSidebarButton.Click += delegate { ShowSettingsForm(); };
+            _sidebar.Controls.Add(_settingsSidebarButton);
 
             Controls.Add(_sidebar);
             _sidebar.BringToFront();
+            LayoutSidebarNavigation();
+        }
+
+        private void LayoutSidebarNavigation()
+        {
+            if (_sidebar == null) return;
+
+            var showDevices = _deviceTabsVisibleForRun;
+            _deviceSectionLabel.Visible = showDevices;
+            _deviceTabsPanel.Visible = showDevices;
+            _deviceSectionDivider.Visible = showDevices;
+
+            var modeLabelY = 18;
+            if (showDevices)
+            {
+                var rowCount = Math.Max(
+                    2,
+                    _deviceTabsPanel.Controls.Count);
+                _deviceTabsPanel.Location = new Point(10, 42);
+                _deviceTabsPanel.Size = new Size(
+                    168,
+                    Math.Min(rowCount * 58, 174));
+                _deviceSectionDivider.Location = new Point(
+                    20,
+                    _deviceTabsPanel.Bottom + 8);
+                modeLabelY = _deviceSectionDivider.Bottom + 13;
+            }
+
+            _modeSectionLabel.Location = new Point(20, modeLabelY);
+            var firstModeY = modeLabelY + 34;
+            _dexModeButton.Location = new Point(10, firstModeY);
+            _singleModeButton1.Location = new Point(10, firstModeY + 42);
+            _singleModeButton2.Location = new Point(10, firstModeY + 84);
+            _singleModeButton3.Location = new Point(10, firstModeY + 126);
+            _sidebarHintLabel.Location = new Point(20, firstModeY + 186);
         }
 
         private ThemedButton CreateSidebarButton(

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using DexManager.Forms;
@@ -16,6 +17,8 @@ namespace DexManager
         [STAThread]
         private static void Main(string[] args)
         {
+            NativeMethods.SuppressNativeCrashDialogs();
+
             bool createdNew;
             _singleInstanceMutex = new Mutex(
                 true,
@@ -31,6 +34,9 @@ namespace DexManager
             Application.SetCompatibleTextRenderingDefault(false);
 
             var logService = new LogService();
+            ProcessRunner processRunner = null;
+            var bundledProcessCleanup =
+                new BundledProcessCleanupService(logService);
 
             try
             {
@@ -42,7 +48,7 @@ namespace DexManager
                 logService.Info(
                     LocalizationService.Get("Log.Program.Starting"));
 
-                var processRunner = new ProcessRunner(logService);
+                processRunner = new ProcessRunner(logService);
                 var pathService = new PathService(
                     settingsService,
                     logService,
@@ -63,6 +69,7 @@ namespace DexManager
                 var adbPath = pathService.SelectAdbPath(
                     settings,
                     settings.Timing.ProcessTimeoutMs);
+                bundledProcessCleanup.AddExecutablePath(adbPath);
                 Environment.SetEnvironmentVariable(
                     "ADB",
                     adbPath,
@@ -92,6 +99,15 @@ namespace DexManager
                     logService);
                 wirelessAdbService.InitializeTarget();
                 var scrcpyPath = settingsService.ResolvePath(settings.Paths.ScrcpyPath);
+                bundledProcessCleanup.AddExecutablePath(scrcpyPath);
+                bundledProcessCleanup.AddExecutablePath(Path.Combine(
+                    Path.GetDirectoryName(scrcpyPath) ?? string.Empty,
+                    "adb.exe"));
+                bundledProcessCleanup.AddExecutablePath(Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "tools",
+                    "adb-proxy",
+                    "DXMAdbProxy.exe"));
                 var scrcpyLaunchCoordinator =
                     new ScrcpyLaunchCoordinator();
                 var runtimeServiceFactory =
@@ -190,17 +206,28 @@ namespace DexManager
                 logService.Error(
                     LocalizationService.Get("Log.Program.InitFailed"),
                     ex);
-                MessageBox.Show(
-                    LocalizationService.Format(
-                        "Program.InitFailed",
-                        Environment.NewLine,
-                        ex.Message),
-                    LocalizationService.Get("App.Name"),
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                if (processRunner == null ||
+                    !processRunner.IsShutdownRequested)
+                {
+                    MessageBox.Show(
+                        LocalizationService.Format(
+                            "Program.InitFailed",
+                            Environment.NewLine,
+                            ex.Message),
+                        LocalizationService.Get("App.Name"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
             }
             finally
             {
+                // Application.Run() has returned, so every form and runtime
+                // has already received its normal shutdown/dispose request.
+                // Close the process launch gate once more and remove only
+                // processes whose executable path belongs to this package.
+                if (processRunner != null) processRunner.BeginShutdown();
+                bundledProcessCleanup.TerminateRemainingProcesses();
+
                 if (_singleInstanceMutex != null)
                 {
                     _singleInstanceMutex.ReleaseMutex();
