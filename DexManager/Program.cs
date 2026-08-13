@@ -35,6 +35,7 @@ namespace DexManager
 
             var logService = new LogService();
             ProcessRunner processRunner = null;
+            MainForm mainForm = null;
             var bundledProcessCleanup =
                 new BundledProcessCleanupService(logService);
 
@@ -174,7 +175,7 @@ namespace DexManager
                     settings.KeyMappings,
                     logService);
 
-                Application.Run(new MainForm(
+                mainForm = new MainForm(
                     settingsService,
                     settings,
                     logService,
@@ -199,7 +200,8 @@ namespace DexManager
                     runtimeServiceFactory,
                     pathService,
                     captureService,
-                    IsAutoRun(args)));
+                    IsAutoRun(args));
+                Application.Run(mainForm);
             }
             catch (Exception ex)
             {
@@ -221,12 +223,17 @@ namespace DexManager
             }
             finally
             {
-                // Application.Run() has returned, so every form and runtime
-                // has already received its normal shutdown/dispose request.
-                // Close the process launch gate once more and remove only
-                // processes whose executable path belongs to this package.
-                if (processRunner != null) processRunner.BeginShutdown();
-                bundledProcessCleanup.TerminateRemainingProcesses();
+                // Explicit app exit performs the final package-owned process
+                // sweep. During Windows shutdown, do not race the OS by
+                // terminating ADB/scrcpy processes from this finally block.
+                var windowsShutdown = mainForm != null &&
+                    mainForm.IsSystemShutdownInProgress;
+                if (!windowsShutdown)
+                {
+                    if (processRunner != null)
+                        processRunner.BeginShutdown();
+                    bundledProcessCleanup.TerminateRemainingProcesses();
+                }
 
                 if (_singleInstanceMutex != null)
                 {

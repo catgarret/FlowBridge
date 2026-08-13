@@ -259,6 +259,55 @@ namespace DexManager.Services
                 writeLog);
         }
 
+        public ProcessResult CleanupForWindowsShutdown(
+            string serial,
+            bool removeOverlay,
+            bool restoreStayAwake,
+            string originalStayAwakeValue)
+        {
+            var commands = new List<string>();
+            if (removeOverlay)
+            {
+                commands.Add(
+                    "settings delete global overlay_display_devices");
+            }
+            if (restoreStayAwake)
+            {
+                if (originalStayAwakeValue == null)
+                {
+                    commands.Add(
+                        "settings delete global stay_on_while_plugged_in");
+                }
+                else
+                {
+                    int parsed;
+                    if (!int.TryParse(
+                            originalStayAwakeValue,
+                            out parsed) ||
+                        parsed < 0)
+                    {
+                        throw new ArgumentException(
+                            "The original stay-awake value is invalid.",
+                            "originalStayAwakeValue");
+                    }
+                    commands.Add(
+                        "settings put global stay_on_while_plugged_in " +
+                        parsed.ToString(
+                            System.Globalization.CultureInfo.InvariantCulture));
+                }
+            }
+            if (commands.Count == 0)
+                throw new ArgumentException(
+                    "No Windows shutdown cleanup command was requested.");
+
+            return Run(
+                AdbCommandBuilder.ForShellCommands(
+                    serial,
+                    commands.ToArray()),
+                false,
+                _defaultTimeoutMs);
+        }
+
         public ProcessResult InstallPackageForSerial(
             string serial,
             string apkPath,

@@ -36,6 +36,7 @@ namespace DexManager.MultiDeviceTests
                 PreservesKnownIdentityWhenTransportCannotBeQueried,
                 RequiresExplicitSerialForDeviceCommands,
                 KeepsCleanupCommandsScopedToRequestedDevice,
+                CombinesWindowsShutdownCleanupIntoOneDeviceCommand,
                 InterleavedDeviceCommandsDoNotShareTarget,
                 DeviceCancellationMatchesOnlyRequestedSerial,
                 CreatesIndependentRuntimeSessions,
@@ -410,6 +411,24 @@ namespace DexManager.MultiDeviceTests
                 "second cleanup must target PHONE-B");
             True(second.IndexOf("PHONE-A", StringComparison.Ordinal) < 0,
                 "second cleanup must not contain PHONE-A");
+        }
+
+        private static void CombinesWindowsShutdownCleanupIntoOneDeviceCommand()
+        {
+            var command = AdbCommandBuilder.ForShellCommands(
+                "PHONE-A",
+                "settings delete global overlay_display_devices",
+                "settings put global stay_on_while_plugged_in 3");
+
+            True(command.StartsWith("-s \"PHONE-A\" shell \""),
+                "shutdown cleanup must remain scoped to PHONE-A");
+            True(command.IndexOf(
+                    "overlay_display_devices; settings put global " +
+                    "stay_on_while_plugged_in 3",
+                    StringComparison.Ordinal) >= 0,
+                "shutdown cleanup must use one combined shell command");
+            True(command.IndexOf("PHONE-B", StringComparison.Ordinal) < 0,
+                "shutdown cleanup must not leak another target");
         }
 
         private static void InterleavedDeviceCommandsDoNotShareTarget()

@@ -110,6 +110,7 @@ namespace DexManager.Forms
         private bool _resolutionSelectionInitialized;
         private bool _resolutionWasCustom;
         private readonly object _stayAwakeTaskLock = new object();
+        private readonly object _stayAwakeValuesSync = new object();
         private readonly Dictionary<string, string> _stayAwakeOriginalValues =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private Task _stayAwakeUpdateTask = Task.FromResult(0);
@@ -142,6 +143,11 @@ namespace DexManager.Forms
         private long _lastPhoneTransferProgressSequence;
         private FileTransferCoordinator _fileTransferStatusSource;
         private PhoneTransferReceiver _phoneTransferStatusSource;
+
+        internal bool IsSystemShutdownInProgress
+        {
+            get { return _systemShutdownInProgress; }
+        }
         private readonly Dictionary<string, DeviceUiContext> _deviceContexts =
             new Dictionary<string, DeviceUiContext>(
                 StringComparer.OrdinalIgnoreCase);

@@ -117,7 +117,7 @@ namespace DexManager.Forms
         {
             if (string.IsNullOrWhiteSpace(serial)) return;
             string original;
-            var overrideApplied = _stayAwakeOriginalValues.TryGetValue(
+            var overrideApplied = TryGetStayAwakeOriginalValue(
                 serial,
                 out original);
             _runtimeSessions.SetPhonePowerState(
@@ -236,7 +236,7 @@ namespace DexManager.Forms
             foreach (var serial in requestedSerials)
             {
                 if (IsSerialMarkedDisconnected(serial)) continue;
-                if (_stayAwakeOriginalValues.ContainsKey(serial)) continue;
+                if (HasStayAwakeOriginalValue(serial)) continue;
                 try
                 {
                     var originalResult = _adbService.ShellForSerial(
@@ -266,7 +266,7 @@ namespace DexManager.Forms
                         continue;
                     }
 
-                    _stayAwakeOriginalValues[serial] = original;
+                    SetStayAwakeOriginalValue(serial, original);
                     PublishPhonePowerState(serial);
                     _logService.Info(DeviceLogFormatter.ForSerial(
                         serial,
@@ -285,7 +285,7 @@ namespace DexManager.Forms
             }
 
             var releases = new List<string>();
-            foreach (var serial in _stayAwakeOriginalValues.Keys)
+            foreach (var serial in GetStayAwakeOriginalSerials())
             {
                 if (!requestedSerials.Contains(serial)) releases.Add(serial);
             }
@@ -299,12 +299,12 @@ namespace DexManager.Forms
         private void ReleaseStayAwakeOverride(string serial)
         {
             string original;
-            if (!_stayAwakeOriginalValues.TryGetValue(serial, out original))
+            if (!TryGetStayAwakeOriginalValue(serial, out original))
                 return;
 
             if (!_settings.Features.DisableStayAwakeOnStop)
             {
-                _stayAwakeOriginalValues.Remove(serial);
+                RemoveStayAwakeOriginalValue(serial);
                 PublishPhonePowerState(serial);
                 return;
             }
@@ -332,7 +332,7 @@ namespace DexManager.Forms
                     "7",
                     StringComparison.Ordinal))
                 {
-                    _stayAwakeOriginalValues.Remove(serial);
+                    RemoveStayAwakeOriginalValue(serial);
                     PublishPhonePowerState(serial);
                     _logService.Warning(DeviceLogFormatter.ForSerial(
                         serial,
@@ -360,7 +360,7 @@ namespace DexManager.Forms
                     return;
                 }
 
-                _stayAwakeOriginalValues.Remove(serial);
+                RemoveStayAwakeOriginalValue(serial);
                 PublishPhonePowerState(serial);
                 _logService.Info(DeviceLogFormatter.ForSerial(
                     serial,
@@ -394,6 +394,44 @@ namespace DexManager.Forms
             return int.TryParse(normalized, out parsed)
                 ? parsed.ToString(System.Globalization.CultureInfo.InvariantCulture)
                 : null;
+        }
+
+        private bool TryGetStayAwakeOriginalValue(
+            string serial,
+            out string original)
+        {
+            lock (_stayAwakeValuesSync)
+            {
+                return _stayAwakeOriginalValues.TryGetValue(
+                    serial,
+                    out original);
+            }
+        }
+
+        private bool HasStayAwakeOriginalValue(string serial)
+        {
+            lock (_stayAwakeValuesSync)
+                return _stayAwakeOriginalValues.ContainsKey(serial);
+        }
+
+        private void SetStayAwakeOriginalValue(
+            string serial,
+            string original)
+        {
+            lock (_stayAwakeValuesSync)
+                _stayAwakeOriginalValues[serial] = original;
+        }
+
+        private void RemoveStayAwakeOriginalValue(string serial)
+        {
+            lock (_stayAwakeValuesSync)
+                _stayAwakeOriginalValues.Remove(serial);
+        }
+
+        private IList<string> GetStayAwakeOriginalSerials()
+        {
+            lock (_stayAwakeValuesSync)
+                return new List<string>(_stayAwakeOriginalValues.Keys);
         }
 
         private void UpdatePhoneScreenWakeSchedule()

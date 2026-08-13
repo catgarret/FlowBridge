@@ -123,7 +123,17 @@ namespace DexManager.Forms
                 PhoneTransferReceiver_ProgressChanged;
             _phoneScreenWakeTimer.Tick -= PhoneScreenWakeTimer_Tick;
 
-            RequestAllRuntimeShutdown();
+            RequestAllRuntimeShutdown(_systemShutdownInProgress);
+            if (_systemShutdownInProgress)
+            {
+                // Windows owns process termination from this point. Do not
+                // dispose runtime services here: several normal Dispose paths
+                // stop child processes or send additional ADB commands.
+                TryCleanup("phone screen timer", _phoneScreenWakeTimer.Dispose);
+                TryCleanup("device tooltips", _deviceTabToolTip.Dispose);
+                TryCleanup("tray service", _trayService.Dispose);
+                return;
+            }
             var cleanupStillRunning = _exitCleanupTask != null &&
                 !_exitCleanupTask.IsCompleted;
             if (!cleanupStillRunning)
@@ -157,7 +167,6 @@ namespace DexManager.Forms
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (e.CloseReason == CloseReason.WindowsShutDown ||
-                e.CloseReason == CloseReason.TaskManagerClosing ||
                 _systemShutdownInProgress)
             {
                 BeginSystemShutdown();
@@ -222,36 +231,60 @@ namespace DexManager.Forms
             _logService.Info(LocalizationService.Get(
                 "Log.Main.SystemShutdownDetected"));
 
-            var wakeSerials = CaptureWakeSerials();
-            var cleanupSerial = GetSelectedDeviceSerial();
+            var cleanupTargets = CaptureWindowsShutdownCleanupTargets();
             BeginPhoneScreenWakeSuppression();
             _phoneScreenWakeTimer.Stop();
 
-            // Stop all producers first, then give the normal per-device
-            // restoration flow a short opportunity to remove overlays and
-            // restore phone power settings. The final process gate is always
-            // closed below so a slow or failing device cannot keep launching
-            // ADB while Windows tears the desktop session down.
-            RequestAllRuntimeShutdown();
+            // Stop every producer first, without stopping child processes or
+            // sending companion detach commands. Only the essential overlay
+            // and phone power restoration commands are allowed below; Windows
+            // owns process termination after the short bounded wait.
+            RequestAllRuntimeShutdown(true);
             TryCleanup(
                 "device monitor shutdown request",
                 _deviceMonitor.RequestShutdown);
-            TryCleanup(
-                "mini control bar",
-                _miniControlBarManager.Dispose);
-            TryCleanup("capture coordinator", _captureCoordinator.Stop);
-            TryCleanup("key mapping", _keyMappingService.Stop);
+            StopAllInteractiveContextsForWindowsShutdown();
 
-            if (_exitCleanupTask == null)
+            var cleanupTasks = new List<Task>();
+            foreach (var target in cleanupTargets)
             {
-                _exitCleanupTask = RunExitCleanupAsync(
-                    wakeSerials,
-                    cleanupSerial);
+                var capturedTarget = target;
+                cleanupTasks.Add(Task.Run(delegate
+                {
+                    try
+                    {
+                        var result = _adbService.CleanupForWindowsShutdown(
+                            capturedTarget.Serial,
+                            capturedTarget.RemoveOverlay,
+                            capturedTarget.RestoreStayAwake,
+                            capturedTarget.OriginalStayAwakeValue);
+                        if (!result.IsSuccess)
+                        {
+                            _logService.Warning(DeviceLogFormatter.ForSerial(
+                                capturedTarget.Serial,
+                                LocalizationService.Format(
+                                    "Log.Main.SystemShutdownDeviceCleanupFailed",
+                                    result.StandardError)));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logService.Error(
+                            DeviceLogFormatter.ForSerial(
+                                capturedTarget.Serial,
+                                LocalizationService.Get(
+                                    "Log.Main.SystemShutdownDeviceCleanupException")),
+                            ex);
+                    }
+                }));
             }
-
+            // The essential device commands are already in flight. Persist
+            // only a dirty main-window mode while they run in parallel.
+            TrySavePendingRunSettingsForSystemShutdown();
             try
             {
-                if (!_exitCleanupTask.Wait(5000))
+                if (cleanupTasks.Count > 0 &&
+                    !Task.WaitAll(cleanupTasks.ToArray(), 1500))
                 {
                     _logService.Warning(LocalizationService.Get(
                         "Log.Main.SystemShutdownCleanupTimedOut"));
@@ -265,13 +298,116 @@ namespace DexManager.Forms
                         "Windows shutdown"),
                     ex.GetBaseException());
             }
-            finally
+        }
+
+        private void TrySavePendingRunSettingsForSystemShutdown()
+        {
+            if (_selectedMode < 0 ||
+                _selectedMode >= _modeSettingsDirty.Length ||
+                !_modeSettingsDirty[_selectedMode])
             {
-                // RunExitCleanupAsync normally closes this gate after
-                // kill-server. Close it here as well when Windows' five-second
-                // budget expires, terminating only DX Manager's selected ADB.
-                _adbService.BeginProcessShutdown();
+                return;
             }
+            try
+            {
+                ApplyRunSettings(false);
+                _modeSettingsDirty[_selectedMode] = false;
+            }
+            catch (Exception ex)
+            {
+                _logService.Warning(LocalizationService.Format(
+                    "Log.Main.ModeSwitchSaveFailed",
+                    ex.Message));
+            }
+        }
+
+        private IList<WindowsShutdownCleanupTarget>
+            CaptureWindowsShutdownCleanupTargets()
+        {
+            var targets = new List<WindowsShutdownCleanupTarget>();
+            var added = new HashSet<string>(
+                System.StringComparer.OrdinalIgnoreCase);
+            foreach (var context in GetAllDeviceContexts())
+            {
+                var dex = context.Runtime.Scrcpy.GetSessionSnapshot();
+                string original = null;
+                var serial = GetWindowsShutdownSerial(context, dex);
+                // Normal DX Manager exit removes overlay state regardless of
+                // who created it. Keep the same recovery guarantee here for
+                // every currently reachable phone, including a display left
+                // behind after its scrcpy window already closed.
+                var removeOverlay = !string.IsNullOrWhiteSpace(serial);
+                var restoreStayAwake =
+                    _settings.Features.DisableStayAwakeOnStop &&
+                    TryGetStayAwakeOriginalForContext(
+                        context,
+                        serial,
+                        out original);
+                if (!removeOverlay && !restoreStayAwake) continue;
+                if (string.IsNullOrWhiteSpace(serial) || !added.Add(serial))
+                    continue;
+
+                targets.Add(new WindowsShutdownCleanupTarget
+                {
+                    Serial = serial,
+                    RemoveOverlay = removeOverlay,
+                    RestoreStayAwake = restoreStayAwake,
+                    OriginalStayAwakeValue = restoreStayAwake &&
+                        original != MissingStayAwakeValue
+                        ? original
+                        : null
+                });
+            }
+            return targets;
+        }
+
+        private string GetWindowsShutdownSerial(
+            DeviceUiContext context,
+            ScrcpySessionSnapshot dex)
+        {
+            if (context == null || context.Runtime == null)
+                return string.Empty;
+            if (dex.IsRunning && !string.IsNullOrWhiteSpace(dex.Serial))
+                return dex.Serial;
+            foreach (var serial in context.Runtime.SingleWindows
+                .GetRunningSerials())
+            {
+                if (!string.IsNullOrWhiteSpace(serial)) return serial;
+            }
+            return GetContextSerial(context);
+        }
+
+        private bool TryGetStayAwakeOriginalForContext(
+            DeviceUiContext context,
+            string preferredSerial,
+            out string original)
+        {
+            if (TryGetStayAwakeOriginalValue(preferredSerial, out original))
+                return true;
+            if (context != null && context.Device != null &&
+                context.Device.Transports != null)
+            {
+                foreach (var transport in context.Device.Transports)
+                {
+                    if (transport != null &&
+                        TryGetStayAwakeOriginalValue(
+                            transport.Serial,
+                            out original))
+                    {
+                        return true;
+                    }
+                }
+            }
+            original = null;
+            return false;
+        }
+
+        private sealed class WindowsShutdownCleanupTarget
+        {
+            public string Serial;
+            public bool RemoveOverlay;
+            public bool RestoreStayAwake;
+            public string OriginalStayAwakeValue;
         }
 
         private void ScheduleCloseAfterExitCleanup()

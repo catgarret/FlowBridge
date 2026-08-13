@@ -456,13 +456,40 @@ namespace DexManager.Forms
 
         private void RequestAllRuntimeShutdown()
         {
+            RequestAllRuntimeShutdown(false);
+        }
+
+        private void RequestAllRuntimeShutdown(bool windowsShutdown)
+        {
             foreach (var context in GetAllDeviceContexts())
             {
                 context.Runtime.Dex.RequestShutdown();
                 context.Runtime.SingleWindows.RequestShutdown();
                 context.Runtime.ScreenOff.RequestShutdown();
                 context.Runtime.FileTransfers.RequestShutdown();
-                context.Runtime.PhoneTransfers.RequestShutdown();
+                if (windowsShutdown)
+                    context.Runtime.PhoneTransfers.RequestWindowsShutdown();
+                else
+                    context.Runtime.PhoneTransfers.RequestShutdown();
+            }
+        }
+
+        private void StopAllInteractiveContextsForWindowsShutdown()
+        {
+            foreach (var context in GetAllDeviceContexts())
+            {
+                TryCleanup(
+                    "mini control bar",
+                    context.MiniBar.Dispose);
+                TryCleanup(
+                    "capture coordinator",
+                    context.Capture.Stop);
+                TryCleanup(
+                    "automatic hide",
+                    context.AutoHide.Stop);
+                TryCleanup(
+                    "key mapping",
+                    context.KeyMapping.Stop);
             }
         }
 

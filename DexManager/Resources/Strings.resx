@@ -218,8 +218,10 @@
   <data name="Log.Main.PhoneScreenWakeFailed" xml:space="preserve"><value>Could not turn on the phone screen.</value></data>
   <data name="Log.Main.CleanupFailed" xml:space="preserve"><value>The cleanup step '{0}' failed while exiting.</value></data>
   <data name="Log.Main.CleanupDeferredForShutdown" xml:space="preserve"><value>Shutdown cleanup exceeded five seconds. DX Manager will close after owned processes and device state are cleaned up.</value></data>
-  <data name="Log.Main.SystemShutdownDetected" xml:space="preserve"><value>Windows session shutdown detected. Stopping active work and attempting bounded device cleanup.</value></data>
-  <data name="Log.Main.SystemShutdownCleanupTimedOut" xml:space="preserve"><value>Windows shutdown cleanup exceeded five seconds. Blocking new ADB work and terminating the selected DX Manager ADB processes.</value></data>
+  <data name="Log.Main.SystemShutdownDetected" xml:space="preserve"><value>Windows session shutdown detected. Stopping active work and attempting only essential device cleanup.</value></data>
+  <data name="Log.Main.SystemShutdownCleanupTimedOut" xml:space="preserve"><value>Windows shutdown device cleanup did not finish within 1.5 seconds. Windows will terminate the remaining processes.</value></data>
+  <data name="Log.Main.SystemShutdownDeviceCleanupFailed" xml:space="preserve"><value>Windows shutdown device cleanup command failed: {0}</value></data>
+  <data name="Log.Main.SystemShutdownDeviceCleanupException" xml:space="preserve"><value>Windows shutdown device cleanup failed.</value></data>
   <data name="Log.Main.SettingsDeferredNoDevice" xml:space="preserve"><value>Saved the run settings. No ADB device is connected, so they will be applied the next time DeX starts.</value></data>
   <data name="Log.Main.SettingsImmediateApplyFailed" xml:space="preserve"><value>The run settings were saved but could not be applied immediately.</value></data>
   <data name="Main.ApplyFailedShort" xml:space="preserve"><value>Could not apply run settings immediately: {0}</value></data>

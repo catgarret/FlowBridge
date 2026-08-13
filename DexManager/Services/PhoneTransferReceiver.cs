@@ -235,9 +235,21 @@ namespace DexManager.Services
 
         public void RequestShutdown()
         {
+            RequestShutdownCore(true, true);
+        }
+
+        public void RequestWindowsShutdown()
+        {
+            RequestShutdownCore(false, false);
+        }
+
+        private void RequestShutdownCore(
+            bool notifyCompanion,
+            bool removeReverse)
+        {
             if (_shutdown.IsCancellationRequested) return;
             _shutdown.Cancel();
-            DetachInternal(true);
+            DetachInternal(notifyCompanion, removeReverse);
             lock (_sync)
             {
                 if (_listener != null)
@@ -588,6 +600,13 @@ namespace DexManager.Services
 
         private void DetachInternal(bool notifyCompanion)
         {
+            DetachInternal(notifyCompanion, true);
+        }
+
+        private void DetachInternal(
+            bool notifyCompanion,
+            bool removeReverse)
+        {
             string serial;
             lock (_sync)
             {
@@ -619,6 +638,7 @@ namespace DexManager.Services
                 }
                 catch (Exception) { }
             }
+            if (!removeReverse) return;
             try
             {
                 _adbService.RemoveReverseForSerial(
