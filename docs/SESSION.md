@@ -28,7 +28,7 @@ Companion 감시 소켓만 끊겨서는 정리하지 않는다. 설정된 USB �
 받은 경우에만 유예 없이
 overlay와 저장된 절전모드 해제 원래 값을 복원한다. Companion Release APK는
 versionName 1.4.0, versionCode 4이며 SHA-256은
-`7AD9266CC39A27A1CAB7E77C8A60C3F3CA7B890901C937E21FD57527834701F1`이다.
+`23D2DEA3809BB94D9A1025A0F2D75EA5C91748CFCEE0E7A9E686FE4C2E2457BC`이다.
 
 5단계 후속 보강으로 설정 창이 메인 기기 탭과 registry 변경을 실시간으로 따라가게
 했다. 기기별 USB·무선 라디오 선택은 실제 연결에 따라 바뀌지 않는 강제 정책이며,

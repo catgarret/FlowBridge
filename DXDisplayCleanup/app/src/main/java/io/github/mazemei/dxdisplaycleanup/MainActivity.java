@@ -235,6 +235,7 @@ public final class MainActivity extends Activity {
     private void cleanup(boolean overlay, boolean stayAwake) {
         CleanupCoordinator.Snapshot snapshot =
                 CleanupCoordinator.cleanup(this, overlay, stayAwake);
+        SessionGuardianService.stopAfterManualCleanupIfIdle(this, snapshot);
         render(snapshot);
         notifySurfaces();
 

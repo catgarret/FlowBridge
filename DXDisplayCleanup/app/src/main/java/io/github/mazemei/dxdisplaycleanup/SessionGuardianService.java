@@ -47,6 +47,7 @@ public final class SessionGuardianService extends Service {
     private static final String ACTION_USB_STATE =
             "android.hardware.usb.action.USB_STATE";
     private static final String EXTRA_USB_CONNECTED = "connected";
+    private static volatile SessionGuardianService activeInstance;
 
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor();
@@ -60,6 +61,7 @@ public final class SessionGuardianService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        activeInstance = this;
         createNotificationChannel();
     }
 
@@ -102,7 +104,26 @@ public final class SessionGuardianService extends Service {
         cancelPendingCleanup();
         closeCurrentSocket();
         executor.shutdownNow();
+        stopForeground(true);
+        if (activeInstance == this) {
+            activeInstance = null;
+        }
         super.onDestroy();
+    }
+
+    static void stopAfterManualCleanupIfIdle(
+            android.content.Context context,
+            CleanupCoordinator.Snapshot snapshot) {
+        if (context == null || snapshot == null || snapshot.anyActive()) {
+            return;
+        }
+        SessionGuardianService instance = activeInstance;
+        if (instance != null && instance.connected) {
+            return;
+        }
+        GuardianSessionStore.clear(context);
+        context.stopService(new Intent(
+                context, SessionGuardianService.class));
     }
 
     private void restartConnectionLoop(

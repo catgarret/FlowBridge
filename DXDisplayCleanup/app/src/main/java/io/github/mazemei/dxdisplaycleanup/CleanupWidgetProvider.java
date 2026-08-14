@@ -26,7 +26,10 @@ public final class CleanupWidgetProvider extends AppWidgetProvider {
         super.onReceive(context, intent);
         String action = intent.getAction();
         if (ACTION_CLEANUP.equals(action)) {
-            CleanupCoordinator.cleanupSelected(context);
+            CleanupCoordinator.Snapshot after =
+                    CleanupCoordinator.cleanupSelected(context);
+            SessionGuardianService.stopAfterManualCleanupIfIdle(
+                    context, after);
             CleanupTileService.requestRefresh(context);
             updateAll(context);
         } else if (ACTION_REFRESH.equals(action)) {

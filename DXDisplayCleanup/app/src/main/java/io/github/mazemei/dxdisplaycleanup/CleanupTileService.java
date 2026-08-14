@@ -26,7 +26,9 @@ public final class CleanupTileService extends TileService {
         }
         CleanupPreferences.Targets targets = CleanupPreferences.load(this);
         if (before.selectedActive(targets)) {
-            CleanupCoordinator.cleanupSelected(this);
+            CleanupCoordinator.Snapshot after =
+                    CleanupCoordinator.cleanupSelected(this);
+            SessionGuardianService.stopAfterManualCleanupIfIdle(this, after);
         }
         CleanupWidgetProvider.updateAll(this);
         refreshTile();
