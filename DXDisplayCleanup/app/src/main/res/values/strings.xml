@@ -47,12 +47,12 @@
     <string name="guardian_disconnect_cleanup_title">Cleanup after connection loss</string>
     <string name="guardian_disconnect_cleanup_description">After the configured USB or Wi-Fi connection is lost, DX Companion waits for this time before removing the remaining virtual display and turning off Stay awake. Reconnecting cancels the cleanup.</string>
     <string-array name="guardian_cleanup_delay_entries">
-        <item>Do not clean up automatically</item>
-        <item>After 30 seconds</item>
+        <item>Clean up immediately after disconnection</item>
         <item>After 1 minute</item>
-        <item>After 3 minutes (default)</item>
-        <item>After 5 minutes</item>
+        <item>After 5 minutes (default)</item>
         <item>After 10 minutes</item>
+        <item>After 30 minutes</item>
+        <item>Do not clean up automatically</item>
     </string-array>
     <string name="guardian_channel_name">DX Manager connection protection</string>
     <string name="guardian_channel_description">Keeps the cleanup connection to DX Manager while a phone session is active.</string>

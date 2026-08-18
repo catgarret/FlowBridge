@@ -5,9 +5,9 @@ import android.content.SharedPreferences;
 
 final class GuardianPreferences {
     static final int DISABLED = -1;
-    static final int DEFAULT_DELAY_SECONDS = 180;
+    static final int DEFAULT_DELAY_SECONDS = 300;
     static final int[] DELAY_VALUES = {
-            DISABLED, 30, 60, 180, 300, 600
+            0, 60, 300, 600, 1800, DISABLED
     };
 
     private static final String FILE_NAME = "guardian_preferences";
@@ -22,6 +22,10 @@ final class GuardianPreferences {
                 FILE_NAME, Context.MODE_PRIVATE);
         int value = preferences.getInt(
                 KEY_DELAY_SECONDS, DEFAULT_DELAY_SECONDS);
+        return normalizeDelaySeconds(value);
+    }
+
+    static int normalizeDelaySeconds(int value) {
         for (int candidate : DELAY_VALUES) {
             if (candidate == value) {
                 return value;
@@ -31,14 +35,7 @@ final class GuardianPreferences {
     }
 
     static void saveDelaySeconds(Context context, int seconds) {
-        boolean supported = false;
-        for (int candidate : DELAY_VALUES) {
-            if (candidate == seconds) {
-                supported = true;
-                break;
-            }
-        }
-        if (!supported) {
+        if (normalizeDelaySeconds(seconds) != seconds) {
             throw new IllegalArgumentException(
                     "Unsupported guardian cleanup delay.");
         }

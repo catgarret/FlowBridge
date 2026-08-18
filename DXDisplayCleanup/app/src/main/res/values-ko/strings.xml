@@ -47,12 +47,12 @@
     <string name="guardian_disconnect_cleanup_title">연결 해제 후 자동 정리</string>
     <string name="guardian_disconnect_cleanup_description">설정된 USB 또는 Wi-Fi 연결이 끊어지면 이 시간 동안 기다린 뒤 남은 가상화면을 제거하고 절전모드 해제를 끕니다. 다시 연결되면 정리를 취소합니다.</string>
     <string-array name="guardian_cleanup_delay_entries">
-        <item>자동으로 정리하지 않음</item>
-        <item>30초 후</item>
+        <item>연결 해제 시 바로 정리</item>
         <item>1분 후</item>
-        <item>3분 후 (기본값)</item>
-        <item>5분 후</item>
+        <item>5분 후 (기본값)</item>
         <item>10분 후</item>
+        <item>30분 후</item>
+        <item>자동으로 정리하지 않음</item>
     </string-array>
     <string name="guardian_channel_name">DX Manager 연결 보호</string>
     <string name="guardian_channel_description">휴대폰 세션 사용 중 DX Manager와 정리 연결을 유지합니다.</string>
