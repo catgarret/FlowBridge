@@ -50,18 +50,17 @@ progress may be lost. Enable it for other apps only when needed.
 
 ## Q3. Which device is used when two or more phones are connected?
 
-DX Manager v1 manages one phone at a time. The first phone selected after the
-program starts is pinned as the target for that run.
+DX Manager 2.0 manages multiple physical phones simultaneously. When two or
+more phones have been detected, select the target from the device list on the
+left. Each phone has independent DeX, Single-Window, connection, Companion,
+and file-transfer state, so starting or disconnecting one phone does not
+replace another phone's active session.
 
-- Phones connected later are ignored.
-- If the pinned phone is disconnected, DX Manager does not switch to another
-  phone automatically.
-- Reconnecting the original phone identifies it as the same device.
-- Switching the same phone between USB and wireless ADB is allowed.
-
-To use a different phone, exit DX Manager completely, leave only the desired
-phone connected, and start DX Manager again. Device selection and simultaneous
-control of multiple phones are candidates for a future v2 release.
+USB and wireless ADB entries belonging to the same physical phone are merged.
+The saved USB/Wi-Fi policy for that phone decides which transport DX Manager
+uses; it does not silently fall back to the other connection. With only one
+phone detected at startup, the device list is hidden and appears when a second
+phone is found.
 
 ## Q4. Parts of the DeX interface are clipped below 1600×900.
 

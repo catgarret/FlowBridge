@@ -3,9 +3,9 @@
 ## 개요
 
 DX Manager는 Samsung DeX용 가상 디스플레이와 Scrcpy 창을 관리하는
-Windows WinForms 프로그램이다. DeX 화면 한 개와 앱별 단일창 세 개를
-유선 또는 무선 ADB로 실행하고, 키 입력 보정, 캡처, 자동 숨김과 휴대폰
-화면 상태를 함께 관리한다.
+Windows WinForms 프로그램이다. 연결된 여러 물리 휴대폰마다 DeX 화면과
+앱별 단일창 세 개를 유선 또는 무선 ADB로 독립 실행하고, 키 입력 보정,
+캡처, 양방향 파일 전송, Companion과 휴대폰 화면 상태를 함께 관리한다.
 
 ## 환경
 
@@ -42,7 +42,9 @@ GitHub 메인 README와 별도로 HTML이 없는 `docs\PACKAGE_README.md`를 배
 - Scrcpy 3.3.4/4.x 실행 옵션 자동 호환
 - USB 및 TCP/IP 무선 ADB, IP 자동 감지, Android 11 페어링
 - OS별 ADB 선택과 절대 경로 실행
-- 한 실행에서 최초 휴대폰 한 대 고정, 같은 휴대폰의 USB/무선 전환 허용
+- 물리 휴대폰 identity별 독립 런타임과 복수 휴대폰 동시 제어
+- 같은 휴대폰의 USB·무선 transport 병합과 휴대폰별 연결 정책 강제
+- 휴대폰별 DeX·단일창·앱 프로필·Companion·양방향 전송 상태 분리
 - 기기 인식 후 실제 시작 명령 직전의 사용자 설정 대기(기본 1초)
 - 한영키/Enter 보정
 - Scrcpy 4.0/SDL3 오른쪽 Shift 호환 치환
@@ -70,22 +72,22 @@ GitHub 메인 README와 별도로 HTML이 없는 `docs\PACKAGE_README.md`를 배
 - 휴대폰의 공유 메뉴와 Companion 폴더 선택으로 파일·폴더를 PC에 전송
 - 선택 기기별 DX Companion 설치·업데이트·재설치·권한 부여·삭제
 
-`DXDisplayCleanup` 프로젝트의 공개 이름은 **DX Companion 1.3.0**이다.
+`DXDisplayCleanup` 프로젝트의 공개 이름은 **DX Companion 1.4.1**이다.
 휴대폰에 남은 `overlay_display_devices`를 제거하고 개발자 옵션의 절전모드
 해제를 끄는 제한된 복구 도구다. 앱 본체의 개별·동시 정리, 빠른 설정 타일과
-2 × 1 홈 위젯, 휴대폰에서 PC로 파일·폴더 전송을 제공하며 인터넷이나 임의
-shell 기능은 포함하지 않는다. 서명된 APK는 공개 ZIP의 `tools\companion`에
+2 × 1 홈 위젯, 휴대폰에서 PC로 파일·폴더 전송을 제공한다. 네트워크는 인증된
+로컬 연결에만 사용하며 분석 수집·클라우드 전송·임의 shell 기능은 포함하지
+않는다. 서명된 APK는 공개 ZIP의 `tools\companion`에
 포함하지만 자동 설치하지 않는다. DX Manager는 설치 전 APK 해시·공식 서명,
 설치 후 package·버전·서명과 권한을 검증한다.
 
 ## 현재 상태
 
-v1.3.0까지 공개 배포됐다. Windows 11에서 유선/무선 DeX와 단일창
-3개 동시 실행을 확인했고, 64비트 Windows 7 SP1/.NET 4.6.2에서 유선 핵심
-기능을 확인했다. v1.2.0은 구조 분리, 미니 컨트롤바와 단일창 앱 프로필을
-포함하며 Windows 11과 Windows 7 SP1 실기 회귀 확인을 완료했다. v1.3.0은
-휴대폰에서 PC로 전송, 번들 Companion 설치·삭제 관리와 노트북 한영키 입력
-호환성 개선을 포함한다.
+v1.3.0까지 공개 배포됐고 v2.0.0 공개 후보를 준비했다. Windows 11에서
+휴대폰 두 대의 USB·무선 조합, 독립 DeX·단일창, 설정, Companion과 양방향
+전송을 확인했다. 64비트 Windows 7 SP1/.NET 4.6.2에서는 USB 복수 기기와
+핵심 기능을 확인했다. v2.0.0은 물리 기기별 런타임·설정·연결 정책과
+Companion 1.4.1 종료 보호를 포함한다.
 
 휴대폰의 현재 정상 동작 확인 기준은 Android 16 / One UI 8.x다. One UI 7.x
 이하에서는 원활한 동작을 확인하지 못했으며 검은 DeX 창이 나타날 수 있다.
@@ -107,4 +109,5 @@ public으로 전환하고 `DX Manager v1.0.0` Release와 x64 ZIP 게시도 완�
 - 64비트 Windows 7/.NET 4.6.2 호환성을 유지한다.
 - 한 Scrcpy 종료가 나머지 창의 화면 상태를 깨뜨리지 않아야 한다.
 - 사용자 설정과 미커밋 변경을 덮어쓰지 않는다.
-- v1에서 다른 휴대폰으로 임의 전환하지 않는다.
+- 모든 기기 명령은 작업 시작 시 캡처한 명시적 serial에만 보낸다.
+- 한 기기의 종료·전송·연결 변경이 다른 기기 런타임에 영향을 주지 않는다.

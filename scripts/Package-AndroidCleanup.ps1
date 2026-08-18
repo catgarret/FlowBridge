@@ -7,11 +7,21 @@ $ErrorActionPreference = "Stop"
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $projectRoot = Join-Path $repoRoot "DXDisplayCleanup"
 $distRoot = Join-Path $repoRoot "dist"
-$packageRoot = Join-Path $distRoot "DX Display Cleaner"
-$zipPath = Join-Path $distRoot "DX-Display-Cleaner-v1.0.0.zip"
+$packageRoot = Join-Path $distRoot "DX Companion"
+$zipPath = Join-Path $distRoot "DX-Companion-v1.4.1.zip"
 $sourceApk = Join-Path $projectRoot "app\build\outputs\apk\release\app-release.apk"
 $expectedPackage = "io.github.mazemei.dxdisplaycleanup"
-$expectedPermission = "android.permission.WRITE_SECURE_SETTINGS"
+$expectedPermissions = @(
+    "android.permission.WRITE_SECURE_SETTINGS",
+    "android.permission.FOREGROUND_SERVICE",
+    "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+    "android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE",
+    "android.permission.CHANGE_NETWORK_STATE",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.INTERNET",
+    "android.permission.POST_NOTIFICATIONS",
+    "android.permission.WAKE_LOCK"
+)
 $expectedCertificate = "ad615803c63760439750c36801e8152ab8664c60ee481ef1473f1df5e80733be"
 
 function Assert-ChildPath([string]$Parent, [string]$Child) {
@@ -70,12 +80,22 @@ if ($LASTEXITCODE -ne 0 -or
 }
 
 $permissions = @(& $aapt dump permissions $sourceApk)
-if ($LASTEXITCODE -ne 0 -or
-    $permissions -notcontains "uses-permission: name='$expectedPermission'") {
-    throw "The required cleanup permission is missing."
+if ($LASTEXITCODE -ne 0) {
+    throw "Unable to inspect APK permissions."
 }
-$otherPermissions = $permissions | Where-Object {
-    $_ -like "uses-permission:*" -and $_ -ne "uses-permission: name='$expectedPermission'"
+$actualPermissions = @($permissions | Where-Object {
+    $_ -match "^uses-permission: name='([^']+)'$"
+} | ForEach-Object {
+    if ($_ -match "^uses-permission: name='([^']+)'$") { $Matches[1] }
+})
+$missingPermissions = @($expectedPermissions | Where-Object {
+    $actualPermissions -notcontains $_
+})
+$otherPermissions = @($actualPermissions | Where-Object {
+    $expectedPermissions -notcontains $_
+})
+if ($missingPermissions) {
+    throw "Required APK permission is missing: $($missingPermissions -join ', ')"
 }
 if ($otherPermissions) {
     throw "Unexpected APK permission: $($otherPermissions -join ', ')"
@@ -104,7 +124,7 @@ if (Test-Path -LiteralPath $zipPath) {
 }
 New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
 Copy-Item -LiteralPath $sourceApk `
-    -Destination (Join-Path $packageRoot "DX-Display-Cleaner-v1.0.0.apk")
+    -Destination (Join-Path $packageRoot "DX-Companion-v1.4.1.apk")
 Copy-Item -LiteralPath (Join-Path $projectRoot "PACKAGE_README.md") `
     -Destination (Join-Path $packageRoot "README.md")
 Copy-Item -LiteralPath (Join-Path $projectRoot "SIGNING.md") `

@@ -1,65 +1,74 @@
-# DX Companion 1.1.0
+# DX Companion 1.4.1
 
-DX Companion is an optional Android companion for DX Manager. It helps recover
-from an interrupted session by removing a simulated secondary display and
-turning off Developer options **Stay awake**.
+DX Companion is the optional Android companion bundled with DX Manager. It
+provides recovery actions, authenticated Windows-shutdown protection, and
+phone-to-PC file and folder transfer.
 
 ## Install and grant permission
 
-1. Install `DX-Companion-v1.1.0.apk` on the phone. You may open it on the
-   phone or drop the standalone APK onto a running DX Manager scrcpy window.
-2. Enable USB debugging and approve this computer.
-3. In DX Manager, open **Settings > Diagnostics > Phone virtual display
-   cleanup** and select **Grant cleanup permission**. The button is enabled only
-   after the exact package and official signing certificate are verified.
+Use **DX Manager > Settings > Diagnostics > DX Companion** to install or update
+the bundled APK on the currently selected phone, then grant the protected
+cleanup permission. DX Manager verifies the exact APK hash, official signing
+certificate, package ID, and version before installation and verifies the
+installed app again before granting permission. Installation never starts
+automatically.
 
-The app provides separate buttons for virtual-display cleanup and Stay awake,
-plus a combined cleanup button. You may also add its Quick Settings tile or
-compact 2 × 1 home-screen widget. The tile and widget clean both items by
-default, and their targets can be changed in the app.
+The app can remove Android's simulated secondary display and turn off Developer
+options **Stay awake**. The main screen offers separate and combined cleanup;
+the Quick Settings tile and compact 2 x 1 home-screen widget use the targets
+selected in the app.
 
-The cleanup action removes Android's single global simulated-secondary-display
-setting. It cannot distinguish a display created by DX Manager from one that
-you selected manually in Developer options. The Stay awake action sets the
-corresponding Developer option to off.
+Files can be sent from Gallery or My Files through Android's **Send to DX
+Manager** share target. Because One UI does not expose folders through the
+normal share sheet, use **Send folder > Select folder** inside DX Companion.
+DX Manager must be running with that phone connected.
 
-The grant survives phone restarts and updates signed with the same official
-certificate. Uninstalling the app removes the grant, so repeat the DX Manager
-permission step after reinstalling it.
+When the authenticated DX Manager guardian session is lost together with the
+selected USB/Wi-Fi transport, Companion can clean recovery state immediately,
+after 1, 5, 10, or 30 minutes, or never. The default is 5 minutes; reconnecting
+the same authenticated session cancels pending cleanup.
 
-The app requests no Internet permission and contains no arbitrary shell or data
-collection feature. Verify the official signing fingerprint in `SIGNING.md`.
+The cleanup action removes Android's single global simulated-display setting,
+so it cannot distinguish a DX Manager display from one manually selected in
+Developer options. Uninstalling the app removes its protected permission.
+
+The app uses local-network permissions only for its authenticated connection
+to DX Manager and does not contain analytics, cloud transfer, or an arbitrary
+shell feature. Verify the official signing fingerprint in `SIGNING.md`.
 
 ---
 
-# DX Companion 1.1.0
+# DX Companion 1.4.1
 
-DX Companion은 DX Manager 세션이 비정상적으로 끝났을 때 휴대폰에 남은
-보조 디스플레이 시뮬레이션 화면을 제거하고, 개발자 옵션의 **절전모드
-해제**를 끄는 선택형 Android 보조 앱입니다.
+DX Companion은 DX Manager에 포함되는 선택형 Android 보조 앱입니다. 남은
+가상화면·절전모드 해제 복구, 인증된 Windows 종료 보호와 휴대폰에서 PC로
+파일·폴더 전송을 제공합니다.
 
 ## 설치 및 권한 부여
 
-1. 휴대폰에 `DX-Companion-v1.1.0.apk`를 설치합니다. 휴대폰에서 APK를
-   직접 열거나 실행 중인 DX Manager scrcpy 창에 APK 하나를 놓아도 됩니다.
-2. USB 디버깅을 켜고 이 컴퓨터의 RSA 연결을 승인합니다.
-3. DX Manager에서 **설정 > 진단 > 휴대폰 가상화면 정리 도구**를 열고
-   **정리 앱 권한 부여**를 누릅니다. 정확한 패키지와 공식 서명 인증서가
-   확인된 경우에만 버튼이 활성화됩니다.
+**DX Manager > 설정 > 진단 > DX Companion**에서 현재 선택된 휴대폰에 번들
+APK를 설치하거나 업데이트한 뒤 보호된 정리 권한을 부여하십시오. DX Manager는
+설치 전에 정확한 APK 해시·공식 서명·package·버전을 확인하고, 권한 부여 전에
+설치된 앱을 다시 검증합니다. 설치는 자동으로 시작되지 않습니다.
 
-앱에서는 가상화면 제거와 절전모드 해제 끄기를 각각 실행하거나 두 항목을
-한 번에 정리할 수 있습니다. 빠른 설정 타일과 2 × 1 홈 화면 위젯도 사용할
-수 있습니다. 타일과 위젯은 기본적으로 두 항목을 모두 정리하며, 앱 설정에서
-정리 대상을 바꿀 수 있습니다.
+앱에서는 Android 보조 디스플레이 시뮬레이션 제거와 개발자 옵션의 **절전모드
+해제** 끄기를 개별 또는 동시에 실행할 수 있습니다. 빠른 설정 타일과 2 x 1 홈
+화면 위젯은 앱에서 선택한 정리 대상을 사용합니다.
 
-Android에는 보조 디스플레이 시뮬레이션용 global 설정이 하나만 있으므로,
-정리하면 DX Manager가 만든 화면뿐 아니라 개발자 옵션에서 사용자가 직접
-선택한 시뮬레이션 화면도 함께 제거됩니다. 절전모드 해제 정리는 해당 개발자
-옵션을 끔 상태로 바꿉니다.
+파일은 갤러리나 내 파일의 공유 메뉴에서 **DX Manager로 보내기**를 선택합니다.
+One UI 공유 메뉴는 폴더를 전달하지 않으므로 폴더는 DX Companion의 **폴더
+보내기 > 폴더 선택**을 사용합니다. DX Manager가 실행 중이고 해당 휴대폰이
+연결돼 있어야 합니다.
 
-권한은 휴대폰 재부팅과 같은 공식 서명의 앱 업데이트 후에도 유지됩니다. 앱을
-삭제하면 권한도 제거되므로 다시 설치한 뒤 DX Manager에서 권한을 다시
-부여하십시오.
+인증된 DX Manager guardian 세션과 선택한 USB·Wi-Fi transport가 함께 끊기면
+즉시, 1분, 5분, 10분, 30분 뒤 정리하거나 자동으로 정리하지 않도록 선택할 수
+있습니다. 기본값은 5분이며 같은 인증 세션이 다시 연결되면 예약 정리를
+취소합니다.
 
-인터넷 권한, 임의 shell 실행과 데이터 수집 기능은 없습니다. 공식 서명
-지문은 함께 제공된 `SIGNING.md`에서 확인할 수 있습니다.
+정리 기능은 Android의 단일 전역 보조 디스플레이 설정을 제거하므로 DX Manager가
+만든 화면과 개발자 옵션에서 직접 선택한 화면을 구분할 수 없습니다. 앱을
+삭제하면 보호 권한도 사라집니다.
+
+로컬 네트워크 권한은 DX Manager와 인증된 연결에만 사용하며 분석 수집, 클라우드
+전송과 임의 shell 기능은 없습니다. 공식 서명 지문은 `SIGNING.md`에서 확인할 수
+있습니다.

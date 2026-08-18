@@ -1,7 +1,8 @@
 # DX Manager
 
-Portable Windows package for managing a Samsung DeX virtual display and up to
-three independent scrcpy app windows. This release bundles scrcpy 4.1.
+Portable Windows package for managing Samsung DeX and up to three independent
+scrcpy app windows per connected Galaxy phone. Version 2.0.0 supports multiple
+physical phones simultaneously and bundles scrcpy 4.1.
 
 ## English
 
@@ -61,6 +62,14 @@ For files, use Gallery or My Files and choose **Send to DX Manager** from the
 Android Share menu. For folders, use **Send folder > Select folder** inside DX
 Companion. DX Manager must be running with the target phone connected. The PC
 destination can be changed under **Settings > Paths / ADB**.
+
+### Multiple phones
+
+When two or more phones are detected, choose the target in the left device
+list. Every phone keeps independent DeX, Single-Window, connection, Companion,
+and transfer state. USB and wireless ADB connections for the same physical
+phone are merged, while the saved connection policy determines which transport
+is used. DX Manager does not silently switch to the other transport.
 
 ### Default settings
 
@@ -148,8 +157,9 @@ Project page: https://github.com/maze-mei/DX-Manager
 
 ## 한국어
 
-Samsung DeX 가상 디스플레이와 앱별 scrcpy 단일창을 최대 3개까지 관리하는
-Windows용 포터블 프로그램입니다. 이 릴리스는 scrcpy 4.1을 포함합니다.
+여러 Galaxy 휴대폰의 Samsung DeX 가상 디스플레이와 휴대폰별 scrcpy
+단일창을 최대 3개까지 동시에 관리하는 Windows용 포터블 프로그램입니다.
+버전 2.0.0은 scrcpy 4.1을 포함합니다.
 
 ### 요구 사항
 
@@ -207,6 +217,14 @@ Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. �
 선택하고, 폴더는 DX Companion의 **폴더 보내기 > 폴더 선택**을 사용하십시오.
 DX Manager가 실행 중이고 대상 휴대폰이 연결돼 있어야 하며, PC 저장 위치는
 **설정 > 경로 / ADB**에서 바꿀 수 있습니다.
+
+### 여러 휴대폰
+
+두 대 이상의 휴대폰이 감지되면 왼쪽 기기 목록에서 대상을 선택하십시오.
+각 휴대폰의 DeX·단일창·연결·Companion·전송 상태는 독립적으로 유지됩니다.
+같은 물리 휴대폰의 USB와 무선 ADB 연결은 하나로 합치지만, 실제 사용
+transport는 그 휴대폰에 저장한 연결 정책을 따르며 반대 방식으로 임의
+전환하지 않습니다.
 
 ### 기본 설정
 

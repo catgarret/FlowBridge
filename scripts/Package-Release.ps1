@@ -1,6 +1,7 @@
 param(
     [string]$Version = "",
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [string]$TargetFrameworkRootPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,7 +14,7 @@ $packageRoot = Join-Path $distRoot "DX Manager"
 $companionApkSource = Join-Path $repoRoot `
     "DXDisplayCleanup\app\build\outputs\apk\release\app-release.apk"
 $companionApkSha256 = `
-    "23D2DEA3809BB94D9A1025A0F2D75EA5C91748CFCEE0E7A9E686FE4C2E2457BC"
+    "C23D65499DD86608C02B46EE962F119A4C5926DB9C6F58574057928535F4153C"
 
 function Assert-ChildPath([string]$Parent, [string]$Child) {
     $parentPath = [IO.Path]::GetFullPath($Parent).TrimEnd('\') + '\'
@@ -102,9 +103,21 @@ if (!$SkipBuild) {
         "/p:Configuration=Release",
         "/m"
     )
-    $localFrameworkRoot = Join-Path $repoRoot ".build-tools\net462\build"
-    if (Test-Path -LiteralPath $localFrameworkRoot) {
-        $arguments += "/p:TargetFrameworkRootPath=$localFrameworkRoot"
+    $frameworkRoot = $TargetFrameworkRootPath
+    if ([string]::IsNullOrWhiteSpace($frameworkRoot)) {
+        $frameworkRoot = $env:DXM_TARGET_FRAMEWORK_ROOT
+    }
+    if ([string]::IsNullOrWhiteSpace($frameworkRoot)) {
+        $frameworkRoot = Join-Path $repoRoot ".build-tools\net462\build"
+    }
+    if (Test-Path -LiteralPath $frameworkRoot) {
+        $frameworkRoot = [IO.Path]::GetFullPath($frameworkRoot)
+        $referenceAssembly = Join-Path $frameworkRoot `
+            ".NETFramework\v4.6.2\mscorlib.dll"
+        if (!(Test-Path -LiteralPath $referenceAssembly -PathType Leaf)) {
+            throw "The supplied .NET Framework root does not contain the v4.6.2 reference assemblies: $frameworkRoot"
+        }
+        $arguments += "/p:TargetFrameworkRootPath=$frameworkRoot"
     }
 
     & $msbuild @arguments
@@ -170,7 +183,7 @@ if (![string]::Equals(
     $actualCompanionHash,
     $companionApkSha256,
     [StringComparison]::OrdinalIgnoreCase)) {
-    throw "The signed DX Companion APK hash does not match the v1.3.0 release candidate."
+    throw "The signed DX Companion APK hash does not match the v2.0.0 release candidate."
 }
 
 if ([string]::IsNullOrWhiteSpace($Version)) {

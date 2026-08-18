@@ -48,13 +48,13 @@ namespace DexManager.Services
             "io.github.mazemei.dxdisplaycleanup";
         public const string PermissionName =
             "android.permission.WRITE_SECURE_SETTINGS";
-        public const int BundledVersionCode = 4;
-        public const string BundledVersionName = "1.4.0";
+        public const int BundledVersionCode = 5;
+        public const string BundledVersionName = "1.4.1";
 
         internal const string ExpectedCertificateSha256 =
             "AD615803C63760439750C36801E8152AB8664C60EE481EF1473F1DF5E80733BE";
         private const string ExpectedBundledApkSha256 =
-            "23D2DEA3809BB94D9A1025A0F2D75EA5C91748CFCEE0E7A9E686FE4C2E2457BC";
+            "C23D65499DD86608C02B46EE962F119A4C5926DB9C6F58574057928535F4153C";
         private const string BundledApkRelativePath =
             @"tools\companion\DX-Companion.apk";
 

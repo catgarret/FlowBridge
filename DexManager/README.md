@@ -31,9 +31,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package-Release.ps
 ```
 
 The script rebuilds Release and writes `dist/DX Manager` and
-`dist/DX-Manager-v1.3.0-win-x64.zip`. Use `-SkipBuild` only when the current
+`dist/DX-Manager-v2.0.0-win-x64.zip`. Use `-SkipBuild` only when the current
 Release output has already been verified. `ExecutionPolicy Bypass` applies
 only to this process and does not change the system policy.
+
+If the .NET Framework 4.6.2 Developer Pack is not installed system-wide, pass
+the directory containing `.NETFramework\v4.6.2` as
+`-TargetFrameworkRootPath`, or set `DXM_TARGET_FRAMEWORK_ROOT` for the current
+shell.
 
 The application is portable, but `DXManager.exe` is not standalone. A release
 package must include:

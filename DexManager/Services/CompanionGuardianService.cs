@@ -86,7 +86,8 @@ namespace DexManager.Services
                 () => _verifier.Inspect(serial)).ConfigureAwait(false);
             if (_shutdown.IsCancellationRequested) return;
             if (verification.State != DisplayCleanupPermissionState.Granted ||
-                verification.VersionCode < 4 ||
+                verification.VersionCode <
+                    DisplayCleanupPermissionService.BundledVersionCode ||
                 !string.Equals(
                     verification.Serial,
                     serial,
@@ -95,7 +96,7 @@ namespace DexManager.Services
                 _logService.Info(DeviceLogFormatter.ForSerial(
                     serial,
                     "Companion shutdown protection is unavailable. " +
-                    "DX Companion 1.4.0 or later with cleanup permission is required."));
+                    "DX Companion 1.4.1 or later with cleanup permission is required."));
                 return;
             }
 

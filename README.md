@@ -5,11 +5,11 @@
 <h1 align="center">DX Manager</h1>
 
 <p align="center">
-  Manage a Samsung DeX virtual display and up to three independent Android app windows from Windows.
+  Manage Samsung DeX and independent Android app windows for multiple Galaxy phones from Windows.
 </p>
 
 <p align="center">
-  Samsung DeX 가상 화면과 앱별 단일창 3개를 Windows에서 관리하는 데스크톱 도구입니다.
+  여러 Galaxy 휴대폰의 Samsung DeX와 앱별 단일창을 Windows에서 동시에 관리하는 데스크톱 도구입니다.
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
   <a href="docs/USER_GUIDE_KO.md">한국어 사용 설명서</a> ·
   <a href="docs/FAQ_EN.md">FAQ</a> ·
   <a href="docs/FAQ_KO.md">Q&amp;A</a> ·
-  <a href="docs/RELEASE_NOTES_v1.3.0.md">v1.3.0 release notes</a> ·
+  <a href="docs/RELEASE_NOTES_v2.0.0.md">v2.0.0 release notes</a> ·
   <a href="DexManager/licenses/THIRD_PARTY_NOTICES.md">Third-party notices</a>
 </p>
 
@@ -34,7 +34,9 @@
 DX Manager is a Windows utility built around Samsung DeX, ADB, and
 [scrcpy](https://github.com/Genymobile/scrcpy). It creates and tracks the
 correct DeX virtual display, launches scrcpy against that display, and can
-open up to three additional app-specific virtual displays.
+open up to three additional app-specific virtual displays for each connected
+physical phone. Multiple Galaxy phones can run independent sessions at the
+same time.
 
 The application does not depend on an `adb.exe` registered in the system
 `PATH`. It selects and runs a bundled ADB by absolute path.
@@ -62,8 +64,11 @@ distribution.
 
 ## Features
 
-- Start and stop one Samsung DeX virtual display
-- Open three independently configured single-app windows
+- Simultaneously manage multiple physical Galaxy phones
+- Start and stop an independent Samsung DeX virtual display for each phone
+- Open three independently configured single-app windows per phone
+- Keep display, launch, app-profile, transfer, and connection settings separate per phone
+- Merge USB and wireless ADB transports belonging to the same physical phone
 - USB and wireless ADB connections
 - Wi-Fi address detection and Android 11+ pairing
 - Per-window resolution, DPI, bitrate, FPS, and app selection
@@ -246,7 +251,7 @@ DeX mode settings are not affected.
 
 ## Optional DX Companion
 
-The signed **DX Companion 1.3.0** APK is included as an external file under
+The signed **DX Companion 1.4.1** APK is included as an external file under
 `tools\companion`, but it is never installed automatically. In **Settings >
 Diagnostics > DX Companion**, the user can install, update, reinstall, grant
 the required permission, or uninstall it on the currently selected phone.
@@ -260,8 +265,9 @@ receiver and removes its ADB reverse connection.
 The companion removes a leftover simulated display, turns off Developer options
 **Stay awake**, and sends selected phone files or folders to DX Manager. Its
 Quick Settings tile and compact 2 × 1 home-screen widget clean both recovery
-targets by default. It has no Internet, data-collection, or arbitrary-shell
-feature. See the
+targets by default. Its network access is limited to authenticated local
+connections to DX Manager; it has no analytics, cloud-transfer, or
+arbitrary-shell feature. See the
 [English user guide](docs/USER_GUIDE_EN.md#12-dx-companion-optional) for
 installation, status indicators, and safety details.
 
@@ -287,15 +293,16 @@ Open `DexManager.sln` and build the `Release` configuration. The output is
 written to `DexManager/bin/Release`. To create the public portable folder and
 ZIP, run `scripts/Package-Release.ps1`. It keeps the developer output in place
 and writes `dist/DX Manager` plus
-`dist/DX-Manager-v1.3.0-win-x64.zip`. See
+`dist/DX-Manager-v2.0.0-win-x64.zip`. See
 [DexManager/README.md](DexManager/README.md) for packaging notes.
 
 ## Project Status
 
-Version 1.3.0 bundles scrcpy 4.1. The current verification baseline includes:
+Version 2.0.0 bundles scrcpy 4.1. The current verification baseline includes:
 
-- Windows 11: USB and wireless DeX, plus three simultaneous single-app windows
-- 64-bit Windows 7 SP1 with .NET Framework 4.6.2: core USB workflow
+- Windows 11: two-phone USB/Wi-Fi combinations with independent DeX,
+  single-app windows, settings, Companion sessions, and bidirectional transfers
+- 64-bit Windows 7 SP1 with .NET Framework 4.6.2: core USB and multi-phone workflow
 - Android 16 / One UI 8.x on Samsung Galaxy devices that support DeX
 
 Hardware, Android versions, network policies, and Samsung firmware can affect
@@ -353,9 +360,10 @@ DX Manager is an independently developed personal project.
 
 DX Manager는 삼성 덱스(Samsung DeX), ADB와
 [scrcpy](https://github.com/Genymobile/scrcpy)를 기반으로 동작하는
-Windows 유틸리티입니다. 올바른 DeX 가상 디스플레이를 생성하고 추적한 뒤
-해당 화면을 scrcpy로 실행하며, 앱별 가상 디스플레이를 최대 3개까지 추가로
-열 수 있습니다.
+Windows 유틸리티입니다. 연결된 물리 휴대폰마다 올바른 DeX 가상 디스플레이를
+생성하고 추적한 뒤 해당 화면을 scrcpy로 실행하며, 휴대폰별 앱 가상
+디스플레이를 최대 3개까지 추가로 열 수 있습니다. 여러 Galaxy 휴대폰의
+세션을 동시에 독립적으로 실행할 수 있습니다.
 
 이 프로그램은 시스템 `PATH`에 등록된 `adb.exe`에 의존하지 않습니다.
 동봉된 ADB를 자동으로 선택하고 항상 절대 경로로 실행합니다.
@@ -383,8 +391,11 @@ DX Manager는 개인적으로 사용하던 Batch 스크립트, CMD 명령과 Aut
 
 ## 주요 기능
 
-- Samsung DeX 가상 디스플레이 1개 실행 및 중지
-- 각각 독립적으로 설정할 수 있는 앱 단일창 3개
+- 여러 물리 Galaxy 휴대폰 동시 관리
+- 휴대폰마다 독립된 Samsung DeX 가상 디스플레이 실행 및 중지
+- 휴대폰마다 각각 독립적으로 설정할 수 있는 앱 단일창 3개
+- 휴대폰별 화면·실행·앱 프로필·전송·연결 설정 분리
+- 같은 휴대폰의 USB와 무선 ADB 연결을 하나의 물리 기기로 병합
 - USB 및 무선 ADB 연결
 - Wi-Fi 주소 자동 감지와 Android 11 이상 무선 페어링
 - 창별 해상도, DPI, 비트레이트, FPS와 시작 앱 설정
@@ -561,7 +572,7 @@ Windows 환경에서 비ASCII 파일명을 보존하지 못할 수 있습니다.
 
 ## 선택형 DX Companion
 
-서명된 **DX Companion 1.3.0** APK는 공개 ZIP의 `tools\companion`에 외부 파일
+서명된 **DX Companion 1.4.1** APK는 공개 ZIP의 `tools\companion`에 외부 파일
 형태로 포함되지만 자동으로 설치되지 않습니다. **설정 > 진단 > DX Companion**에서
 사용자가 현재 선택된 휴대폰에 설치·업데이트·재설치하거나 권한을 부여하고 삭제할
 수 있습니다.
@@ -573,8 +584,9 @@ APK만 다른 휴대폰으로 복사해 설치해도 이 보호 권한은 저절
 
 Companion에서는 남은 가상화면 제거, 개발자 옵션의 **절전모드 해제** 끄기와
 휴대폰 파일·폴더의 PC 전송을 사용할 수 있습니다. 빠른 설정 타일과 2 × 1 홈
-화면 위젯은 기본적으로 두 복구 항목을 함께 정리합니다. 인터넷 연결, 데이터
-수집과 임의 shell 실행 기능은 없습니다. 설치 방법과 상태 표시, 주의사항은
+화면 위젯은 기본적으로 두 복구 항목을 함께 정리합니다. 네트워크 권한은 DX
+Manager와 인증된 로컬 연결에만 사용하며 분석 수집, 클라우드 전송과 임의
+shell 실행 기능은 없습니다. 설치 방법과 상태 표시, 주의사항은
 [한국어 사용 설명서](docs/USER_GUIDE_KO.md#12-선택형-dx-companion)를
 참조하십시오.
 
@@ -600,15 +612,16 @@ DX Manager는 SDL3 기반 scrcpy 4.x 창과의 호환을 위해 물리 오른쪽
 `DexManager.sln`을 열고 `Release` 구성으로 빌드합니다. 결과물은
 `DexManager/bin/Release`에 생성됩니다. 공개용 포터블 폴더와 ZIP은
 `scripts/Package-Release.ps1`을 실행해 만듭니다. 개발 빌드 폴더는 유지하고
-`dist/DX Manager`와 `dist/DX-Manager-v1.3.0-win-x64.zip`을 생성합니다. 배포 파일 구성은
+`dist/DX Manager`와 `dist/DX-Manager-v2.0.0-win-x64.zip`을 생성합니다. 배포 파일 구성은
 [DexManager/README.md](DexManager/README.md)를 참조하십시오.
 
 ## 프로젝트 상태
 
-버전 1.3.0은 scrcpy 4.1을 포함합니다. 현재 확인 기준은 다음과 같습니다.
+버전 2.0.0은 scrcpy 4.1을 포함합니다. 현재 확인 기준은 다음과 같습니다.
 
-- Windows 11: USB 및 무선 DeX, 단일창 3개 동시 실행
-- 64비트 Windows 7 SP1 및 .NET Framework 4.6.2: USB 핵심 기능
+- Windows 11: 휴대폰 두 대의 USB·Wi-Fi 조합, 독립 DeX·단일창·설정·
+  Companion 세션과 양방향 전송
+- 64비트 Windows 7 SP1 및 .NET Framework 4.6.2: USB 핵심 및 복수 기기 기능
 - Samsung DeX를 지원하는 Android 16 / One UI 8.x Galaxy 기기
 
 하드웨어, Android 버전, 네트워크 정책과 Samsung 펌웨어에 따라 동작이

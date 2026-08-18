@@ -62,7 +62,7 @@ scrcpy starts.
 
 Do not copy `DXManager.exe` by itself. Keep the complete distribution,
 including the `tools` directory, scrcpy DLLs, `scrcpy-server`, and license
-files. Version 1.3.0 bundles scrcpy 4.1.
+files. Version 2.0.0 bundles scrcpy 4.1.
 
 > [!IMPORTANT]
 > Keep the phone connected and use **Stop DeX**, press `Left Alt+F8`, or
@@ -76,6 +76,25 @@ Simulate secondary displays**, select any resolution once, open the same menu
 again, and then select **None**. Selecting **None** first may not clear a stale
 display. See [FAQ Q1](FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone)
 for screenshots.
+
+### Using multiple phones
+
+DX Manager 2.0 can manage multiple physical Galaxy phones simultaneously.
+When only one phone is known during the current run, the device selector is
+hidden. It appears after a second phone is detected and remains available for
+that run so disconnected sessions can still be identified.
+
+Select a phone in the left device list before changing settings or starting a
+session. Each phone keeps its own DeX and three Single-Window settings, app
+profiles, selected USB/Wi-Fi policy, DX Companion session, and bidirectional
+file-transfer state. A USB and wireless ADB connection belonging to the same
+physical phone are merged into one device entry. DX Manager uses only the
+connection method selected for that phone and does not silently switch to the
+other transport.
+
+Scrcpy window titles include the phone display name. Files received from DX
+Companion are stored under a phone-name subfolder inside the configured PC
+destination.
 
 ## 3. DeX Mode
 
@@ -416,7 +435,7 @@ selected app**, then try again.
 
 ## 12. DX Companion (Optional)
 
-**DX Companion 1.3.0** is an Android recovery and file-transfer utility. It can
+**DX Companion 1.4.1** is an Android recovery and file-transfer utility. It can
 remove a simulated secondary display left on the phone, turn off Developer
 options **Stay awake**, and send selected files or folders from the phone to DX
 Manager. Normally, keep the phone connected and use **Stop DeX**, `Left Alt+F8`,
@@ -467,6 +486,20 @@ protected permission as a normal runtime-permission dialog inside the app.
   main app, choose whether the tile and widget clean the virtual display,
   Stay awake, or both.
 
+### Automatic cleanup after a connection loss
+
+DX Companion can wait before cleaning up after its authenticated guardian
+connection to DX Manager is lost. The choices are **Immediately**, **1 minute**,
+**5 minutes**, **10 minutes**, **30 minutes**, and **Never clean up
+automatically**. The default is **5 minutes**. Reconnecting the same authenticated
+session before the delay expires cancels the pending cleanup.
+
+A temporary USB or Wi-Fi interruption therefore does not have to destroy the
+existing virtual display. During Windows shutdown, DX Manager does not start a
+new ADB helper; it asks an already connected and verified Companion session to
+clean up immediately when one is available. This is a best-effort safeguard, so
+normal DX Manager exit remains the recommended method.
+
 The indicators mean:
 
 - Color DX icon: at least one configured cleanup target is active
@@ -479,10 +512,10 @@ the app cannot distinguish a display created by DX Manager from one selected
 manually in Developer options. Cleanup removes every currently configured
 simulated secondary display.
 
-The app requests only `WRITE_SECURE_SETTINGS` and contains no Internet
-permission, data collection, or arbitrary-shell feature. Its implemented
-settings access is limited to the simulated-display setting and Android's
-Stay-awake developer option.
+The protected `WRITE_SECURE_SETTINGS` access is limited to the simulated-display
+setting and Android's Stay-awake developer option. Network permissions are used
+only for authenticated local transfer and guardian sessions with DX Manager;
+the app contains no analytics, cloud-transfer, or arbitrary-shell feature.
 
 You can remove the same display without the app by following the
 [manual FAQ procedure](FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone).

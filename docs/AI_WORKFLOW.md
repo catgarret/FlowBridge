@@ -48,11 +48,15 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package-Release.ps1
 ```
 
+시스템에 .NET Framework 4.6.2 Developer Pack이 없으면 참조 어셈블리 루트를
+`-TargetFrameworkRootPath`로 지정하거나 현재 셸의
+`DXM_TARGET_FRAMEWORK_ROOT` 환경 변수에 설정한다.
+
 개발 산출물은 `DexManager\bin\Release`, 사용자 배포 산출물은
 `dist\DX Manager`와 버전이 포함된 x64 ZIP으로 구분한다.
 스크립트는 DX Manager 실행 여부를 확인하고 번들 Release ADB 서버를 정리한
 뒤 Debug/Release의 로그와 스크린샷 테스트 파일을 비운다.
-v1.3.0 패키지는 Scrcpy 4.1 런타임,
+v2.0.0 패키지는 Scrcpy 4.1 런타임,
 `tools\adb-proxy\DXMAdbProxy.exe`와 서명이 검증된
 `tools\companion\DX-Companion.apk`를 반드시 포함해야 한다.
 
@@ -64,8 +68,9 @@ powershell -NoProfile -ExecutionPolicy Bypass `
   -File .\scripts\Build-AndroidCleanup.ps1
 ```
 
-Android 앱은 `overlay_display_devices` 이외의 설정, 임의 shell 또는 네트워크
-기능을 추가하지 않는다. `signing.properties`, keystore, 비밀번호와 Android
+Android 앱은 문서화된 복구 설정 이외의 설정이나 임의 shell 기능을 추가하지
+않고, 네트워크는 인증된 로컬 전송·guardian 세션으로 제한한다.
+`signing.properties`, keystore, 비밀번호와 Android
 빌드 산출물은 Git에 넣지 않는다. Release keystore는 Git 외부에 안전하게
 백업하고 공개 인증서 지문은 `DXDisplayCleanup/SIGNING.md`와 대조한다.
 

@@ -1,6 +1,6 @@
 # DexManager 개발 문서
 
-마지막 전체 정리: 2026-08-02
+마지막 전체 정리: 2026-08-18
 
 새 채팅에서는 `PROJECT_BRIEF.md`, `SESSION.md`, `TODO.md`,
 `AI_WORKFLOW.md` 순서로 읽는다. 작업 성격에 따라 `TECH_NOTES.md`,
@@ -16,7 +16,8 @@
 - `SESSION.md`: 다음 채팅을 위한 현재 상태
 - `AI_WORKFLOW.md`: Codex 작업 및 Git 규칙
 - `CHANGELOG.md`: 사용자 관점의 큰 이정표
-- `RELEASE_NOTES_v1.3.0.md`: v1.3.0 GitHub Release용 영어·한국어 설명
+- `RELEASE_NOTES_v2.0.0.md`: v2.0.0 GitHub Release용 영어·한국어 설명
+- `RELEASE_NOTES_v1.3.0.md`: 이전 v1.3.0 GitHub Release 기록
 - `PACKAGE_README.md`: 배포 ZIP 루트에 들어가는 HTML 없는 영어·한국어 안내
 - `../DXDisplayCleanup`: 번들 선택형 Android 복구·파일 전송 앱 소스와 빌드 문서
 

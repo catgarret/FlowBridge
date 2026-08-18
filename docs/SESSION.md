@@ -1,6 +1,6 @@
 # Session Handoff
 
-마지막 갱신: 2026-08-14
+마지막 갱신: 2026-08-18
 
 ## Git
 
@@ -8,12 +8,11 @@
 - 원본 저장소: `E:\vs\dex system`
 - 브랜치: `feature/v2-multi-device`
 - 마지막 공개 커밋: 이 문서를 포함한 최신 `main` (`git log -1`로 확인)
-- 현재 작업: v1.3.0 공개 배포 완료, v2 다중 기기 구현 및 Companion 기반
-  Windows 종료 보호 후보 완료
+- 현재 작업: v2 다중 기기 구현과 실기 확인 완료, v2.0.0 공개 후보 패키징
 
 Windows 종료 중 `adb.exe` 네이티브 오류창이 반복되는 문제 때문에 실제 종료
 경로를 일반적인 Alt+F8·트레이 종료와 완전히 분리했다. `WM_QUERYENDSESSION`을
-받는 즉시 새 프로세스 실행을 차단하고, 검증된 DX Companion 1.4.0과 미리 열어 둔
+받는 즉시 새 프로세스 실행을 차단하고, 검증된 DX Companion 1.4.1과 미리 열어 둔
 기기별 인증 loopback 소켓에만 overlay 제거와 절전모드 해제 원래 값 복원 요청을
 보낸다. 이 경로에서는 새 ADB 실행, reverse 제거, adb server 종료 또는 자식
 프로세스 강제 종료를 하지 않으며 나머지 프로세스 수명은 Windows에 맡긴다.
@@ -27,8 +26,8 @@ Companion 감시 소켓만 끊겨서는 정리하지 않는다. 설정된 USB �
 전송 방식을 판별하지 못한 경우에도 자동 정리하지 않는다. Windows 종료 명령을
 받은 경우에만 유예 없이
 overlay와 저장된 절전모드 해제 원래 값을 복원한다. Companion Release APK는
-versionName 1.4.0, versionCode 4이며 SHA-256은
-`23D2DEA3809BB94D9A1025A0F2D75EA5C91748CFCEE0E7A9E686FE4C2E2457BC`이다.
+versionName 1.4.1, versionCode 5이며 SHA-256은
+`C23D65499DD86608C02B46EE962F119A4C5926DB9C6F58574057928535F4153C`이다.
 
 5단계 후속 보강으로 설정 창이 메인 기기 탭과 registry 변경을 실시간으로 따라가게
 했다. 기기별 USB·무선 라디오 선택은 실제 연결에 따라 바뀌지 않는 강제 정책이며,
@@ -141,8 +140,9 @@ v1.1.0 작업 전 문서 커밋은 `f9d96fa`, 복구 태그는
 - 캡처와 드롭 파일의 휴대폰 저장 폴더에 Unicode ADB 찾아보기 추가
 - `DXDisplayCleanup` Android 앱 구현: 상태 확인, 설정 삭제 후 재검증, 메인
   정리 버튼, 빠른 설정 타일, 홈 위젯, 한국어/영어 UI
-- Android 앱은 네트워크·임의 shell 없이 `WRITE_SECURE_SETTINGS` 하나만
-  요청하며 package ID와 공개 서명 지문을 문서화
+- Android 앱은 `WRITE_SECURE_SETTINGS`를 정리 기능에 한정해 사용하고,
+  네트워크 권한은 인증된 로컬 파일 전송과 guardian 연결에만 사용하며 임의
+  shell 실행은 제공하지 않는다. package ID와 공개 서명 지문을 문서화했다.
 - 각 DeX·단일창 HWND/PID를 따라가는 미니 컨트롤바와 왼쪽/오른쪽 위치,
   툴팁, 접기/펴기, 활성화·최소화·앞뒤 순서 연동
 - Android 패키지별 단일창 해상도·DPI·스트리밍·실행 옵션 프로필 저장,
@@ -428,3 +428,25 @@ v2 다중 기기 기능 구현 뒤 소스 크기, 비동기 진입점, 빈 예�
 DeviceConnected/DeviceDisconnected 처리기와 전환 보조 코드는 제거했다.
 `AppSettings`의 직렬화 DTO·열거형은 `AppSettings.Types`로 옮겼고, 커스텀 입력
 컨트롤은 기본 입력, 숫자·단축키 입력, 드롭다운 팝업의 세 파일로 나눴다.
+
+## 2026-08-18 v2.0.0 공개 후보
+
+다중 기기 기능과 Windows 11·Windows 7 실기 확인을 바탕으로 Windows 앱 버전을
+2.0.0으로 확정했다. 물리 기기별 독립 DeX·단일창·설정·USB/Wi-Fi 정책·Companion·
+양방향 전송, 한 기기 연결 시 선택 영역 숨김, 기기 표시 이름 보존과 scrcpy 제목
+표시를 사용자 문서에 반영한다.
+
+DX Companion은 연결 손실 자동 정리 시간을 즉시·1분·5분·10분·30분·자동 정리
+안 함 순서로 정리하고 기본값을 5분으로 변경한 1.4.1(versionCode 5)이다. 번들
+검증 SHA-256은
+`C23D65499DD86608C02B46EE962F119A4C5926DB9C6F58574057928535F4153C`이다.
+
+최종 Windows x64/.NET Framework 4.6.2 Release 빌드는 경고 0·오류 0으로
+통과했고 다중 기기 회귀 테스트 38개가 모두 통과했다. DX Companion은 Android
+단위 테스트 7개, `lintRelease`, v2 서명과 RSA 4096 인증서 검증을 통과했다.
+공개 후보 ZIP은 파일 55개와 폴더 4개로 구성되며 PDB·로그·스크린샷·사용자
+설정·서명키를 포함하지 않는다. 최종 `DX-Manager-v2.0.0-win-x64.zip`의 SHA-256은
+`2B46C23912F78DAFA35728E8C3C45214BE85B8EFE112583420FC237B2456CDA5`이다.
+패키징 스크립트는 로컬 .NET 4.6.2 targeting pack이 없는 환경에서도 명시적인
+`-TargetFrameworkRootPath` 또는 `DXM_TARGET_FRAMEWORK_ROOT`를 사용할 수 있게
+보강했고, 해당 경로를 이용한 전체 빌드·패키징까지 재검증했다.
