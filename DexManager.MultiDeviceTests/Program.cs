@@ -56,7 +56,8 @@ namespace DexManager.MultiDeviceTests
                 RoundTripsCompanionGuardianProtocolPayload,
                 BlocksNewProcessesAfterShutdown,
                 TerminatesActiveProcessOnShutdown,
-                TerminatesOnlyConfiguredBundledExecutablePath
+                TerminatesOnlyConfiguredBundledExecutablePath,
+                SerializesConcurrentSettingsSaves
             };
 
             try
@@ -986,6 +987,58 @@ namespace DexManager.MultiDeviceTests
                     catch { }
                     second.Dispose();
                 }
+                try { Directory.Delete(root, true); }
+                catch { }
+            }
+        }
+
+        private static void SerializesConcurrentSettingsSaves()
+        {
+            var root = Path.Combine(
+                Path.GetTempPath(),
+                "DXManager.Settings." + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+
+            try
+            {
+                const int writerCount = 8;
+                var gate = new ManualResetEventSlim(false);
+                var tasks = new Task[writerCount];
+                for (var index = 0; index < writerCount; index++)
+                {
+                    var writer = index;
+                    tasks[index] = Task.Run(delegate
+                    {
+                        var service = new SettingsService(
+                            new LogService(),
+                            root);
+                        var settings = AppSettings.CreateDefault();
+                        settings.Connection.WirelessHost =
+                            "192.168.0." + (writer + 1);
+                        gate.Wait();
+                        service.Save(settings);
+                    });
+                }
+
+                gate.Set();
+                True(Task.WaitAll(tasks, 10000),
+                    "concurrent settings saves must finish promptly");
+
+                var verifier = new SettingsService(new LogService(), root);
+                var loaded = verifier.Load();
+                NotNull(loaded,
+                    "concurrent settings saves must leave valid settings");
+                True(File.Exists(verifier.SettingsFilePath),
+                    "concurrent settings saves must create settings.json");
+                Equal(
+                    0,
+                    Directory.GetFiles(
+                        Path.GetDirectoryName(verifier.SettingsFilePath),
+                        "settings.json.*.tmp").Length,
+                    "successful settings saves must remove unique temp files");
+            }
+            finally
+            {
                 try { Directory.Delete(root, true); }
                 catch { }
             }

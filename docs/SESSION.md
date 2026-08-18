@@ -442,11 +442,18 @@ DX Companion은 연결 손실 자동 정리 시간을 즉시·1분·5분·10분�
 `C23D65499DD86608C02B46EE962F119A4C5926DB9C6F58574057928535F4153C`이다.
 
 최종 Windows x64/.NET Framework 4.6.2 Release 빌드는 경고 0·오류 0으로
-통과했고 다중 기기 회귀 테스트 38개가 모두 통과했다. DX Companion은 Android
+통과했고 다중 기기 회귀 테스트 39개가 모두 통과했다. DX Companion은 Android
 단위 테스트 7개, `lintRelease`, v2 서명과 RSA 4096 인증서 검증을 통과했다.
 공개 후보 ZIP은 파일 55개와 폴더 4개로 구성되며 PDB·로그·스크린샷·사용자
-설정·서명키를 포함하지 않는다. 최종 `DX-Manager-v2.0.0-win-x64.zip`의 SHA-256은
-`2B46C23912F78DAFA35728E8C3C45214BE85B8EFE112583420FC237B2456CDA5`이다.
+설정·서명키를 포함하지 않는다.
 패키징 스크립트는 로컬 .NET 4.6.2 targeting pack이 없는 환경에서도 명시적인
 `-TargetFrameworkRootPath` 또는 `DXM_TARGET_FRAMEWORK_ROOT`를 사용할 수 있게
 보강했고, 해당 경로를 이용한 전체 빌드·패키징까지 재검증했다.
+
+공개 후보 실기 실행 중 여러 저장 요청이 같은 `settings.json.tmp`를 공유해
+임시 파일이 먼저 이동될 수 있는 경합을 확인했다. 설정 저장을 고유 임시 파일과
+프로세스 간 파일 잠금으로 직렬화하고, 8개 독립 서비스의 동시 저장을 검증하는
+39번째 회귀 테스트를 추가했다. 재패키징한
+`DX-Manager-v2.0.0-win-x64.zip`은 파일 55개·폴더 4개이며
+SHA-256은
+`28865114FD6B712AF4A6DDC24F9B89F7C418606047B18BDAB3A21C9D4DB7984D`이다.

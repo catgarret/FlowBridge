@@ -102,6 +102,9 @@
     <Compile Include="..\DexManager\Services\LogService.cs">
       <Link>Services\LogService.cs</Link>
     </Compile>
+    <Compile Include="..\DexManager\Services\SettingsService.cs">
+      <Link>Services\SettingsService.cs</Link>
+    </Compile>
     <Compile Include="..\DexManager\Utils\ProcessRunner.cs">
       <Link>Utils\ProcessRunner.cs</Link>
     </Compile>

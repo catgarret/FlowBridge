@@ -82,7 +82,9 @@
 - DeX·단일창 scrcpy 창 제목에 휴대폰 표시 이름을 추가해 동시 실행 창을 구분
 - .NET Framework 4.6.2 x64 Release 빌드와 35개 다중 기기 회귀 테스트 통과
 - DX Companion 1.4.1의 단위 테스트 7개·Release lint·v2 서명·번들 해시와
-  Windows x64 Release 빌드·다중 기기 회귀 테스트 38개를 최종 재검증
+  Windows x64 Release 빌드·다중 기기 회귀 테스트 39개를 최종 재검증
+- 여러 설정 저장 요청이 같은 `settings.json.tmp`를 먼저 이동할 수 있던 경합을
+  제거하고, 저장별 고유 임시 파일·프로세스 간 파일 잠금·동시 저장 회귀 테스트 추가
 - 공개 후보 ZIP에서 PDB·로그·스크린샷·사용자 설정·서명키를 제외하고 필수
   Scrcpy·ADB·ADB 프록시·DX Companion·라이선스 파일이 모두 포함됐는지 검사
 - .NET 4.6.2 targeting pack이 설치되지 않은 개발 PC에서도 검증된 참조

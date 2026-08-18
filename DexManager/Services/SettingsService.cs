@@ -12,9 +12,23 @@ namespace DexManager.Services
         private readonly object _saveSync = new object();
 
         public SettingsService(LogService logService)
+            : this(logService, AppDomain.CurrentDomain.BaseDirectory)
         {
+        }
+
+        internal SettingsService(
+            LogService logService,
+            string baseDirectory)
+        {
+            if (logService == null)
+                throw new ArgumentNullException("logService");
+            if (string.IsNullOrWhiteSpace(baseDirectory))
+                throw new ArgumentException(
+                    "Base directory is empty.",
+                    "baseDirectory");
+
             _logService = logService;
-            BaseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            BaseDirectory = Path.GetFullPath(baseDirectory);
             SettingsFilePath = Path.Combine(BaseDirectory, "config", "settings.json");
         }
 
@@ -72,7 +86,7 @@ namespace DexManager.Services
                     else
                     {
                         ThrowIfUnsupportedSchema(recoveryException);
-                        var tempPath = SettingsFilePath + ".tmp";
+                        var tempPath = FindRecoveryTempPath();
                         if (TryLoadCandidate(
                             tempPath,
                             out settings,
@@ -109,6 +123,10 @@ namespace DexManager.Services
                 try
                 {
                     SaveRecovered(settings);
+                    if (sourcePath.EndsWith(
+                        ".tmp",
+                        StringComparison.OrdinalIgnoreCase))
+                        TryDeleteFile(sourcePath);
                 }
                 catch (Exception ex)
                 {
@@ -345,42 +363,145 @@ namespace DexManager.Services
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
 
-            var tempPath = SettingsFilePath + ".tmp";
             var backupPath = SettingsFilePath + ".bak";
+            using (AcquireSaveFileLock())
+            {
+                for (var attempt = 0; attempt < 2; attempt++)
+                {
+                    var tempPath = CreateUniqueTempPath();
+                    try
+                    {
+                        WriteTempSettings(tempPath, settings);
+                        CommitTempSettings(
+                            tempPath,
+                            backupPath,
+                            preserveExistingBackup);
+                        break;
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        if (attempt != 0) throw;
+                    }
+                    finally
+                    {
+                        TryDeleteFile(tempPath);
+                    }
+                }
+            }
+            _logService.Info(LocalizationService.Format(
+                "Log.Settings.Saved",
+                SettingsFilePath));
+        }
+
+        private FileStream AcquireSaveFileLock()
+        {
+            var lockPath = SettingsFilePath + ".lock";
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (true)
+            {
+                try
+                {
+                    return new FileStream(
+                        lockPath,
+                        FileMode.OpenOrCreate,
+                        FileAccess.ReadWrite,
+                        FileShare.None);
+                }
+                catch (IOException)
+                {
+                    if (DateTime.UtcNow >= deadline) throw;
+                    System.Threading.Thread.Sleep(25);
+                }
+            }
+        }
+
+        private string CreateUniqueTempPath()
+        {
+            return SettingsFilePath + "." +
+                Guid.NewGuid().ToString("N") + ".tmp";
+        }
+
+        private void WriteTempSettings(
+            string tempPath,
+            AppSettings settings)
+        {
             using (var stream = new FileStream(
                 tempPath,
-                FileMode.Create,
+                FileMode.CreateNew,
                 FileAccess.Write,
                 FileShare.None))
             {
                 CreateSerializer().WriteObject(stream, settings);
                 stream.Flush(true);
             }
+        }
 
-            if (File.Exists(SettingsFilePath))
-            {
-                if (preserveExistingBackup)
-                {
-                    File.Replace(
-                        tempPath,
-                        SettingsFilePath,
-                        null,
-                        true);
-                }
-                else
-                {
-                    ReplaceWithBackupPreserved(
-                        tempPath,
-                        backupPath);
-                }
-            }
-            else
+        private void CommitTempSettings(
+            string tempPath,
+            string backupPath,
+            bool preserveExistingBackup)
+        {
+            if (!File.Exists(SettingsFilePath))
             {
                 File.Move(tempPath, SettingsFilePath);
+                return;
             }
-            _logService.Info(LocalizationService.Format(
-                "Log.Settings.Saved",
-                SettingsFilePath));
+
+            if (preserveExistingBackup)
+            {
+                File.Replace(
+                    tempPath,
+                    SettingsFilePath,
+                    null,
+                    true);
+                return;
+            }
+
+            ReplaceWithBackupPreserved(tempPath, backupPath);
+        }
+
+        private string FindRecoveryTempPath()
+        {
+            var legacyTempPath = SettingsFilePath + ".tmp";
+            if (File.Exists(legacyTempPath)) return legacyTempPath;
+
+            var directory = Path.GetDirectoryName(SettingsFilePath);
+            if (string.IsNullOrWhiteSpace(directory) ||
+                !Directory.Exists(directory))
+                return legacyTempPath;
+
+            try
+            {
+                var pattern = Path.GetFileName(SettingsFilePath) + ".*.tmp";
+                FileInfo newest = null;
+                foreach (var path in Directory.GetFiles(directory, pattern))
+                {
+                    var candidate = new FileInfo(path);
+                    if (newest == null ||
+                        candidate.LastWriteTimeUtc > newest.LastWriteTimeUtc)
+                        newest = candidate;
+                }
+                return newest == null ? legacyTempPath : newest.FullName;
+            }
+            catch (IOException)
+            {
+                return legacyTempPath;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return legacyTempPath;
+            }
+        }
+
+        private static void TryDeleteFile(string path)
+        {
+            try
+            {
+                if (File.Exists(path)) File.Delete(path);
+            }
+            catch
+            {
+            }
         }
 
         private void ReplaceWithBackupPreserved(
