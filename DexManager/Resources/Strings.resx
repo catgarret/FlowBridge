@@ -12,6 +12,7 @@
   <data name="Common.Save" xml:space="preserve"><value>Save</value></data>
   <data name="Common.Browse" xml:space="preserve"><value>Browse</value></data>
   <data name="Common.Error" xml:space="preserve"><value>Error</value></data>
+  <data name="Common.Unknown" xml:space="preserve"><value>unknown</value></data>
   <data name="Main.Mode" xml:space="preserve"><value>MODE</value></data>
   <data name="Main.ConnectedDevices" xml:space="preserve"><value>CONNECTED DEVICES</value></data>
   <data name="Main.Dex" xml:space="preserve"><value>DeX</value></data>
@@ -428,10 +429,24 @@
   <data name="Settings.OpenLogs" xml:space="preserve"><value>Open session log</value></data>
   <data name="Settings.OpenEnvironment" xml:space="preserve"><value>Run environment check</value></data>
   <data name="Settings.DiagnosticsGuide" xml:space="preserve"><value>Open logs or check ADB, Scrcpy and device connectivity.</value></data>
-  <data name="Settings.WindowsShutdownTest" xml:space="preserve"><value>Test Windows shutdown cleanup</value></data>
-  <data name="Settings.WindowsShutdownTestGuide" xml:space="preserve"><value>Run the same fast cleanup path used during Windows shutdown without shutting down Windows. Connected DX Companion sessions perform cleanup, then DX Manager closes.</value></data>
-  <data name="Settings.WindowsShutdownTestConfirm" xml:space="preserve"><value>Test the Windows shutdown cleanup path? Active DeX, single-app, and file-transfer work will stop. Connected DX Companion sessions will clean virtual displays and stay-awake settings, then DX Manager will close. Phones without a connected Companion session are skipped, and Windows remains running.</value></data>
-  <data name="Log.Main.SystemShutdownSimulationStarted" xml:space="preserve"><value>Starting the Windows shutdown cleanup test. Windows will remain running while the same fast device-cleanup path is executed.</value></data>
+  <data name="Settings.SaveDiagnosticReport" xml:space="preserve"><value>Save diagnostic report</value></data>
+  <data name="Settings.SelectedDeviceDiagnostics" xml:space="preserve"><value>Selected device version</value></data>
+  <data name="Settings.DeviceDiagnosticsWaiting" xml:space="preserve"><value>Select a connected phone to inspect its Android and One UI versions.</value></data>
+  <data name="Settings.DeviceDiagnosticsChecking" xml:space="preserve"><value>Reading version information from the selected phone...</value></data>
+  <data name="Settings.RefreshDeviceDiagnostics" xml:space="preserve"><value>Refresh selected device</value></data>
+  <data name="Settings.DeviceDiagnosticsFailed" xml:space="preserve"><value>Device version information could not be read.&#x0A;{0}</value></data>
+  <data name="Settings.DeviceDiagnosticsSummary" xml:space="preserve"><value>{0} · {1}&#x0A;Android {2} · One UI {3} · security patch {4}&#x0A;{5}</value></data>
+  <data name="Settings.Transport.Unknown" xml:space="preserve"><value>unknown connection</value></data>
+  <data name="Settings.Transport.Usb" xml:space="preserve"><value>USB</value></data>
+  <data name="Settings.Transport.Wireless" xml:space="preserve"><value>Wi-Fi ADB</value></data>
+  <data name="Settings.Transport.Emulator" xml:space="preserve"><value>emulator</value></data>
+  <data name="Settings.Compatibility.Unknown" xml:space="preserve"><value>Compatibility could not be determined. This is informational and does not block launch.</value></data>
+  <data name="Settings.Compatibility.RecommendedBaseline" xml:space="preserve"><value>One UI 8.x / Android 16 is the verified recommended baseline.</value></data>
+  <data name="Settings.Compatibility.OlderUnverified" xml:space="preserve"><value>This older software version is not verified and may show a black screen or input limitations.</value></data>
+  <data name="Settings.Compatibility.NewerUnverified" xml:space="preserve"><value>This newer software version has not yet been fully verified. Launch remains available.</value></data>
+  <data name="Settings.DiagnosticReportFilter" xml:space="preserve"><value>Text files (*.txt)|*.txt|All files (*.*)|*.*</value></data>
+  <data name="Settings.DiagnosticReportSaved" xml:space="preserve"><value>The diagnostic report was saved. Its folder will now open.</value></data>
+  <data name="Settings.DiagnosticReportFailed" xml:space="preserve"><value>The diagnostic report could not be saved.&#x0A;{0}</value></data>
   <data name="Settings.StartWithWindows" xml:space="preserve"><value>Start with Windows</value></data>
   <data name="Settings.StartMinimized" xml:space="preserve"><value>Start minimized to the tray</value></data>
   <data name="Settings.WakeUpMode" xml:space="preserve"><value>ADB wake-up mode</value></data>

@@ -12,6 +12,7 @@
   <data name="Common.Save" xml:space="preserve"><value>저장</value></data>
   <data name="Common.Browse" xml:space="preserve"><value>찾아보기</value></data>
   <data name="Common.Error" xml:space="preserve"><value>오류</value></data>
+  <data name="Common.Unknown" xml:space="preserve"><value>확인 안 됨</value></data>
   <data name="Main.Mode" xml:space="preserve"><value>모드</value></data>
   <data name="Main.ConnectedDevices" xml:space="preserve"><value>연결된 기기</value></data>
   <data name="Main.Dex" xml:space="preserve"><value>DeX</value></data>
@@ -428,10 +429,24 @@
   <data name="Settings.OpenLogs" xml:space="preserve"><value>현재 세션 로그 열기</value></data>
   <data name="Settings.OpenEnvironment" xml:space="preserve"><value>환경 점검 실행</value></data>
   <data name="Settings.DiagnosticsGuide" xml:space="preserve"><value>로그를 열거나 ADB, Scrcpy와 장치 연결 상태를 점검합니다.</value></data>
-  <data name="Settings.WindowsShutdownTest" xml:space="preserve"><value>Windows 종료 정리 테스트</value></data>
-  <data name="Settings.WindowsShutdownTestGuide" xml:space="preserve"><value>Windows를 끄지 않고 실제 Windows 종료 때와 같은 빠른 정리 경로를 실행합니다. 연결된 DX Companion이 정리를 수행하며, 테스트가 끝나면 DX Manager만 종료됩니다.</value></data>
-  <data name="Settings.WindowsShutdownTestConfirm" xml:space="preserve"><value>Windows 종료 정리 경로를 테스트할까요? 실행 중인 DeX·단일창과 파일 전송을 중단하고, 연결된 DX Companion이 가상 화면과 절전모드 해제를 정리한 뒤 DX Manager가 종료됩니다. Companion이 없거나 연결되지 않은 휴대폰은 정리하지 않으며 Windows는 종료되지 않습니다.</value></data>
-  <data name="Log.Main.SystemShutdownSimulationStarted" xml:space="preserve"><value>Windows 종료 정리 테스트를 시작합니다. Windows는 종료하지 않고 동일한 빠른 기기 정리 경로를 실행합니다.</value></data>
+  <data name="Settings.SaveDiagnosticReport" xml:space="preserve"><value>진단 보고서 저장</value></data>
+  <data name="Settings.SelectedDeviceDiagnostics" xml:space="preserve"><value>선택한 기기 버전</value></data>
+  <data name="Settings.DeviceDiagnosticsWaiting" xml:space="preserve"><value>연결된 휴대폰을 선택하면 Android와 One UI 버전을 확인합니다.</value></data>
+  <data name="Settings.DeviceDiagnosticsChecking" xml:space="preserve"><value>선택한 휴대폰에서 버전 정보를 읽는 중입니다...</value></data>
+  <data name="Settings.RefreshDeviceDiagnostics" xml:space="preserve"><value>선택한 기기 새로 고침</value></data>
+  <data name="Settings.DeviceDiagnosticsFailed" xml:space="preserve"><value>기기 버전 정보를 읽지 못했습니다.&#x0A;{0}</value></data>
+  <data name="Settings.DeviceDiagnosticsSummary" xml:space="preserve"><value>{0} · {1}&#x0A;Android {2} · One UI {3} · 보안 패치 {4}&#x0A;{5}</value></data>
+  <data name="Settings.Transport.Unknown" xml:space="preserve"><value>연결 방식 확인 안 됨</value></data>
+  <data name="Settings.Transport.Usb" xml:space="preserve"><value>USB</value></data>
+  <data name="Settings.Transport.Wireless" xml:space="preserve"><value>Wi-Fi ADB</value></data>
+  <data name="Settings.Transport.Emulator" xml:space="preserve"><value>에뮬레이터</value></data>
+  <data name="Settings.Compatibility.Unknown" xml:space="preserve"><value>호환성을 판정하지 못했습니다. 안내용 정보이며 실행을 차단하지 않습니다.</value></data>
+  <data name="Settings.Compatibility.RecommendedBaseline" xml:space="preserve"><value>One UI 8.x / Android 16은 확인된 권장 기준입니다.</value></data>
+  <data name="Settings.Compatibility.OlderUnverified" xml:space="preserve"><value>이전 소프트웨어 버전은 확인되지 않았으며 검은 화면이나 입력 제한이 생길 수 있습니다.</value></data>
+  <data name="Settings.Compatibility.NewerUnverified" xml:space="preserve"><value>더 새로운 소프트웨어 버전은 아직 충분히 확인되지 않았습니다. 실행은 차단하지 않습니다.</value></data>
+  <data name="Settings.DiagnosticReportFilter" xml:space="preserve"><value>텍스트 파일 (*.txt)|*.txt|모든 파일 (*.*)|*.*</value></data>
+  <data name="Settings.DiagnosticReportSaved" xml:space="preserve"><value>진단 보고서를 저장했습니다. 저장 폴더를 엽니다.</value></data>
+  <data name="Settings.DiagnosticReportFailed" xml:space="preserve"><value>진단 보고서를 저장하지 못했습니다.&#x0A;{0}</value></data>
   <data name="Settings.StartWithWindows" xml:space="preserve"><value>Windows 시작 시 자동 실행</value></data>
   <data name="Settings.StartMinimized" xml:space="preserve"><value>자동 실행 시 트레이로 시작</value></data>
   <data name="Settings.WakeUpMode" xml:space="preserve"><value>ADB Wake-up 방식</value></data>

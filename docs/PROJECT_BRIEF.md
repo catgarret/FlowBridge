@@ -72,7 +72,7 @@ GitHub 메인 README와 별도로 HTML이 없는 `docs\PACKAGE_README.md`를 배
 - 휴대폰의 공유 메뉴와 Companion 폴더 선택으로 파일·폴더를 PC에 전송
 - 선택 기기별 DX Companion 설치·업데이트·재설치·권한 부여·삭제
 
-`DXDisplayCleanup` 프로젝트의 공개 이름은 **DX Companion 1.4.1**이다.
+`DXDisplayCleanup` 프로젝트의 공개 이름은 **DX Companion 2.0.0**이다.
 휴대폰에 남은 `overlay_display_devices`를 제거하고 개발자 옵션의 절전모드
 해제를 끄는 제한된 복구 도구다. 앱 본체의 개별·동시 정리, 빠른 설정 타일과
 2 × 1 홈 위젯, 휴대폰에서 PC로 파일·폴더 전송을 제공한다. 네트워크는 인증된
@@ -87,7 +87,9 @@ v1.3.0까지 공개 배포됐고 v2.0.0 공개 후보를 준비했다. Windows 1
 휴대폰 두 대의 USB·무선 조합, 독립 DeX·단일창, 설정, Companion과 양방향
 전송을 확인했다. 64비트 Windows 7 SP1/.NET 4.6.2에서는 USB 복수 기기와
 핵심 기능을 확인했다. v2.0.0은 물리 기기별 런타임·설정·연결 정책과
-Companion 1.4.1 종료 보호를 포함한다.
+Companion 2.0.0 종료 보호를 포함한다. 설정의 진단 페이지에는 현재 선택된
+휴대폰의 Android·SDK·One UI·보안 패치와 연결 방식을 표시하고, 민감 정보를
+가린 진단 보고서를 텍스트 파일로 저장하는 기능도 포함한다.
 
 휴대폰의 현재 정상 동작 확인 기준은 Android 16 / One UI 8.x다. One UI 7.x
 이하에서는 원활한 동작을 확인하지 못했으며 검은 DeX 창이 나타날 수 있다.

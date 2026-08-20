@@ -63,6 +63,11 @@ Android Share menu. For folders, use **Send folder > Select folder** inside DX
 Companion. DX Manager must be running with the target phone connected. The PC
 destination can be changed under **Settings > Paths / ADB**.
 
+The **Selected device version** card under **Settings > Diagnostics** shows the
+current phone's Android, SDK, One UI, security patch and transport information.
+Use **Save diagnostic report** to create a privacy-redacted text report for a
+bug report.
+
 ### Multiple phones
 
 When two or more phones are detected, choose the target in the left device
@@ -217,6 +222,10 @@ Windows 7 SP1에는 .NET Framework 4.6.2가 기본 포함되지 않습니다. �
 선택하고, 폴더는 DX Companion의 **폴더 보내기 > 폴더 선택**을 사용하십시오.
 DX Manager가 실행 중이고 대상 휴대폰이 연결돼 있어야 하며, PC 저장 위치는
 **설정 > 경로 / ADB**에서 바꿀 수 있습니다.
+
+**설정 > 진단**의 **선택 기기 버전** 카드에는 현재 휴대폰의 Android, SDK,
+One UI, 보안 패치와 연결 방식이 표시됩니다. 문제를 제보할 때는 **진단 보고서
+저장**으로 개인정보를 가린 텍스트 보고서를 만들 수 있습니다.
 
 ### 여러 휴대폰
 

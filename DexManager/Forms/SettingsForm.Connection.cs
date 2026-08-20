@@ -282,6 +282,7 @@ namespace DexManager.Forms
             if (_activePageIndex == 4 &&
                 !_displayCleanupOperationRunning)
             {
+                RefreshDeviceDiagnosticsAsync();
                 RefreshDisplayCleanupStatusAsync();
             }
         }

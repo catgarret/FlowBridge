@@ -67,7 +67,7 @@
   복원 요청을 전송
 - Companion이 없거나 서명·권한 검증을 통과하지 못한 기기는 Windows 종료 중
   새 `adb.exe`를 실행하지 않고 기기 정리를 건너뛰어 네이티브 ADB 오류창을 방지
-- DX Companion 1.4.1에 인증된 loopback 감시 세션과 물리 연결 손실 유예 정리를
+- DX Companion 2.0.0에 인증된 loopback 감시 세션과 물리 연결 손실 유예 정리를
   추가; guardian 소켓만 끊어지면 유지하고 설정된 USB/Wi-Fi까지 사라진 경우에만
   기본 5분 뒤 정리, 즉시·1분·5분·10분·30분 또는 자동 정리 안 함 선택 가능
 - 사용자가 DX Manager를 정상 종료할 때는 기기 설정 복원과 overlay 정리를 먼저
@@ -81,10 +81,15 @@
 - 휴대폰→PC 수신 파일을 공통 경로 아래 휴대폰 표시 이름별 하위 폴더로 분리
 - DeX·단일창 scrcpy 창 제목에 휴대폰 표시 이름을 추가해 동시 실행 창을 구분
 - .NET Framework 4.6.2 x64 Release 빌드와 35개 다중 기기 회귀 테스트 통과
-- DX Companion 1.4.1의 단위 테스트 7개·Release lint·v2 서명·번들 해시와
+- DX Companion 2.0.0(versionCode 6)의 단위 테스트 7개·Release lint·v2 서명·번들 해시와
   Windows x64 Release 빌드·다중 기기 회귀 테스트 39개를 최종 재검증
 - 여러 설정 저장 요청이 같은 `settings.json.tmp`를 먼저 이동할 수 있던 경합을
   제거하고, 저장별 고유 임시 파일·프로세스 간 파일 잠금·동시 저장 회귀 테스트 추가
+- 진단 페이지에 현재 선택된 기기의 Android·SDK·One UI·보안 패치·연결 방식과
+  참고용 호환성 판정을 표시하고 수동 새로 고침 제공
+- 환경, 선택 기기 런타임, 연결 기기 요약과 최근 경고·오류에서 serial·IP·토큰·
+  사용자 경로를 가린 진단 보고서 저장 추가
+- RC 검증용 Windows 종료 모의 테스트를 최종 사용자 UI에서 제거
 - 공개 후보 ZIP에서 PDB·로그·스크린샷·사용자 설정·서명키를 제외하고 필수
   Scrcpy·ADB·ADB 프록시·DX Companion·라이선스 파일이 모두 포함됐는지 검사
 - .NET 4.6.2 targeting pack이 설치되지 않은 개발 PC에서도 검증된 참조

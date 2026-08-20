@@ -131,7 +131,6 @@ namespace DexManager.Forms
         private bool _allowExit;
         private bool _exitInProgress;
         private bool _systemShutdownInProgress;
-        private bool _systemShutdownSimulationInProgress;
         private Task _exitCleanupTask;
         private bool _forcedCloseContinuationScheduled;
         private bool[] _modeSettingsDirty = new bool[4];
@@ -149,8 +148,7 @@ namespace DexManager.Forms
         {
             get
             {
-                return _systemShutdownInProgress &&
-                    !_systemShutdownSimulationInProgress;
+                return _systemShutdownInProgress;
             }
         }
         private readonly Dictionary<string, DeviceUiContext> _deviceContexts =

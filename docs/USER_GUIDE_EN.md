@@ -397,6 +397,16 @@ bundled scrcpy ADB or `34.0.1-9979309` for the bundled legacy ADB.
 Use **Settings > Diagnostics > Run environment check** to verify ADB, scrcpy,
 Windows, device connectivity, and important folders.
 
+The **Selected device version** card shows the currently selected phone's
+model, transport, Android version, SDK level, One UI version and security patch.
+Its compatibility result is informational and does not block launching. Select
+**Refresh** after a firmware update or transport change.
+
+Select **Save diagnostic report** to create a privacy-redacted text report.
+Serial numbers, IP addresses, tokens and user-profile paths are masked. Review
+the file before sharing it because third-party ADB/scrcpy messages may still
+contain environment-specific details.
+
 <p align="center">
   <img src="images/en/guide-diagnostics-en.png" width="900" alt="DX Manager Diagnostics page">
 </p>
@@ -435,7 +445,7 @@ selected app**, then try again.
 
 ## 12. DX Companion (Optional)
 
-**DX Companion 1.4.1** is an Android recovery and file-transfer utility. It can
+**DX Companion 2.0.0** is an Android recovery and file-transfer utility. It can
 remove a simulated secondary display left on the phone, turn off Developer
 options **Stay awake**, and send selected files or folders from the phone to DX
 Manager. Normally, keep the phone connected and use **Stop DeX**, `Left Alt+F8`,

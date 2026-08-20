@@ -171,7 +171,10 @@ namespace DexManager.Forms
             }
             _pages[index].BringToFront();
             if (index == 4)
+            {
+                RefreshDeviceDiagnosticsAsync();
                 RefreshDisplayCleanupStatusAsync();
+            }
         }
     }
 }

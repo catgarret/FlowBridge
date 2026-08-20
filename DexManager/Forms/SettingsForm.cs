@@ -31,9 +31,14 @@ namespace DexManager.Forms
         private readonly Func<string> _getSelectedDeviceSerial;
         private readonly Func<string> _getSelectedDeviceIdentity;
         private readonly Func<DeviceRegistrySnapshot> _getDeviceSnapshot;
+        private readonly Func<DeviceRuntimeRegistrySnapshot>
+            _getRuntimeSnapshot;
+        private readonly LogService _logService;
+        private readonly DeviceVersionDiagnosticService
+            _deviceVersionDiagnosticService;
+        private readonly DiagnosticReportService _diagnosticReportService;
         private readonly Action _showLogs;
         private readonly Action _showEnvironmentCheck;
-        private readonly Action _simulateWindowsShutdown;
         private readonly Action<AppTheme> _applyTheme;
         private readonly Action<bool> _settingsChanged;
         private readonly Func<string, Task> _detachPhoneTransfer;
@@ -118,6 +123,11 @@ namespace DexManager.Forms
         private bool _loadingWirelessDevice;
         private string _loadedWirelessDeviceIdentity = string.Empty;
         private int _activePageIndex;
+        private Label _deviceDiagnosticsStatusLabel;
+        private Button _deviceDiagnosticsRefreshButton;
+        private Button _diagnosticReportButton;
+        private DeviceVersionDiagnostic _lastDeviceDiagnostic;
+        private int _deviceDiagnosticsGeneration;
 
         public SettingsForm(
             SettingsService settingsService,
@@ -127,9 +137,10 @@ namespace DexManager.Forms
             Func<string> getSelectedDeviceSerial,
             Func<string> getSelectedDeviceIdentity,
             Func<DeviceRegistrySnapshot> getDeviceSnapshot,
+            Func<DeviceRuntimeRegistrySnapshot> getRuntimeSnapshot,
+            LogService logService,
             Action showLogs,
             Action showEnvironmentCheck,
-            Action simulateWindowsShutdown,
             Action<AppTheme> applyTheme,
             Action<bool> settingsChanged,
             Func<string, Task> detachPhoneTransfer,
@@ -147,9 +158,14 @@ namespace DexManager.Forms
                 delegate { return string.Empty; };
             _getDeviceSnapshot = getDeviceSnapshot ??
                 delegate { return new DeviceRegistrySnapshot(); };
+            _getRuntimeSnapshot = getRuntimeSnapshot ??
+                delegate { return new DeviceRuntimeRegistrySnapshot(); };
+            _logService = logService ?? new LogService();
+            _deviceVersionDiagnosticService =
+                new DeviceVersionDiagnosticService(adbService);
+            _diagnosticReportService = new DiagnosticReportService();
             _showLogs = showLogs;
             _showEnvironmentCheck = showEnvironmentCheck;
-            _simulateWindowsShutdown = simulateWindowsShutdown;
             _applyTheme = applyTheme;
             _settingsChanged = settingsChanged;
             _detachPhoneTransfer = detachPhoneTransfer;

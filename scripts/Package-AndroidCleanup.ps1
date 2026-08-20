@@ -8,9 +8,11 @@ $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $projectRoot = Join-Path $repoRoot "DXDisplayCleanup"
 $distRoot = Join-Path $repoRoot "dist"
 $packageRoot = Join-Path $distRoot "DX Companion"
-$zipPath = Join-Path $distRoot "DX-Companion-v1.4.1.zip"
+$zipPath = Join-Path $distRoot "DX-Companion-v2.0.0.zip"
 $sourceApk = Join-Path $projectRoot "app\build\outputs\apk\release\app-release.apk"
 $expectedPackage = "io.github.mazemei.dxdisplaycleanup"
+$expectedVersionCode = "6"
+$expectedVersionName = "2.0.0"
 $expectedPermissions = @(
     "android.permission.WRITE_SECURE_SETTINGS",
     "android.permission.FOREGROUND_SERVICE",
@@ -78,6 +80,10 @@ if ($LASTEXITCODE -ne 0 -or
     $badgingText -notmatch "package: name='$([Regex]::Escape($expectedPackage))'") {
     throw "Unexpected APK package identity."
 }
+if ($badgingText -notmatch "versionCode='$expectedVersionCode'" -or
+    $badgingText -notmatch "versionName='$([Regex]::Escape($expectedVersionName))'") {
+    throw "Unexpected APK version. Expected $expectedVersionName (versionCode $expectedVersionCode)."
+}
 
 $permissions = @(& $aapt dump permissions $sourceApk)
 if ($LASTEXITCODE -ne 0) {
@@ -124,7 +130,7 @@ if (Test-Path -LiteralPath $zipPath) {
 }
 New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
 Copy-Item -LiteralPath $sourceApk `
-    -Destination (Join-Path $packageRoot "DX-Companion-v1.4.1.apk")
+    -Destination (Join-Path $packageRoot "DX-Companion-v2.0.0.apk")
 Copy-Item -LiteralPath (Join-Path $projectRoot "PACKAGE_README.md") `
     -Destination (Join-Path $packageRoot "README.md")
 Copy-Item -LiteralPath (Join-Path $projectRoot "SIGNING.md") `

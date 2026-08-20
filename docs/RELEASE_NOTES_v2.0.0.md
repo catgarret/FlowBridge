@@ -29,10 +29,14 @@ state.
 - Store phone-to-PC transfers in a separate phone-name subfolder below the
   configured PC destination.
 - Keep the Settings window open and refresh it for the newly selected phone.
+- Show Android, SDK, One UI, security-patch and transport information for the
+  currently selected phone under **Settings > Diagnostics**.
+- Save a privacy-redacted diagnostic report with environment, selected-device,
+  connected-device and recent warning/error information.
 
-### DX Companion 1.4.1
+### DX Companion 2.0.0
 
-- Bundle signed DX Companion 1.4.1 (versionCode 5). Installation remains an
+- Bundle signed DX Companion 2.0.0 (versionCode 6). Installation remains an
   explicit user action under **Settings > Diagnostics > DX Companion**.
 - Use an authenticated pre-established Companion session for optional cleanup
   during Windows shutdown without starting a new ADB process.
@@ -67,7 +71,7 @@ state.
   currently verified baseline
 
 Windows-shutdown cleanup is best effort and requires an already authenticated
-DX Companion 1.4.1 guardian session. Normal DX Manager exit remains the
+DX Companion 2.0.0 guardian session. Normal DX Manager exit remains the
 recommended cleanup path, especially on Windows 7.
 
 The public ZIP is portable. Extract the complete folder and do not copy only
@@ -103,10 +107,14 @@ Companion과 양방향 파일 전송 상태를 독립적으로 유지합니다.
 - 휴대폰에서 PC로 받은 파일을 설정한 폴더 아래 휴대폰 이름별 하위 폴더에
   나누어 저장합니다.
 - 메인 기기 선택을 바꿔도 설정 창을 닫지 않고 새 대상 정보로 갱신합니다.
+- **설정 > 진단**에서 현재 선택된 휴대폰의 Android·SDK·One UI·보안 패치와
+  연결 방식을 표시합니다.
+- 환경, 선택 기기, 연결 기기와 최근 경고·오류에서 민감 정보를 가린 진단
+  보고서를 텍스트 파일로 저장합니다.
 
-### DX Companion 1.4.1
+### DX Companion 2.0.0
 
-- 서명된 DX Companion 1.4.1(versionCode 5)을 포함합니다. 설치는 여전히
+- 서명된 DX Companion 2.0.0(versionCode 6)을 포함합니다. 설치는 여전히
   **설정 > 진단 > DX Companion**에서 사용자가 직접 눌러야만 시작됩니다.
 - Windows 종료 시 새 ADB 프로세스를 시작하지 않고, 미리 인증해 연결해 둔
   Companion 세션이 있을 때만 선택적으로 기기 정리를 요청합니다.
@@ -138,7 +146,7 @@ Companion과 양방향 파일 전송 상태를 독립적으로 유지합니다.
 - 번들 scrcpy 4.1
 - Samsung DeX 지원 Galaxy 기기. 현재 확인 기준은 Android 16 / One UI 8.x
 
-Windows 종료 시 정리는 이미 인증된 DX Companion 1.4.1 guardian 세션이 있을
+Windows 종료 시 정리는 이미 인증된 DX Companion 2.0.0 guardian 세션이 있을
 때만 최선 노력 방식으로 동작합니다. 특히 Windows 7에서는 DX Manager 정상
 종료를 권장합니다.
 

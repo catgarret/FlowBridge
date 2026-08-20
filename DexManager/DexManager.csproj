@@ -109,6 +109,9 @@
     <Compile Include="Forms\SettingsForm.Connection.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\SettingsForm.Diagnostics.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\SettingsForm.DeviceBrowser.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
@@ -164,6 +167,7 @@
     <Compile Include="Models\DeviceRegistrySnapshot.cs" />
     <Compile Include="Models\DeviceRuntimeSessionSnapshot.cs" />
     <Compile Include="Models\DeviceRuntimeRegistrySnapshot.cs" />
+    <Compile Include="Models\DeviceVersionDiagnostic.cs" />
     <Compile Include="Models\LastSuccessSettings.cs" />
     <Compile Include="Models\ProcessResult.cs" />
     <Compile Include="Models\DeviceState.cs" />
@@ -191,6 +195,8 @@
     <Compile Include="Services\DeviceRuntimeServiceSet.cs" />
     <Compile Include="Services\DeviceRuntimeServiceFactory.cs" />
     <Compile Include="Services\DeviceFolderService.cs" />
+    <Compile Include="Services\DeviceVersionDiagnosticService.cs" />
+    <Compile Include="Services\DiagnosticReportService.cs" />
     <Compile Include="Services\DisplayCleanupPermissionService.cs" />
     <Compile Include="Services\EnvironmentCheckService.cs" />
     <Compile Include="Services\FileTransferCoordinator.cs" />

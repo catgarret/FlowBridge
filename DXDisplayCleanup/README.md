@@ -9,7 +9,7 @@ The app provides separate actions for both settings and a combined action. Its
 Quick Settings tile and compact 2 × 1 home-screen widget clean both by default;
 their targets can be changed inside the app.
 
-DX Companion 1.4.1 can also keep an authenticated loopback session with a
+DX Companion 2.0.0 can also keep an authenticated loopback session with a
 verified DX Manager instance. When Windows announces a real session shutdown,
 DX Manager sends the cleanup request over that already-open session instead of
 starting a new ADB process. A broken USB/Wi-Fi session does not clean up

@@ -356,39 +356,15 @@ namespace DexManager.Forms
                 if (_showEnvironmentCheck != null)
                     _showEnvironmentCheck();
             };
+            _diagnosticReportButton = CreateActionButton(
+                LocalizationService.Get("Settings.SaveDiagnosticReport"),
+                220);
+            _diagnosticReportButton.Margin = new Padding(0, 10, 0, 0);
+            _diagnosticReportButton.Click +=
+                DiagnosticReportButton_Click;
             panel.Controls.Add(logButton);
             panel.Controls.Add(environmentButton);
-            panel.Controls.Add(new Label
-            {
-                AutoSize = true,
-                MaximumSize = new Size(610, 0),
-                ForeColor = _theme.TextTertiary,
-                BackColor = _theme.CardBackground,
-                Margin = new Padding(0, 24, 0, 10),
-                Text = LocalizationService.Get(
-                    "Settings.WindowsShutdownTestGuide")
-            });
-            var shutdownTestButton = CreateActionButton(
-                LocalizationService.Get("Settings.WindowsShutdownTest"),
-                220);
-            shutdownTestButton.Click += delegate
-            {
-                if (_simulateWindowsShutdown == null) return;
-                var answer = MessageBox.Show(
-                    this,
-                    LocalizationService.Get(
-                        "Settings.WindowsShutdownTestConfirm"),
-                    LocalizationService.Get("App.Name"),
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning,
-                    MessageBoxDefaultButton.Button2);
-                if (answer != DialogResult.Yes) return;
-
-                var simulate = _simulateWindowsShutdown;
-                Close();
-                simulate();
-            };
-            panel.Controls.Add(shutdownTestButton);
+            panel.Controls.Add(_diagnosticReportButton);
             panel.Controls.Add(new Label
             {
                 AutoSize = true,
@@ -429,6 +405,11 @@ namespace DexManager.Forms
             resetButton.Click += ResetDefaultsButton_Click;
             panel.Controls.Add(resetButton);
             AddCard(page, LocalizationService.Get("Settings.Diagnostics"), panel);
+
+            AddCard(
+                page,
+                LocalizationService.Get("Settings.SelectedDeviceDiagnostics"),
+                BuildSelectedDeviceDiagnosticsPanel());
 
             var displayCleanup = new FlowLayoutPanel
             {

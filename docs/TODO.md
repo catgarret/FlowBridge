@@ -3,8 +3,10 @@
 ## 다음 작업
 
 - [x] v2.0.0 공개 후보 준비
-  - [x] Windows 버전 2.0.0과 DX Companion 1.4.1(versionCode 5) 일치
+  - [x] Windows 버전 2.0.0과 DX Companion 2.0.0(versionCode 6) 일치
   - [x] 다중 기기 README·사용 설명서·FAQ·개발 문서 최신화
+  - [x] 진단 페이지의 선택 기기 Android·SDK·One UI·보안 패치 진단
+  - [x] serial·IP·토큰·사용자 경로를 가린 진단 보고서 저장
   - [x] Windows x64/.NET Framework 4.6.2 Release와 전체 회귀 테스트
   - [x] Android 단위 테스트·lint·Release APK 서명 및 해시 재검증
   - [x] 공개용 ZIP의 필수 파일과 비밀키·설정·로그 제외 최종 검사
@@ -77,13 +79,13 @@
   - [x] 자식 프로세스 네이티브 오류 대화상자 억제 모드 추가
   - [x] 일반 종료 후 분리된 ADB 서버와 번들 보조 프로세스의 절대 경로 최종 정리
   - [x] 이름이 같은 다른 경로 프로세스를 보존하는 회귀 테스트 추가
-  - [x] Windows를 끄지 않고 같은 빠른 정리 경로를 실행하는 진단 기능 추가
+  - [x] 공개 UI에 넣었던 Windows 종료 모의 테스트를 RC 검증 후 제거
   - [x] 실제 종료 시 새 ADB 실행·종료를 없애고 미리 연결된 Companion 소켓만 사용
   - [x] Companion 미설치·미검증 기기는 실제 Windows 종료 정리를 건너뛰도록 분리
   - [x] Companion 연결 손실 시 기본 5분 유예와 재연결 취소, 즉시 정리 및 자동 정리 안 함 옵션 추가
   - [x] .NET Framework 4.6.2 Debug 빌드와 37개 다중 기기 회귀 테스트 통과
-  - [ ] Windows 11에서 진단 기능으로 다중 기기 overlay·절전모드 해제 정리 확인
-  - [ ] Windows 11 실제 종료에서 ADB 오류창 제거와 Companion 기기 설정 복원 확인
+  - [x] Windows 11 RC2 다중 기기 overlay·절전모드 해제 정리 확인
+  - [x] Windows 11 실제 종료에서 ADB 오류창 제거와 Companion 기기 설정 복원 확인
   - [ ] Windows 7 회사 PC에서 오류창 제거와 기기 설정 복원 재확인
 
 - [x] v1.2.0 구조 분리

@@ -1,4 +1,4 @@
-# DX Companion 1.4.1
+# DX Companion 2.0.0
 
 DX Companion is the optional Android companion bundled with DX Manager. It
 provides recovery actions, authenticated Windows-shutdown protection, and
@@ -38,7 +38,7 @@ shell feature. Verify the official signing fingerprint in `SIGNING.md`.
 
 ---
 
-# DX Companion 1.4.1
+# DX Companion 2.0.0
 
 DX Companion은 DX Manager에 포함되는 선택형 Android 보조 앱입니다. 남은
 가상화면·절전모드 해제 복구, 인증된 Windows 종료 보호와 휴대폰에서 PC로

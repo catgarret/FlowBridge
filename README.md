@@ -249,9 +249,15 @@ resolution, DPI, bitrate, FPS, run options, and additional arguments, then open
 of the three single-window slots automatically applies the saved profile. The
 DeX mode settings are not affected.
 
-## Optional DX Companion
+## Device Diagnostics and Optional DX Companion
 
-The signed **DX Companion 1.4.1** APK is included as an external file under
+In **Settings > Diagnostics**, DX Manager shows the currently selected phone's
+model, Android version, SDK level, One UI version, security patch, transport,
+and an informational compatibility assessment. **Save diagnostic report**
+creates a privacy-redacted text report containing the environment, selected
+device state, connected-device summary, and recent warnings/errors.
+
+The signed **DX Companion 2.0.0** APK is included as an external file under
 `tools\companion`, but it is never installed automatically. In **Settings >
 Diagnostics > DX Companion**, the user can install, update, reinstall, grant
 the required permission, or uninstall it on the currently selected phone.
@@ -570,9 +576,14 @@ Windows 환경에서 비ASCII 파일명을 보존하지 못할 수 있습니다.
 선택하면 저장된 프로필이 자동으로 적용됩니다. DeX 모드 설정에는 영향을 주지
 않습니다.
 
-## 선택형 DX Companion
+## 기기 진단과 선택형 DX Companion
 
-서명된 **DX Companion 1.4.1** APK는 공개 ZIP의 `tools\companion`에 외부 파일
+**설정 > 진단**에는 현재 선택된 휴대폰의 모델, Android 버전, SDK 수준, One UI,
+보안 패치, 연결 방식과 참고용 호환성 판정이 표시됩니다. **진단 보고서 저장**은
+환경·선택 기기 상태·연결 기기 요약·최근 경고와 오류를 개인정보를 가린 텍스트
+파일로 저장합니다.
+
+서명된 **DX Companion 2.0.0** APK는 공개 ZIP의 `tools\companion`에 외부 파일
 형태로 포함되지만 자동으로 설치되지 않습니다. **설정 > 진단 > DX Companion**에서
 사용자가 현재 선택된 휴대폰에 설치·업데이트·재설치하거나 권한을 부여하고 삭제할
 수 있습니다.
