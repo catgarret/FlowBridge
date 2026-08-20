@@ -19,6 +19,9 @@ namespace DexManager.Services
         private static readonly Regex QuotedPath = new Regex(
             "\"[^\"\r\n]*[\\\\/][^\"\r\n]*\"",
             RegexOptions.Compiled);
+        private static readonly Regex AbsoluteWindowsPath = new Regex(
+            @"(?i)(?<![a-z0-9_])(?:[a-z]:[\\/]|\\\\)[^\r\n]*",
+            RegexOptions.Compiled);
 
         public string CreateReport(
             string appVersion,
@@ -42,7 +45,7 @@ namespace DexManager.Services
                 Environment.Is64BitOperatingSystem);
             builder.AppendLine(".NET runtime: " + Environment.Version);
             builder.AppendLine("ADB executable: " + FileName(adbPath));
-            builder.AppendLine("ADB version: " + OneLine(adbVersion));
+            builder.AppendLine("ADB version: " + FormatAdbVersion(adbVersion));
             builder.AppendLine("Scrcpy executable: " + FileName(scrcpyPath));
             builder.AppendLine();
 
@@ -70,11 +73,13 @@ namespace DexManager.Services
             }
             else
             {
+                var deviceNumber = 0;
                 foreach (var device in devices.Devices)
                 {
                     if (device == null) continue;
-                    builder.Append("- ");
-                    builder.Append(Safe(device.DisplayName));
+                    deviceNumber++;
+                    builder.Append("- Device ");
+                    builder.Append(deviceNumber);
                     builder.Append(" | identity=");
                     builder.Append(MaskIdentity(device.Identity));
                     builder.Append(" | transports=");
@@ -102,7 +107,7 @@ namespace DexManager.Services
 
             builder.AppendLine();
             builder.AppendLine(
-                "Serials, IP addresses, authentication values, and quoted paths are masked.");
+                "Device names, serials, IP addresses, authentication values, and local paths are masked.");
             return builder.ToString();
         }
 
@@ -116,7 +121,7 @@ namespace DexManager.Services
                 return;
             }
 
-            builder.AppendLine("Name: " + Safe(diagnostic.DisplayName));
+            builder.AppendLine("Name: <device-name>");
             builder.AppendLine("Model: " + Safe(diagnostic.Model));
             builder.AppendLine("Transport: " + diagnostic.TransportKind);
             builder.AppendLine("Serial: " + MaskSerial(diagnostic.Serial));
@@ -152,9 +157,9 @@ namespace DexManager.Services
                 (runtime.Companion != null && runtime.Companion.IsAttached));
             if (runtime.Transfers != null)
             {
-                builder.AppendLine("PC to phone transfers: active=" +
-                    runtime.Transfers.ActivePcToPhoneSessions +
-                    ", queued=" +
+                builder.AppendLine("PC to phone transfer sessions: " +
+                    runtime.Transfers.ActivePcToPhoneSessions);
+                builder.AppendLine("PC to phone queued items: " +
                     runtime.Transfers.QueuedPcToPhoneItems);
                 builder.AppendLine("Phone to PC transfers: active=" +
                     runtime.Transfers.ActivePhoneToPcTransfers);
@@ -227,7 +232,31 @@ namespace DexManager.Services
             result = IpAddress.Replace(result, "<ip>");
             result = TokenValue.Replace(result, "$1=<redacted>");
             result = QuotedPath.Replace(result, "\"<path>\"");
+            result = AbsoluteWindowsPath.Replace(result, "<path>");
             return result;
+        }
+
+        private static string FormatAdbVersion(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return "unknown";
+
+            var versionLines = value
+                .Replace("\r", string.Empty)
+                .Split('\n')
+                .Select(line => line.Trim())
+                .Where(line =>
+                    line.StartsWith(
+                        "Android Debug Bridge version",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith(
+                        "Version ",
+                        StringComparison.OrdinalIgnoreCase))
+                .Take(2)
+                .ToArray();
+            if (versionLines.Length > 0)
+                return string.Join(" | ", versionLines);
+
+            return SanitizeLogLine(OneLine(value), null);
         }
 
         private static IEnumerable<string> CollectSensitiveSerials(

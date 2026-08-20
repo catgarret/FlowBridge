@@ -6,7 +6,7 @@
   - [x] Windows 버전 2.0.0과 DX Companion 2.0.0(versionCode 6) 일치
   - [x] 다중 기기 README·사용 설명서·FAQ·개발 문서 최신화
   - [x] 진단 페이지의 선택 기기 Android·SDK·One UI·보안 패치 진단
-  - [x] serial·IP·토큰·사용자 경로를 가린 진단 보고서 저장
+  - [x] 기기 이름·serial·IP·토큰·로컬 경로를 가린 진단 보고서 저장
   - [x] Windows x64/.NET Framework 4.6.2 Release와 전체 회귀 테스트
   - [x] Android 단위 테스트·lint·Release APK 서명 및 해시 재검증
   - [x] 공개용 ZIP의 필수 파일과 비밀키·설정·로그 제외 최종 검사

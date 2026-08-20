@@ -297,4 +297,21 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="SyncCompanionApk" AfterTargets="Build">
+    <PropertyGroup>
+      <CompanionApkSource>$(MSBuildProjectDirectory)\..\DXDisplayCleanup\app\build\outputs\apk\release\app-release.apk</CompanionApkSource>
+      <CompanionApkTarget>$(TargetDir)tools\companion\DX-Companion.apk</CompanionApkTarget>
+    </PropertyGroup>
+    <MakeDir
+      Directories="$(TargetDir)tools\companion"
+      Condition="Exists('$(CompanionApkSource)')" />
+    <Copy
+      SourceFiles="$(CompanionApkSource)"
+      DestinationFiles="$(CompanionApkTarget)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(CompanionApkSource)')" />
+    <Delete
+      Files="$(CompanionApkTarget)"
+      Condition="!Exists('$(CompanionApkSource)') And Exists('$(CompanionApkTarget)')" />
+  </Target>
 </Project>

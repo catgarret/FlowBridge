@@ -403,9 +403,9 @@ Its compatibility result is informational and does not block launching. Select
 **Refresh** after a firmware update or transport change.
 
 Select **Save diagnostic report** to create a privacy-redacted text report.
-Serial numbers, IP addresses, tokens and user-profile paths are masked. Review
-the file before sharing it because third-party ADB/scrcpy messages may still
-contain environment-specific details.
+Device names, serial numbers, IP addresses, tokens and local paths are masked.
+Review the file before sharing it because third-party ADB/scrcpy messages may
+still contain environment-specific details.
 
 <p align="center">
   <img src="images/en/guide-diagnostics-en.png" width="900" alt="DX Manager Diagnostics page">

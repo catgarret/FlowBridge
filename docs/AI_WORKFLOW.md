@@ -54,6 +54,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package-Release.ps
 
 개발 산출물은 `DexManager\bin\Release`, 사용자 배포 산출물은
 `dist\DX Manager`와 버전이 포함된 x64 ZIP으로 구분한다.
+메이님에게 전달하거나 GitHub에 게시할 최종 릴리스 산출물은 항상
+`E:\vs\dex system\dist`에서 생성·확인한다. C 드라이브의 Codex 작업 폴더에서
+만든 `bin\Release`와 `dist`는 빌드·실기 검증용으로만 사용하며 정식 릴리스본으로
+안내하지 않는다.
 스크립트는 DX Manager 실행 여부를 확인하고 번들 Release ADB 서버를 정리한
 뒤 Debug/Release의 로그와 스크린샷 테스트 파일을 비운다.
 v2.0.0 패키지는 Scrcpy 4.1 런타임,
