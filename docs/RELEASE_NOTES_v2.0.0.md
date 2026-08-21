@@ -78,6 +78,20 @@ The public ZIP is portable. Extract the complete folder and do not copy only
 `DXManager.exe`. DX Companion is included but is never installed without the
 user pressing the install button.
 
+### SHA-256
+
+- `DX-Manager-v2.0.0-win-x64.zip`:
+  `CA78A306F61235708DBDDE0541C06E071C646DC0F8B47BC8F2487E5518E8AF86`
+- `DXManager.exe`:
+  `D7EF8F373F1B42A2A4518D06D2BF5956352788614F31598D605BD833E589B6DC`
+- Bundled `DX-Companion.apk`:
+  `7CD40017789E22440DCA0291AB0C45ADB564A19D8A623E669F373395536B880F`
+
+The Microsoft Defender false-positive submission for this exact
+`DXManager.exe` build was reviewed before publication, and the detection was
+removed. The source and reproducible package contents remain available in this
+repository for independent inspection.
+
 ---
 
 ## 한국어
@@ -153,3 +167,16 @@ Windows 종료 시 정리는 이미 인증된 DX Companion 2.0.0 guardian 세션
 공개 ZIP은 설치가 필요 없는 포터블 패키지입니다. 폴더 전체의 압축을 풀고
 `DXManager.exe`만 따로 복사하지 마십시오. DX Companion은 포함되지만 사용자가
 설치 버튼을 누르지 않으면 자동으로 설치되지 않습니다.
+
+### SHA-256
+
+- `DX-Manager-v2.0.0-win-x64.zip`:
+  `CA78A306F61235708DBDDE0541C06E071C646DC0F8B47BC8F2487E5518E8AF86`
+- `DXManager.exe`:
+  `D7EF8F373F1B42A2A4518D06D2BF5956352788614F31598D605BD833E589B6DC`
+- 번들 `DX-Companion.apk`:
+  `7CD40017789E22440DCA0291AB0C45ADB564A19D8A623E669F373395536B880F`
+
+이 `DXManager.exe` 빌드에 대한 Microsoft Defender 오탐 신고는 게시 전에
+검토가 끝나 탐지가 해제되었습니다. 소스와 재현 가능한 패키지 구성은 독립적인
+확인을 위해 저장소에 공개되어 있습니다.

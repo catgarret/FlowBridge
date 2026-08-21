@@ -89,6 +89,10 @@ scrcpy 창 제목에는 휴대폰 표시 이름이 포함됩니다. DX Companion
 받은 파일은 설정된 PC 저장 폴더 아래 휴대폰 이름별 하위 폴더에 나누어
 저장됩니다.
 
+<p align="center">
+  <img src="images/en/guide-device-selection-v2-en.png" width="760" alt="USB 또는 무선 ADB 설정 대상 휴대폰 선택">
+</p>
+
 ## 3. DeX 모드
 
 왼쪽 메뉴에서 **DeX**를 선택합니다.
@@ -391,7 +395,7 @@ ADB는 `34.0.1-9979309`로 표시됩니다.
 공유하기 전에 내용을 한 번 확인하십시오.
 
 <p align="center">
-  <img src="images/ko/guide-diagnostics-ko.png" width="900" alt="DX Manager 진단 메뉴">
+  <img src="images/en/guide-device-diagnostics-v2-en.png" width="760" alt="선택 기기 진단과 DX Companion 상태">
 </p>
 
 진단 페이지에서 **고급 옵션 표시**를 누르면 기기 감시 주기, 가상
@@ -483,6 +487,10 @@ DX Companion은 DX Manager와 인증된 guardian 연결이 끊긴 뒤 일정 시
 대기 시간이 끝나기 전에 같은 인증 세션이 다시 연결되면 예약된 정리는
 취소됩니다.
 
+<p align="center">
+  <img src="images/en/guide-companion-quick-settings-en.png" width="420" alt="DX Companion 빠른 설정 타일과 위젯 및 지연 정리 옵션">
+</p>
+
 따라서 일시적인 USB 또는 Wi-Fi 끊김만으로 기존 가상화면을 바로 지울 필요가
 없습니다. Windows 종료 시 DX Manager는 새 ADB 보조 프로세스를 실행하지 않고,
 이미 연결되어 검증된 Companion 세션이 있을 때만 즉시 정리를 요청합니다. 이는
@@ -506,6 +514,10 @@ Android의 절전모드 해제 개발자 옵션으로 한정됩니다. 네트워
 Manager와 인증된 로컬 전송·guardian 세션에만 사용하며 분석 수집, 클라우드
 전송과 임의 shell 실행 기능은 포함하지 않습니다.
 
+<p align="center">
+  <img src="images/en/guide-companion-home-en.png" width="420" alt="휴대폰에 남은 보조 화면이 표시된 DX Companion 정리 화면">
+</p>
+
 앱을 사용하지 않아도 [FAQ의 수동 제거 절차](FAQ_KO.md#q1-휴대폰에-작은-화면보조-디스플레이이-남아-있습니다)로
 같은 화면을 제거할 수 있습니다.
 
@@ -518,6 +530,10 @@ Manager와 인증된 로컬 전송·guardian 세션에만 사용하며 분석 �
    보내기**를 선택합니다.
 4. 폴더는 Android 공유 메뉴로 보낼 수 없으므로 DX Companion의 **폴더 보내기 >
    폴더 선택**을 사용합니다.
+
+<p align="center">
+  <img src="images/en/guide-companion-file-transfer-en.png" width="420" alt="DX Companion 파일 및 폴더 전송 화면">
+</p>
 
 받을 위치는 DX Manager의 **설정 > 경로 / ADB > 휴대폰→PC 저장 폴더**에서
 변경할 수 있습니다. 전송 데이터는 현재 선택된 휴대폰의 인증된 ADB reverse

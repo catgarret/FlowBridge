@@ -96,6 +96,10 @@ Scrcpy window titles include the phone display name. Files received from DX
 Companion are stored under a phone-name subfolder inside the configured PC
 destination.
 
+<p align="center">
+  <img src="images/en/guide-device-selection-v2-en.png" width="760" alt="Selecting a target phone for USB or wireless ADB settings">
+</p>
+
 ## 3. DeX Mode
 
 Select **DeX** in the left navigation.
@@ -408,7 +412,7 @@ Review the file before sharing it because third-party ADB/scrcpy messages may
 still contain environment-specific details.
 
 <p align="center">
-  <img src="images/en/guide-diagnostics-en.png" width="900" alt="DX Manager Diagnostics page">
+  <img src="images/en/guide-device-diagnostics-v2-en.png" width="760" alt="DX Manager selected-device diagnostics and DX Companion status">
 </p>
 
 Select **Show advanced options** on the Diagnostics page to access device
@@ -504,6 +508,10 @@ connection to DX Manager is lost. The choices are **Immediately**, **1 minute**,
 automatically**. The default is **5 minutes**. Reconnecting the same authenticated
 session before the delay expires cancels the pending cleanup.
 
+<p align="center">
+  <img src="images/en/guide-companion-quick-settings-en.png" width="420" alt="DX Companion Quick Settings tile, widget and delayed cleanup options">
+</p>
+
 A temporary USB or Wi-Fi interruption therefore does not have to destroy the
 existing virtual display. During Windows shutdown, DX Manager does not start a
 new ADB helper; it asks an already connected and verified Companion session to
@@ -527,6 +535,10 @@ setting and Android's Stay-awake developer option. Network permissions are used
 only for authenticated local transfer and guardian sessions with DX Manager;
 the app contains no analytics, cloud-transfer, or arbitrary-shell feature.
 
+<p align="center">
+  <img src="images/en/guide-companion-home-en.png" width="420" alt="DX Companion cleanup screen with a simulated display visible on the phone">
+</p>
+
 You can remove the same display without the app by following the
 [manual FAQ procedure](FAQ_EN.md#q1-a-small-screen-secondary-display-remains-on-the-phone).
 
@@ -539,6 +551,10 @@ You can remove the same display without the app by following the
    Manager** from Android's Share menu.
 4. Android's Share menu does not provide folders. To send a folder, use DX
    Companion's **Send folder > Select folder** action instead.
+
+<p align="center">
+  <img src="images/en/guide-companion-file-transfer-en.png" width="420" alt="DX Companion file and folder transfer screen">
+</p>
 
 Change the destination under **Settings > Paths / ADB > Phone-to-PC destination
 folder** in DX Manager. Data is streamed directly to the PC through an
