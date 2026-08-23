@@ -4,6 +4,10 @@
 
 ## Unreleased - experimental macOS port
 
+- Rebuilt Calls and Messages as a window-filling split view with independently scrolling lists, redesigned quick-launch assignment and sidebar device controls, and added live Galaxy notification browsing and dismissal.
+- 전화·문자를 창 높이에 맞는 독립 스크롤 분할 화면으로 재구성하고 앱 바로 실행 지정·사이드바 기기 제어를 개선했으며, Galaxy 현재 알림 조회와 삭제를 추가했습니다.
+- Persisted and restored both Galaxy brightness and automatic-brightness mode strictly around active screen sessions, including option-off, app quit, and crash-recovery paths.
+- Galaxy 밝기와 자동 밝기 모드를 화면 세션 실행 중에만 변경하고 옵션 해제·앱 종료·비정상 종료 후 재실행에도 복원하도록 수정했습니다.
 - Integrated screen launch controls into the connected-device card, clarified automatic brightness restoration with contextual help, added cached Galaxy contact photos with explicit row selection, and aligned display-quality controls.
 - 연결된 기기 카드에 화면 실행 기능을 통합하고 밝기 자동 복원 도움말을 정리했으며, Galaxy 연락처 사진 캐시·명확한 행 선택 표시·화면 품질 설정 정렬을 추가했습니다.
 

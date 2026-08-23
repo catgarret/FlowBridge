@@ -44,6 +44,12 @@ public struct PhoneScreenState: Equatable, Sendable {
     public init(isAwake: Bool, isLocked: Bool) { self.isAwake = isAwake; self.isLocked = isLocked }
 }
 
+public struct ScreenBrightnessState: Codable, Equatable, Sendable {
+    public let value: Int
+    public let mode: Int
+    public init(value: Int, mode: Int) { self.value = value; self.mode = mode }
+}
+
 public struct PhoneContact: Identifiable, Hashable, Sendable {
     public let name: String; public let number: String; public let photoURI: String
     public var id: String { "\(name)|\(number)" }
@@ -113,9 +119,10 @@ public struct AppSettings: Codable, Sendable {
     public var messageNotificationsEnabled = false
     public var appNotificationsEnabled = false
     public var turnPhoneScreenOffOnStart = false
+    public var pendingBrightnessRestores: [String: ScreenBrightnessState] = [:]
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, controlBarPosition, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
+    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, controlBarPosition, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart, pendingBrightnessRestores }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -141,6 +148,7 @@ public struct AppSettings: Codable, Sendable {
         messageNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .messageNotificationsEnabled) ?? false
         appNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .appNotificationsEnabled) ?? false
         turnPhoneScreenOffOnStart = try values.decodeIfPresent(Bool.self, forKey: .turnPhoneScreenOffOnStart) ?? false
+        pendingBrightnessRestores = try values.decodeIfPresent([String: ScreenBrightnessState].self, forKey: .pendingBrightnessRestores) ?? [:]
     }
 }
 
@@ -148,7 +156,7 @@ public enum PhoneNotificationKind: String, Codable, Sendable {
     case call, message, application
 }
 
-public struct PhoneNotification: Hashable, Sendable {
+public struct PhoneNotification: Identifiable, Hashable, Sendable {
     public let key: String
     public let package: String
     public let title: String
@@ -160,6 +168,7 @@ public struct PhoneNotification: Hashable, Sendable {
     }
 
     public var fingerprint: String { "\(key)|\(title)|\(body)" }
+    public var id: String { key }
 }
 
 public enum DXError: LocalizedError {

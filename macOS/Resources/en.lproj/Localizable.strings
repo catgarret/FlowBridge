@@ -255,3 +255,13 @@
 "영상 창이 표시되는지 확인하고 있습니다." = "Checking that the video window is visible.";
 "해상도" = "Resolution";
 "Galaxy의 주소록·최근 통화·SMS는 연결 중에만 읽습니다. 연락처 사진만 빠른 표시를 위해 Mac에 캐시하며, 통화 음성은 Galaxy 또는 연결된 Bluetooth 기기에서 처리됩니다." = "Galaxy contacts, recent calls, and SMS are read only while connected. Only contact photos are cached on this Mac for faster display; call audio stays on the Galaxy or its connected Bluetooth device.";
+"연결됨" = "Connected";
+"미러링" = "Mirror";
+"기기 별칭 지정 또는 수정" = "Set or edit device name";
+"앱 검색" = "Search Apps";
+"알림 항목 선택" = "Choose Notification Types";
+"Galaxy 알림" = "Galaxy Notifications";
+"Galaxy 알림창에 남아 있는 항목" = "Notifications currently visible on Galaxy";
+"모두 지우기" = "Clear All";
+"남아 있는 알림 없음" = "No Notifications";
+"Galaxy에서 알림 지우기" = "Dismiss on Galaxy";

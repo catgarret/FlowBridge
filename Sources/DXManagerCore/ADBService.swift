@@ -106,9 +106,18 @@ public struct ADBService: Sendable {
             .trimmingCharacters(in: .whitespacesAndNewlines)) ?? 128
     }
 
+    public func screenBrightnessMode(serial: String) throws -> Int {
+        Int(try shell(serial: serial, ["settings", "get", "system", "screen_brightness_mode"]).trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+    }
+
     public func setScreenBrightness(serial: String, value: Int) throws {
         _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness_mode", "0"])
         _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness", String(max(0, min(255, value)))])
+    }
+
+    public func restoreScreenBrightness(serial: String, state: ScreenBrightnessState) throws {
+        _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness", String(max(0, min(255, state.value)))])
+        _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness_mode", String(state.mode)])
     }
 
     public func nativeDisplaySize(serial: String) throws -> (width: Int, height: Int) {
@@ -206,6 +215,11 @@ public struct ADBService: Sendable {
 
     public func notifications(serial: String) throws -> [PhoneNotification] {
         NotificationParser.parse(try shell(serial: serial, ["dumpsys", "notification", "--noredact"]))
+    }
+
+    public func dismissNotification(serial: String, key: String) throws {
+        guard !key.isEmpty, key.unicodeScalars.allSatisfy(CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789|:._-@").contains) else { throw DXError.commandFailed("알림 키가 올바르지 않습니다.") }
+        _ = try shell(serial: serial, ["cmd notification snooze --for 31536000000 '\(key)'"])
     }
 
     public func contacts(serial: String) throws -> [PhoneContact] {

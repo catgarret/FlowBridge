@@ -30,6 +30,7 @@ final class AppModel: ObservableObject {
     @Published var phoneSearch = ""
     @Published var contacts: [PhoneContact] = []
     @Published var contactPhotoURLs: [String: URL] = [:]
+    @Published var activeNotifications: [PhoneNotification] = []
     @Published var recentCalls: [PhoneCall] = []
     @Published var recentMessages: [PhoneMessage] = []
     @Published var wirelessEndpoint = ""
@@ -77,7 +78,8 @@ final class AppModel: ObservableObject {
     private var notificationBaselineSerial = ""
     private var seenNotificationFingerprints: Set<String> = []
     private var lastPhoneDataRefresh = Date.distantPast
-    private var brightnessBeforeSession: Int?
+    private var brightnessBeforeSession: ScreenBrightnessState?
+    private var brightnessSessionSerial = ""
     private var sessionAttempt = UUID()
     private var didConfigureLaunchPresentation = false
     private var protectedScreenPollInProgress = false
@@ -420,6 +422,7 @@ final class AppModel: ObservableObject {
         notificationBaselineSerial = ""
         seenNotificationFingerprints.removeAll()
         if installedApps.isEmpty, !selectedSerial.isEmpty { loadPackages() }
+        if sessionPhase == .idle { restoreBrightnessIfNeeded(serial: selectedSerial) }
     }
 
     func deviceLabel(_ device: Device) -> String {
@@ -435,7 +438,7 @@ final class AppModel: ObservableObject {
     func saveDeviceAlias() {
         guard let key = selectedDeviceKey else { status = "별칭을 지정할 기기를 선택해 주세요."; return }
         let alias = deviceAlias.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !alias.isEmpty else { status = "기기 별칭을 입력해 주세요."; return }
+        guard !alias.isEmpty else { removeDeviceAlias(); return }
         appSettings.deviceAliases[key] = String(alias.prefix(40))
         deviceAlias = appSettings.deviceAliases[key] ?? alias
         save()
@@ -462,6 +465,31 @@ final class AppModel: ObservableObject {
                 else if !granted { self?.status = "macOS 시스템 설정에서 Flow Bridge 알림을 허용해 주세요." }
                 else { self?.status = "휴대폰 알림 전달을 켰습니다." }
             }
+        }
+    }
+
+    func loadActiveNotifications() {
+        let serial = selectedSerial
+        perform { [settings = appSettings] in
+            guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let items = try ADBService(executable: adbPath).notifications(serial: serial)
+            return { model in model.activeNotifications = items; model.status = "Galaxy 알림을 불러왔습니다." }
+        }
+    }
+
+    func dismissNotification(_ item: PhoneNotification) { dismissNotifications([item]) }
+    func dismissAllNotifications() { dismissNotifications(activeNotifications) }
+
+    private func dismissNotifications(_ items: [PhoneNotification]) {
+        let serial = selectedSerial
+        guard !items.isEmpty else { return }
+        perform { [settings = appSettings] in
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let adb = ADBService(executable: adbPath)
+            for item in items { try adb.dismissNotification(serial: serial, key: item.key) }
+            let remaining = try adb.notifications(serial: serial)
+            return { model in model.activeNotifications = remaining; model.status = "Galaxy 알림을 정리했습니다." }
         }
     }
 
@@ -509,6 +537,18 @@ final class AppModel: ObservableObject {
         packageNames[slot] = package
         save()
         status = "앱 바로 실행 \(slot + 1)에 지정했습니다."
+    }
+
+    func toggleFavorite(package: String, slot: Int) {
+        guard packageNames.indices.contains(slot) else { return }
+        if packageNames[slot] == package {
+            packageNames[slot] = ""
+            save()
+            status = "앱 바로 실행 \(slot + 1) 지정을 해제했습니다."
+        } else {
+            for index in packageNames.indices where packageNames[index] == package { packageNames[index] = "" }
+            assignFavorite(package: package, slot: slot)
+        }
     }
 
     func chooseAndTransfer() {
@@ -697,7 +737,8 @@ final class AppModel: ObservableObject {
         captureWindowPlacements()
         sessionAttempt = UUID()
         controller?.stop(serial: serial)
-        restoreBrightnessIfNeeded(serial: serial)
+        let restoreSerials = Set(appSettings.pendingBrightnessRestores.keys).union(brightnessSessionSerial.isEmpty ? [] : [brightnessSessionSerial])
+        for restoreSerial in restoreSerials { restoreBrightnessIfNeeded(serial: restoreSerial) }
         hasActiveSession = false
         sessionPhase = .idle
         phoneNeedsUnlock = false
@@ -708,7 +749,16 @@ final class AppModel: ObservableObject {
         captureWindowPlacements()
         miniBars.closeAll()
         if !selectedSerial.isEmpty { controller?.stop(serial: selectedSerial) }
+        let restoreSerial = brightnessSessionSerial.isEmpty ? selectedSerial : brightnessSessionSerial
+        if let state = appSettings.pendingBrightnessRestores[restoreSerial] ?? brightnessBeforeSession,
+           let adbPath = ToolLocator.adb(appSettings.adbPath) {
+            try? ADBService(executable: adbPath).restoreScreenBrightness(serial: restoreSerial, state: state)
+            brightnessBeforeSession = nil
+            brightnessSessionSerial = ""
+            appSettings.pendingBrightnessRestores.removeValue(forKey: restoreSerial)
+        }
         controller?.stopAll()
+        if let data = try? JSONEncoder().encode(appSettings) { try? data.write(to: Self.settingsURL, options: .atomic) }
         NSApplication.shared.terminate(nil)
     }
 
@@ -834,6 +884,12 @@ final class AppModel: ObservableObject {
         status = "설정을 저장했습니다."
     }
 
+    func brightnessSettingChanged() {
+        appSettings.turnPhoneScreenOffOnStart = turnPhoneScreenOffOnStart
+        if !turnPhoneScreenOffOnStart { restoreBrightnessIfNeeded(serial: selectedSerial) }
+        save()
+    }
+
     private func start(exclusiveMainDisplay: Bool = false, trackMainSession: Bool = false, _ action: @escaping @Sendable (DXSessionController, String, DisplaySettings) throws -> Void) {
         if trackMainSession && sessionPhase == .launching { return }
         let serial = selectedSerial
@@ -865,18 +921,20 @@ final class AppModel: ObservableObject {
                 controller.stopMainDisplays(serial: serial)
                 throw DXError.commandFailed("영상 창을 열지 못했습니다. Galaxy 잠금을 해제한 뒤 다시 시도해 주세요.")
             }
-            let previousBrightness = dimPhone && trackMainSession ? (try? adb.screenBrightness(serial: serial)) : nil
+            let previousBrightness = dimPhone && trackMainSession ? ScreenBrightnessState(value: (try? adb.screenBrightness(serial: serial)) ?? 128, mode: (try? adb.screenBrightnessMode(serial: serial)) ?? 0) : nil
             if dimPhone && trackMainSession { try? adb.setScreenBrightness(serial: serial, value: 0) }
             return { model in
                 if trackMainSession && model.sessionAttempt != attempt {
                     controller.stopMainDisplays(serial: serial)
-                    if let previousBrightness { Task.detached { try? adb.setScreenBrightness(serial: serial, value: previousBrightness) } }
+                    if let previousBrightness { Task.detached { try? adb.restoreScreenBrightness(serial: serial, state: previousBrightness) } }
                     return
                 }
                 model.controller = controller
                 model.mediaVolume = currentVolume
                 if trackMainSession {
                     model.brightnessBeforeSession = previousBrightness
+                    model.brightnessSessionSerial = previousBrightness == nil ? "" : serial
+                    if let previousBrightness { model.appSettings.pendingBrightnessRestores[serial] = previousBrightness; model.save() }
                     model.hasActiveSession = true
                     model.sessionPhase = .running
                     model.phoneNeedsUnlock = screenState.isLocked
@@ -903,10 +961,16 @@ final class AppModel: ObservableObject {
     }
 
     private func restoreBrightnessIfNeeded(serial: String) {
-        guard let value = brightnessBeforeSession, !serial.isEmpty,
+        guard !serial.isEmpty,
               let adbPath = ToolLocator.adb(appSettings.adbPath) else { return }
-        brightnessBeforeSession = nil
-        Task.detached { try? ADBService(executable: adbPath).setScreenBrightness(serial: serial, value: value) }
+        guard let state = appSettings.pendingBrightnessRestores[serial] ?? (brightnessSessionSerial == serial ? brightnessBeforeSession : nil) else { return }
+        if brightnessSessionSerial == serial { brightnessBeforeSession = nil; brightnessSessionSerial = "" }
+        Task.detached { [weak self] in
+            do {
+                try ADBService(executable: adbPath).restoreScreenBrightness(serial: serial, state: state)
+                await MainActor.run { self?.appSettings.pendingBrightnessRestores.removeValue(forKey: serial); self?.save() }
+            } catch { }
+        }
     }
 
     private func perform(showBusy: Bool = true, _ work: @escaping @Sendable () throws -> (@MainActor (AppModel) -> Void)) {
@@ -952,6 +1016,7 @@ final class AppModel: ObservableObject {
                     guard let self else { return }
                     defer { self.notificationPollInProgress = false }
                     let current = Set(notifications.map(\.fingerprint))
+                    self.activeNotifications = notifications
                     if isNewBaseline {
                         self.notificationBaselineSerial = serial
                         self.seenNotificationFingerprints = current
