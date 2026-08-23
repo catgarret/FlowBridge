@@ -279,7 +279,7 @@ private struct AppsView: View {
                     ForEach(0..<3, id: \.self) { slot in
                         let name = model.installedApps.first(where: { $0.package == model.packageNames[slot] })?.name ?? (model.packageNames[slot] == "com.android.settings" ? "설정" : "지정 안 됨")
                         HStack(spacing: 14) {
-                            Text("\(slot + 1)").font(.headline).foregroundStyle(.white).frame(width: 30, height: 30).background(Color.accentColor, in: Circle())
+                            AppIconView(package: model.packageNames[slot], url: model.appIconURLs[model.packageNames[slot]], fallback: "\(slot + 1)").onAppear { model.requestAppIcon(package: model.packageNames[slot]) }
                             VStack(alignment: .leading, spacing: 2) { Text(name).font(.headline).lineLimit(1); Text("⌘\(slot + 1)").font(.caption).foregroundStyle(.secondary) }
                             Spacer(); Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent).disabled(model.packageNames[slot].isEmpty).keyboardShortcut(KeyEquivalent(Character(String(slot + 1))), modifiers: .command)
                         }.padding(.vertical, 13)
@@ -305,7 +305,7 @@ private struct AppPickerSheet: View {
             let grouped = Dictionary(grouping: Array(matches.prefix(300))) { indexKey($0.name) }.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
             ScrollViewReader { proxy in
                 ZStack(alignment: .trailing) {
-                    List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in HStack { VStack(alignment: .leading, spacing: 2) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.secondary) }; Spacer(); HStack(spacing: 5) { ForEach(0..<3) { slot in Button("\(slot + 1)") { model.toggleFavorite(package: app.package, slot: slot) }.buttonStyle(.borderedProminent).tint(model.packageNames[slot] == app.package ? Color.accentColor : Color.secondary.opacity(0.35)).help("⌘\(slot + 1) 바로 실행 지정") } }; Button("실행") { model.startApp(package: app.package) } } } }.id(letter) } }
+                    List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in HStack { AppIconView(package: app.package, url: model.appIconURLs[app.package], fallback: String(app.name.prefix(1))).onAppear { model.requestAppIcon(package: app.package) }; VStack(alignment: .leading, spacing: 2) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.secondary) }; Spacer(); HStack(spacing: 5) { ForEach(0..<3) { slot in Button("\(slot + 1)") { model.toggleFavorite(package: app.package, slot: slot) }.buttonStyle(.borderedProminent).tint(model.packageNames[slot] == app.package ? Color.accentColor : Color.secondary.opacity(0.35)).help("⌘\(slot + 1) 바로 실행 지정") } }; Button("실행") { model.startApp(package: app.package) } } } }.id(letter) } }
                     if model.appSearch.isEmpty { VStack(spacing: 1) { ForEach(grouped.map(\.key), id: \.self) { letter in Button(letter) { withAnimation { proxy.scrollTo(letter, anchor: .top) } }.buttonStyle(.plain).font(.caption2.weight(.semibold)).foregroundStyle(.blue) } }.padding(.trailing, 6) }
                 }
             }
@@ -471,6 +471,16 @@ private struct ContactAvatar: View {
     }
 }
 
+private struct AppIconView: View {
+    let package: String; let url: URL?; let fallback: String; var systemFallback = "app.fill"
+    var body: some View {
+        Group {
+            if let url, let image = NSImage(contentsOf: url) { Image(nsImage: image).resizable().scaledToFit() }
+            else { ZStack { RoundedRectangle(cornerRadius: 9).fill(Color.secondary.opacity(0.12)); if fallback.isEmpty { Image(systemName: systemFallback).foregroundStyle(.secondary) } else { Text(fallback).font(.headline).foregroundStyle(.secondary) } } }
+        }.frame(width: 38, height: 38).clipShape(RoundedRectangle(cornerRadius: 9))
+    }
+}
+
 private struct TransferView: View {
     @EnvironmentObject private var model: AppModel
     @State private var selectedRemote: RemoteFile?
@@ -565,7 +575,8 @@ private struct NotificationsView: View {
             Card("Galaxy 알림", icon: "iphone.and.arrow.forward") {
                 HStack { Text("Galaxy 알림창에 남아 있는 항목").foregroundStyle(.secondary); Spacer(); Button("모두 지우기", role: .destructive, action: model.dismissAllNotifications).disabled(model.activeNotifications.isEmpty) }
                 if model.activeNotifications.isEmpty { VStack(spacing: 8) { Image(systemName: "bell.slash").font(.system(size: 30)).foregroundStyle(.secondary); Text("남아 있는 알림 없음").foregroundStyle(.secondary) }.frame(maxWidth: .infinity).padding(28) }
-                else { VStack(spacing: 0) { ForEach(model.activeNotifications) { item in HStack(spacing: 12) { Image(systemName: item.kind == .call ? "phone" : item.kind == .message ? "message" : "app.badge").foregroundStyle(.blue).frame(width: 28); VStack(alignment: .leading, spacing: 3) { Text(item.title.isEmpty ? item.package : item.title).fontWeight(.medium); Text(item.body).font(.caption).foregroundStyle(.secondary).lineLimit(2) }; Spacer(); Button { model.dismissNotification(item) } label: { Image(systemName: "xmark") }.buttonStyle(.borderless).help("Galaxy에서 알림 지우기") }.padding(.vertical, 10); Divider() } } }
+                else { VStack(spacing: 0) { ForEach(model.activeNotifications) { item in HStack(spacing: 14) { AppIconView(package: item.package, url: model.appIconURLs[item.package], fallback: "", systemFallback: item.kind == .call ? "phone.fill" : item.kind == .message ? "message.fill" : "app.fill").onAppear { model.requestAppIcon(package: item.package) }; VStack(alignment: .leading, spacing: 4) { Text(item.title.isEmpty ? item.package : item.title).fontWeight(.semibold); Text(item.body).font(.subheadline).foregroundStyle(.secondary).lineLimit(2); Text(item.package).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Button { model.dismissNotification(item) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("Galaxy에서 알림 지우기") }.padding(.vertical, 13); Divider() } } }
+                if !model.notificationDeliveryStatus.isEmpty { Text(model.notificationDeliveryStatus).font(.caption).foregroundStyle(.secondary) }
             }
         }.onAppear(perform: model.loadActiveNotifications)
     }
@@ -588,7 +599,7 @@ private struct SettingsView: View {
                         }
                         GridRow {
                             Text("프레임").fontWeight(.medium).frame(width: 72, alignment: .leading)
-                            Picker("프레임", selection: $model.settings.fps) { Text("30 FPS").tag(30); Text("60 FPS").tag(60); Text("120 FPS").tag(120) }.pickerStyle(.segmented).labelsHidden().frame(width: 360)
+                            HStack(spacing: 8) { PresetButton(title: "30 FPS", selected: model.settings.fps == 30) { model.settings.fps = 30 }; PresetButton(title: "60 FPS", selected: model.settings.fps == 60) { model.settings.fps = 60 }; PresetButton(title: "120 FPS", selected: model.settings.fps == 120) { model.settings.fps = 120 } }.frame(width: 360, alignment: .leading)
                         }
                     }
                     Text("60 FPS가 기본 권장값입니다. 120 FPS는 기기·연결·Mac 성능에 따라 실제 프레임이 낮아질 수 있습니다.").font(.caption).foregroundStyle(.secondary)

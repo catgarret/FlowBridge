@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Fixed repeated Galaxy notifications being suppressed, surfaced macOS delivery errors, added lazy cached app icons across notifications/search/quick launch, and matched FPS button spacing to resolution presets.
+- 반복 게시된 Galaxy 알림이 누락되던 문제를 수정하고 macOS 전달 오류를 표시하며 알림·앱 검색·바로 실행에 지연 로딩 앱 아이콘 캐시를 적용하고 FPS 버튼 간격을 해상도 프리셋과 통일했습니다.
 - Cleaned legacy and Flow Bridge-owned DEX overlays on reconnect when no screen session is active, preferred the Galaxy-configured device name, and hid the redundant call-list picker label.
 - 화면 세션이 없을 때 재연결 시 과거 및 Flow Bridge 소유 DEX 오버레이를 정리하고 Galaxy에 설정된 기기 이름을 우선 표시하며 불필요한 통화 목록 라벨을 숨겼습니다.
 - Aligned the App Search action to the right side of the Quick Launch Assignments card header.

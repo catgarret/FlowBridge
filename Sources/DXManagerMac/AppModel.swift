@@ -31,6 +31,8 @@ final class AppModel: ObservableObject {
     @Published var contacts: [PhoneContact] = []
     @Published var contactPhotoURLs: [String: URL] = [:]
     @Published var activeNotifications: [PhoneNotification] = []
+    @Published var appIconURLs: [String: URL] = [:]
+    @Published var notificationDeliveryStatus = ""
     @Published var recentCalls: [PhoneCall] = []
     @Published var recentMessages: [PhoneMessage] = []
     @Published var wirelessEndpoint = ""
@@ -84,6 +86,7 @@ final class AppModel: ObservableObject {
     private var didConfigureLaunchPresentation = false
     private var protectedScreenPollInProgress = false
     private var overlayCleanupInProgress: Set<String> = []
+    private var iconLoadsInProgress: Set<String> = []
 
     init() {
         load()
@@ -101,6 +104,7 @@ final class AppModel: ObservableObject {
         turnPhoneScreenOffOnStart = appSettings.turnPhoneScreenOffOnStart
         packageNames = appSettings.favoritePackages
         UNUserNotificationCenter.current().delegate = notificationDelegate
+        if phoneNotificationsEnabled || messageNotificationsEnabled || appNotificationsEnabled { notificationSettingsChanged() }
         refresh()
         if automaticReconnect, !wirelessEndpoint.isEmpty { connectWireless() }
         checkForUpdates()
@@ -465,7 +469,7 @@ final class AppModel: ObservableObject {
             Task { @MainActor in
                 if let error { self?.status = "macOS 알림 권한 요청 실패: \(error.localizedDescription)" }
                 else if !granted { self?.status = "macOS 시스템 설정에서 Flow Bridge 알림을 허용해 주세요." }
-                else { self?.status = "휴대폰 알림 전달을 켰습니다." }
+                else { self?.status = "휴대폰 알림 전달을 켰습니다."; self?.notificationDeliveryStatus = "macOS 알림 허용됨" }
             }
         }
     }
@@ -1049,10 +1053,7 @@ final class AppModel: ObservableObject {
                         let enabled = item.kind == .call ? options.0 : item.kind == .message ? options.1 : options.2
                         if enabled { self.deliver(item) }
                     }
-                    self.seenNotificationFingerprints.formUnion(current)
-                    if self.seenNotificationFingerprints.count > 4000 {
-                        self.seenNotificationFingerprints = current
-                    }
+                    self.seenNotificationFingerprints = current
                 }
             } catch {
                 await MainActor.run { self?.notificationPollInProgress = false }
@@ -1078,8 +1079,44 @@ final class AppModel: ObservableObject {
         content.body = item.body
         content.sound = .default
         content.threadIdentifier = "galaxy.\(item.package)"
+        let deliveredTitle = content.title
         let request = UNNotificationRequest(identifier: item.fingerprint, content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { [weak self] error in
+            Task { @MainActor in self?.notificationDeliveryStatus = error.map { "macOS 알림 전달 실패: \($0.localizedDescription)" } ?? "최근 전달: \(deliveredTitle)" }
+        }
+    }
+
+    func requestAppIcon(package: String) {
+        guard !package.isEmpty, appIconURLs[package] == nil, !iconLoadsInProgress.contains(package), !selectedSerial.isEmpty,
+              let adbPath = ToolLocator.adb(appSettings.adbPath) else { return }
+        iconLoadsInProgress.insert(package)
+        let serial = selectedSerial
+        Task.detached { [weak self] in
+            let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("FlowBridge/AppIcons", isDirectory: true)
+            try? FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true)
+            let digest = SHA256.hash(data: Data("\(serial)|\(package)".utf8)).map { String(format: "%02x", $0) }.joined()
+            let output = cache.appendingPathComponent("\(digest).icon")
+            if !FileManager.default.fileExists(atPath: output.path) {
+                let apk = FileManager.default.temporaryDirectory.appendingPathComponent("flowbridge-\(UUID().uuidString).apk")
+                defer { try? FileManager.default.removeItem(at: apk) }
+                do {
+                    let adb = ADBService(executable: adbPath)
+                    let remote = try adb.packagePath(serial: serial, package: package).split(whereSeparator: \.isNewline).first.map(String.init)?.replacingOccurrences(of: "package:", with: "") ?? ""
+                    guard !remote.isEmpty else { throw DXError.commandFailed("앱 경로 없음") }
+                    try adb.pull(serial: serial, remotePath: remote, localURL: apk)
+                    let names = String(data: try Self.runData("/usr/bin/unzip", ["-Z1", apk.path]), encoding: .utf8) ?? ""
+                    let candidates = names.split(whereSeparator: \.isNewline).map(String.init).filter { path in let lower = path.lowercased(); return (lower.hasSuffix(".png") || lower.hasSuffix(".webp")) && (lower.contains("launcher") || lower.contains("app_icon") || lower.hasSuffix("/icon.png")) }
+                    guard let iconPath = candidates.last else { throw DXError.commandFailed("앱 아이콘 없음") }
+                    let data = try Self.runData("/usr/bin/unzip", ["-p", apk.path, iconPath])
+                    try data.write(to: output, options: .atomic)
+                } catch { }
+            }
+            await MainActor.run { if FileManager.default.fileExists(atPath: output.path) { self?.appIconURLs[package] = output }; self?.iconLoadsInProgress.remove(package) }
+        }
+    }
+
+    nonisolated private static func runData(_ executable: String, _ arguments: [String]) throws -> Data {
+        let process = Process(); let pipe = Pipe(); process.executableURL = URL(fileURLWithPath: executable); process.arguments = arguments; process.standardOutput = pipe; process.standardError = FileHandle.nullDevice; try process.run(); let data = pipe.fileHandleForReading.readDataToEndOfFile(); process.waitUntilExit(); guard process.terminationStatus == 0 else { throw DXError.commandFailed("아이콘 추출 실패") }; return data
     }
 
     private func load() {
