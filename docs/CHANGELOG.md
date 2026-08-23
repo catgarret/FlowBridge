@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Rebuilt app-presence and control-bar-position settings as compact contiguous segments with fixed widths and consistent trailing alignment.
+- 앱 표시 위치와 화면 제어 바 위치를 고정 폭의 촘촘한 세그먼트로 다시 구성해 두 행 모두 오른쪽 끝에 일관되게 정렬했습니다.
 - Replaced the draggable floating session remote with a full-width status bar docked inside the top or bottom of each DEX and mirror window, scoped its window ordering to the video window, and separated the volume label from its slider.
 - 드래그식 플로팅 화면 리모컨을 제거하고 DEX·미러링 창 내부 상단 또는 하단에 붙는 전체 폭 상태 표시줄로 바꿨습니다. 영상 창 위에서만 표시되도록 순서를 제한하고 볼륨 라벨과 슬라이더 간격을 분리했습니다.
 - Removed vertical alphabet rails while retaining localized section sorting, resized the app picker to fit, removed its redundant search launcher, flush-aligned launch mode, staged outbound files before explicit transfer, auto-loaded inbound files on tab entry, and tightened right-aligned Settings controls.

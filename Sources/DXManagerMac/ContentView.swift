@@ -719,17 +719,13 @@ private struct SettingsView: View {
                     SettingsRow("Flow Bridge 로그인 자동 실행") { Toggle("", isOn: Binding(get: { model.launchAtLogin }, set: { value in if value != model.launchAtLogin { model.toggleLaunchAtLogin() } })).labelsHidden() }
                     Divider()
                     SettingsRow("앱 표시 위치") {
-                        HStack(spacing: 6) {
-                            PresenceButton("Dock + 메뉴 막대", value: .dockAndMenuBar)
-                            PresenceButton("메뉴 막대만", value: .menuBarOnly)
-                            PresenceButton("Dock만", value: .dockOnly)
-                        }.frame(width: 420, alignment: .trailing)
+                        PresenceModeSwitcher()
                     }
                     Divider()
                     SettingsRow("앱을 시작할 때 메인 창 열기") { Toggle("", isOn: $model.openMainWindowAtLaunch).labelsHidden().onChange(of: model.openMainWindowAtLaunch) { _ in model.presentationSettingsChanged() } }
                     Divider()
                     SettingsRow("화면 제어 바 위치") {
-                        Picker("화면 제어 바 위치", selection: $model.controlBarPosition) { Text("화면 상단").tag(ControlBarPosition.top); Text("화면 하단").tag(ControlBarPosition.bottom) }.pickerStyle(.segmented).labelsHidden().frame(maxWidth: 280).onChange(of: model.controlBarPosition) { _ in model.controlBarPositionChanged() }
+                        ControlBarPositionSwitcher()
                     }
                     Divider()
                     SettingsRow("사용하지 않을 때 자동 숨김") { HStack(spacing: 8) { TextField("분", value: $model.autoHideMinutes, format: .number).frame(width: 54); Text("분 · 0이면 사용 안 함").foregroundStyle(.secondary) } }
@@ -844,16 +840,51 @@ private struct Surface<Content: View>: View {
     var body: some View { content.padding(20).frame(maxWidth: .infinity, alignment: .leading).background(Color.primary.opacity(0.028), in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.09))) }
 }
 
-private struct PresenceButton: View {
+private struct PresenceModeSwitcher: View {
     @EnvironmentObject private var model: AppModel
-    let title: String; let value: AppPresenceMode
-    init(_ title: String, value: AppPresenceMode) { self.title = title; self.value = value }
-    @ViewBuilder
     var body: some View {
-        if model.presenceMode == value { Button(title, action: select).buttonStyle(.borderedProminent).frame(maxWidth: .infinity) }
-        else { Button(title, action: select).buttonStyle(.bordered).frame(maxWidth: .infinity) }
+        HStack(spacing: 2) {
+            option("Dock + 메뉴 막대", value: .dockAndMenuBar)
+            option("메뉴 막대만", value: .menuBarOnly)
+            option("Dock만", value: .dockOnly)
+        }
+        .padding(3)
+        .frame(width: 356)
+        .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 8))
     }
-    private func select() { model.presenceMode = value; model.presentationSettingsChanged() }
+    private func option(_ title: String, value: AppPresenceMode) -> some View {
+        Button {
+            model.presenceMode = value
+            model.presentationSettingsChanged()
+        } label: {
+            Text(title).fontWeight(.medium).frame(maxWidth: .infinity, minHeight: 28)
+                .foregroundStyle(model.presenceMode == value ? Color.white : Color.secondary)
+                .background(model.presenceMode == value ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+        }.buttonStyle(.plain)
+    }
+}
+
+private struct ControlBarPositionSwitcher: View {
+    @EnvironmentObject private var model: AppModel
+    var body: some View {
+        HStack(spacing: 2) {
+            option("화면 상단", value: .top)
+            option("화면 하단", value: .bottom)
+        }
+        .padding(3)
+        .frame(width: 236)
+        .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 8))
+    }
+    private func option(_ title: String, value: ControlBarPosition) -> some View {
+        Button {
+            model.controlBarPosition = value
+            model.controlBarPositionChanged()
+        } label: {
+            Text(title).fontWeight(.medium).frame(maxWidth: .infinity, minHeight: 28)
+                .foregroundStyle(model.controlBarPosition == value ? Color.white : Color.secondary)
+                .background(model.controlBarPosition == value ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 6))
+        }.buttonStyle(.plain)
+    }
 }
 
 private struct SettingsRow<Control: View>: View {
