@@ -75,6 +75,7 @@ private struct CompactSessionControls: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) { Divider() }
+        .clipShape(BottomRoundedCorners(radius: 12))
     }
 
     private func controlRow(compact: Bool) -> some View {
@@ -97,5 +98,20 @@ private struct CompactSessionControls: View {
         .controlSize(compact ? .mini : .regular)
         .padding(.horizontal, compact ? 5 : 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct BottomRoundedCorners: Shape {
+    let radius: CGFloat
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX - radius, y: rect.maxY), control: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.maxY))
+        path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY - radius), control: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }

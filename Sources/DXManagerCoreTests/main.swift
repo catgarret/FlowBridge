@@ -37,6 +37,8 @@ let downloadEntries = ADBService.parseDownloadEntries("Folder/\nphoto.jpg\nnotes
 check(downloadEntries.count == 3, "Download entry parsing")
 check(downloadEntries.first?.isDirectory == true, "Download folders sort first")
 check(downloadEntries.first?.name == "Folder", "Download folder suffix trimming")
+let nestedDownloadEntries = ADBService.parseDownloadEntries("nested.jpg\n", directory: "/sdcard/Download/Photos")
+check(nestedDownloadEntries.first?.path == "/sdcard/Download/Photos/nested.jpg", "nested Download path parsing")
 
 let launcherDump = """
 3 activities found:

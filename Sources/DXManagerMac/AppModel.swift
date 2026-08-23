@@ -43,6 +43,7 @@ final class AppModel: ObservableObject {
     @Published var transferStatus = ""
     @Published var isTransferring = false
     @Published var remoteFiles: [RemoteFile] = []
+    @Published var remoteDirectory = "/sdcard/Download"
     @Published var remoteThumbnailURLs: [String: URL] = [:]
     @Published var pendingTransferURLs: [URL] = []
     @Published var status = "ADB 기기를 검색하는 중입니다."
@@ -620,14 +621,25 @@ final class AppModel: ObservableObject {
         return true
     }
 
-    func loadRemoteFiles() {
+    func loadRemoteFiles(directory: String? = nil) {
         let serial = selectedSerial
+        let target = directory ?? remoteDirectory
         perform { [settings = appSettings] in
             guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
-            let files = try ADBService(executable: adbPath).downloadFiles(serial: serial)
-            return { model in model.remoteFiles = files; model.status = "Galaxy Download 파일 \(files.count)개를 불러왔습니다." }
+            let files = try ADBService(executable: adbPath).downloadFiles(serial: serial, directory: target)
+            return { model in model.remoteDirectory = target; model.remoteFiles = files; model.status = "Galaxy \(target.replacingOccurrences(of: "/sdcard/Download", with: "Download")) 항목 \(files.count)개를 불러왔습니다." }
         }
+    }
+
+    func openRemoteDirectory(_ file: RemoteFile) {
+        guard file.isDirectory else { return }
+        loadRemoteFiles(directory: file.path)
+    }
+
+    func openRemoteParentDirectory() {
+        guard remoteDirectory != "/sdcard/Download" else { return }
+        loadRemoteFiles(directory: (remoteDirectory as NSString).deletingLastPathComponent)
     }
 
     func requestRemoteThumbnail(_ file: RemoteFile) {

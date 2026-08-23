@@ -456,7 +456,7 @@ private struct PhoneView: View {
     private var callList: some View {
         let filtered = model.recentCalls.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || contactName($0.number).localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered.prefix(100)) { call in
-            HStack(spacing: 12) { ContactAvatar(name: contactName(call.number), photoURL: contactPhoto(call.number)); VStack(alignment: .leading, spacing: 5) { Text(contactName(call.number)).fontWeight(.medium); HStack(spacing: 4) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down"); Text(call.number) }.font(.caption).foregroundStyle(call.type == 3 ? .red : .secondary) }; Spacer(); Text(call.date, style: .relative).font(.caption2).foregroundStyle(.secondary).help(exactDate(call.date)) }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(call.number, rowID: call.id) }.listRowBackground(selectedRowID == call.id ? Color.accentColor.opacity(0.14) : Color.clear)
+            HStack(spacing: 14) { ContactAvatar(name: contactName(call.number), photoURL: contactPhoto(call.number)); VStack(alignment: .leading, spacing: 7) { Text(contactName(call.number)).fontWeight(.medium); HStack(spacing: 5) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down"); Text(call.number) }.font(.caption).foregroundStyle(call.type == 3 ? .red : .secondary) }; Spacer(); Text(call.date, style: .relative).font(.caption2).foregroundStyle(.secondary).help(exactDate(call.date)) }.padding(.vertical, 12).contentShape(Rectangle()).onTapGesture { select(call.number, rowID: call.id) }.listRowBackground(selectedRowID == call.id ? Color.accentColor.opacity(0.14) : Color.clear)
         }.listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -600,6 +600,15 @@ private struct TransferView: View {
                         if !model.remoteFiles.isEmpty { Button(selectedRemote.count == model.remoteFiles.count ? "선택 해제" : "모두 선택") { selectedRemote = selectedRemote.count == model.remoteFiles.count ? [] : Set(model.remoteFiles) } }
                     }.padding(.bottom, 12)
                     Divider()
+                    HStack(spacing: 9) {
+                        Button(action: model.openRemoteParentDirectory) { Image(systemName: "chevron.left") }
+                            .buttonStyle(.borderless).disabled(model.remoteDirectory == "/sdcard/Download")
+                        Image(systemName: "folder.fill").foregroundStyle(.blue)
+                        Text(model.remoteDirectory.replacingOccurrences(of: "/sdcard/Download", with: "Download"))
+                            .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                        Spacer()
+                    }.frame(height: 38)
+                    Divider()
                     if model.remoteFiles.isEmpty {
                         VStack(spacing: 10) {
                             Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.blue)
@@ -616,6 +625,10 @@ private struct TransferView: View {
                                     Text(file.isDirectory ? "폴더" : fileTypeLabel(file.name)).font(.caption2).foregroundStyle(.secondary)
                                 }
                                 Spacer()
+                                if file.isDirectory {
+                                    Button { selectedRemote.removeAll(); model.openRemoteDirectory(file) } label: { Image(systemName: "chevron.right") }
+                                        .buttonStyle(.borderless).help("폴더 열기")
+                                }
                                 if selectedRemote.contains(file) { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) }
                             }.padding(.vertical, 7).tag(file)
                         }.listStyle(.plain).scrollContentBackground(.hidden).frame(minHeight: 260)
@@ -630,7 +643,7 @@ private struct TransferView: View {
                     if model.isTransferring { HStack(spacing: 10) { ProgressView().controlSize(.small); Text(model.transferStatus).font(.caption).foregroundStyle(.secondary).lineLimit(1) }.padding(.top, 8) }
                 }
             }
-        }.onAppear { if direction == 1 && isConnected { model.loadRemoteFiles() } }.onChange(of: direction) { value in if value == 1 && isConnected { model.loadRemoteFiles() } }
+        }.onAppear { if direction == 1 && isConnected { model.loadRemoteFiles() } }.onChange(of: direction) { value in if value == 1 && isConnected { model.loadRemoteFiles() } }.onChange(of: model.remoteDirectory) { _ in selectedRemote.removeAll() }
     }
 
     private func acceptDrop(_ providers: [NSItemProvider]) -> Bool {
@@ -723,7 +736,7 @@ private struct SettingsView: View {
     @State private var showsExpertSettings = false
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
-            SettingsGroup("화면 품질", icon: "display") {
+            SettingsGroup("화면 품질") {
                 VStack(alignment: .leading, spacing: 0) {
                     SettingsRow("해상도") {
                             HStack(spacing: 6) {
@@ -750,7 +763,7 @@ private struct SettingsView: View {
                     }
                 }
             }
-            SettingsGroup("연결과 Mac 동작", icon: "gearshape") {
+            SettingsGroup("연결과 Mac 동작") {
                 VStack(alignment: .leading, spacing: 0) {
                     SettingsRow("마지막 무선 주소로 자동 재연결") { Toggle("", isOn: $model.automaticReconnect).labelsHidden() }
                     Divider()
@@ -906,12 +919,11 @@ private struct SettingsRow<Control: View>: View {
 
 private struct SettingsGroup<Content: View>: View {
     let title: String
-    let icon: String
     @ViewBuilder let content: Content
-    init(_ title: String, icon: String, @ViewBuilder content: () -> Content) { self.title = title; self.icon = icon; self.content = content() }
+    init(_ title: String, @ViewBuilder content: () -> Content) { self.title = title; self.content = content() }
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label(localized(title), systemImage: icon).font(.title3.weight(.semibold)).padding(.leading, 4)
+            Text(localized(title)).font(.title3.weight(.semibold)).padding(.leading, 4)
             VStack(alignment: .leading, spacing: 14) { content }
                 .padding(.horizontal, 18).padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)

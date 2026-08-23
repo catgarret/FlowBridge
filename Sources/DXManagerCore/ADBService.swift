@@ -282,18 +282,28 @@ public struct ADBService: Sendable {
         _ = try runner.run(executable, ["-s", serial, "pull", remotePath, localURL.path])
     }
 
-    public func downloadFiles(serial: String) throws -> [RemoteFile] {
-        let output = try shell(serial: serial, ["ls", "-1p", "/sdcard/Download"])
-        return Self.parseDownloadEntries(output)
+    public func downloadFiles(serial: String, directory: String = "/sdcard/Download") throws -> [RemoteFile] {
+        let root = "/sdcard/Download"
+        let normalized = directory.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let safeDirectory = "/" + normalized
+        guard safeDirectory == root || safeDirectory.hasPrefix(root + "/") else {
+            throw DXError.commandFailed("Download 폴더 밖은 탐색할 수 없습니다.")
+        }
+        let output = try shell(serial: serial, ["ls -1p -- \(Self.shellQuoted(safeDirectory))"])
+        return Self.parseDownloadEntries(output, directory: safeDirectory)
     }
 
-    public static func parseDownloadEntries(_ output: String) -> [RemoteFile] {
+    private static func shellQuoted(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    public static func parseDownloadEntries(_ output: String, directory: String = "/sdcard/Download") -> [RemoteFile] {
         output.split(whereSeparator: \ .isNewline).compactMap { raw in
             var name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty else { return nil }
             let isDirectory = name.hasSuffix("/")
             if isDirectory { name.removeLast() }
-            return RemoteFile(name: name, path: "/sdcard/Download/\(name)", isDirectory: isDirectory)
+            return RemoteFile(name: name, path: "\(directory)/\(name)", isDirectory: isDirectory)
         }.sorted {
             if $0.isDirectory != $1.isDirectory { return $0.isDirectory }
             return $0.name.localizedStandardCompare($1.name) == .orderedAscending

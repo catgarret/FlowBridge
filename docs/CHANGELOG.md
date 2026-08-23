@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Added nested Galaxy Download folder navigation with safe paths containing spaces, increased recent-call row spacing, simplified settings headings, and rounded the mirror control bar's outer bottom corners.
+- Galaxy Download 하위 폴더 탐색과 공백 경로 처리를 추가하고 최근 통화 행 간격을 넓혔으며 설정 제목 아이콘을 제거하고 미러링 제어 바 외곽 하단 모서리를 둥글게 정리했습니다.
 - Made the mirror control bar follow the exact video width and switch to a compact layout when the window is narrowed.
 - 미러링 제어 바가 영상 너비를 정확히 따르고 창을 줄이면 축약 배치로 전환되도록 수정했습니다.
 
