@@ -4,6 +4,12 @@
 
 ## Unreleased - experimental macOS port
 
+- Removed redundant Quick Launch chevrons and stabilized the phone sidebar toolbar/search geometry across Calls and Messages with cleaner search padding.
+- 앱 바로 실행의 불필요한 화살표를 제거하고 전화·문자 전환 시 좌측 도구·검색 영역 위치가 움직이지 않도록 고정했으며 검색창 여백을 정리했습니다.
+- Replaced the oversized File Transfer and Notifications page bars with the same compact centered switcher used by Calls and Messages.
+- 파일 전송·알림의 과도하게 넓은 탭을 제거하고 전화·문자와 같은 중앙형 전환 규격으로 통일했습니다.
+- Right-aligned the app launch-mode control and widened its segments so the phone-mirroring label has comfortable spacing.
+- 앱 실행 방식 전환을 우측 끝에 정렬하고 휴대폰 미러링 모드 문구의 세그먼트 내부 여백을 넓혔습니다.
 - Restored Calls and Messages to a compact centered switcher while keeping a larger hit target and unmistakable selected state.
 - 전화·문자 전환은 넓은 페이지 탭에서 분리해 중앙의 간결한 전환 컨트롤로 되돌리고 클릭 영역과 선택 상태만 명확하게 개선했습니다.
 - Rebuilt Quick Launch selection around directly editable slots, repaired the app picker spacing and alphabet rail, labeled the launch-mode control, standardized primary in-page switchers, and aligned Mac import copy and icon color with Galaxy send.

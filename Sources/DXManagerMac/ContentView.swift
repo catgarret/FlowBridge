@@ -293,8 +293,8 @@ private struct AppsView: View {
             HStack(spacing: 18) {
                 Text("앱 실행 방식").fontWeight(.semibold)
                 Spacer()
-                Picker("앱 실행 방식", selection: $model.appLaunchMode) { Text("DEX 모드").tag(AppLaunchMode.desktopWindow); Text("휴대폰 미러링 모드").tag(AppLaunchMode.phoneScreen) }.pickerStyle(.segmented).labelsHidden().frame(width: 420).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
-            }
+                LaunchModeSwitcher(selection: $model.appLaunchMode).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
+            }.frame(maxWidth: .infinity, alignment: .trailing)
             Card("앱 바로 실행 지정", icon: "bolt.square") {
                 VStack(spacing: 0) {
                     ForEach(0..<3, id: \.self) { slot in
@@ -304,7 +304,7 @@ private struct AppsView: View {
                                 HStack(spacing: 14) {
                                     AppIconView(package: model.packageNames[slot], url: model.appIconURLs[model.packageNames[slot]], fallback: model.packageNames[slot].isEmpty ? "" : "\(slot + 1)").onAppear { if isConnected && !model.packageNames[slot].isEmpty { model.requestAppIcon(package: model.packageNames[slot]) } }
                                     VStack(alignment: .leading, spacing: 3) { Text(name).font(.headline).lineLimit(1); Text(model.packageNames[slot].isEmpty ? "클릭해서 앱 선택" : "⌘\(slot + 1) · 클릭해서 변경").font(.caption).foregroundStyle(.secondary) }
-                                    Spacer(); Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                                    Spacer()
                                 }.contentShape(Rectangle())
                             }.buttonStyle(.plain)
                             if !model.packageNames[slot].isEmpty {
@@ -419,8 +419,16 @@ private struct PhoneView: View {
             Divider()
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
-                    if tab == 0 { HStack(spacing: 10) { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).labelsHidden(); Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.bordered).help("다이얼 열기") }.padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 10) }
-                    TextField("이름, 번호 또는 내용 검색", text: $model.phoneSearch).textFieldStyle(.roundedBorder).padding(.horizontal, 16).padding(.bottom, 14)
+                    HStack(spacing: 10) {
+                        if tab == 0 {
+                            Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).labelsHidden()
+                            Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.bordered).help("다이얼 열기")
+                        } else { Spacer() }
+                    }.frame(height: 34).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 10)
+                    HStack(spacing: 9) {
+                        Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                        TextField("이름, 번호 또는 내용 검색", text: $model.phoneSearch).textFieldStyle(.plain)
+                    }.padding(.horizontal, 11).frame(height: 36).background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08))).padding(.horizontal, 16).padding(.bottom, 12)
                     Divider()
                     if tab == 0 { callSource == 0 ? AnyView(callList) : AnyView(contactList) } else { messageThreadList }
                 }.frame(width: 360)
@@ -544,7 +552,7 @@ private struct TransferView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            PageTabBar(selection: $direction, items: [("Galaxy로 보내기", "arrow.up.circle.fill"), ("Mac으로 가져오기", "arrow.down.circle.fill")])
+            CompactTabSwitcher(selection: $direction, items: [("Galaxy로 보내기", "arrow.up.circle.fill"), ("Mac으로 가져오기", "arrow.down.circle.fill")], width: 460)
             if direction == 0 {
                 Card("Galaxy로 보내기", icon: "arrow.up.circle") {
                 VStack(spacing: 14) {
@@ -622,7 +630,7 @@ private struct NotificationsView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            PageTabBar(selection: $tab, items: [("Galaxy 알림", "bell.fill"), ("알림 설정", "slider.horizontal.3")])
+            CompactTabSwitcher(selection: $tab, items: [("Galaxy 알림", "bell.fill"), ("알림 설정", "slider.horizontal.3")])
             if tab == 1 { Card("알림 설정", icon: "bell.badge") {
                 VStack(spacing: 0) {
                     NotificationRow(title: "전화", subtitle: "Galaxy 수신 전화 알림", icon: "phone", isOn: $model.phoneNotificationsEnabled)
@@ -739,26 +747,10 @@ private struct DiagnosticsView: View {
     }
 }
 
-private struct PageTabBar: View {
-    @Binding var selection: Int
-    let items: [(String, String)]
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                Button { withAnimation(.easeInOut(duration: 0.16)) { selection = index } } label: {
-                    VStack(spacing: 9) {
-                        HStack(spacing: 8) { Image(systemName: item.1); Text(localized(item.0)).fontWeight(.semibold) }
-                        Capsule().fill(selection == index ? Color.accentColor : Color.clear).frame(height: 3).padding(.horizontal, 16)
-                    }.foregroundStyle(selection == index ? Color.primary : Color.secondary).frame(maxWidth: .infinity).padding(.top, 13).padding(.bottom, 8).background(selection == index ? Color.accentColor.opacity(0.1) : Color.clear, in: RoundedRectangle(cornerRadius: 10)).contentShape(RoundedRectangle(cornerRadius: 10))
-                }.buttonStyle(.plain)
-            }
-        }.padding(5).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.08))).frame(maxWidth: 560).frame(maxWidth: .infinity).padding(.bottom, 4)
-    }
-}
-
 private struct CompactTabSwitcher: View {
     @Binding var selection: Int
     let items: [(String, String)]
+    var width: CGFloat = 360
     var body: some View {
         HStack(spacing: 4) {
             ForEach(Array(items.enumerated()), id: \.offset) { index, item in
@@ -775,9 +767,32 @@ private struct CompactTabSwitcher: View {
             }
         }
         .padding(4)
-        .frame(width: 360)
+        .frame(width: width)
         .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 11))
         .overlay(RoundedRectangle(cornerRadius: 11).stroke(Color.primary.opacity(0.08)))
+    }
+}
+
+private struct LaunchModeSwitcher: View {
+    @Binding var selection: AppLaunchMode
+    var body: some View {
+        HStack(spacing: 4) {
+            option("DEX 모드", value: .desktopWindow)
+            option("휴대폰 미러링 모드", value: .phoneScreen)
+        }
+        .padding(4)
+        .frame(width: 440)
+        .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 11))
+        .overlay(RoundedRectangle(cornerRadius: 11).stroke(Color.primary.opacity(0.08)))
+    }
+
+    private func option(_ title: String, value: AppLaunchMode) -> some View {
+        Button { withAnimation(.easeInOut(duration: 0.15)) { selection = value } } label: {
+            Text(localized(title)).fontWeight(.semibold).frame(maxWidth: .infinity, minHeight: 36)
+                .foregroundStyle(selection == value ? Color.white : Color.secondary)
+                .background(selection == value ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+                .contentShape(RoundedRectangle(cornerRadius: 8))
+        }.buttonStyle(.plain)
     }
 }
 
