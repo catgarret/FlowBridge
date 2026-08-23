@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Reworked spacing, card hierarchy, connection setup, phone message bubbles, and content width; made disconnected views cache-readable but action-safe; split file transfer into prominent send/receive modes; and moved log export into Diagnostics.
+- 공통 여백·카드 위계·연결 설정·문자 말풍선·콘텐츠 폭을 정리하고, 연결 해제 시 캐시는 열람하되 기기 작업은 막도록 개선했으며, 파일 전송을 보내기·가져오기 전환 화면으로 분리하고 로그 저장을 진단으로 옮겼습니다.
 - Fixed repeated Galaxy notifications being suppressed, surfaced macOS delivery errors, added lazy cached app icons across notifications/search/quick launch, and matched FPS button spacing to resolution presets.
 - 반복 게시된 Galaxy 알림이 누락되던 문제를 수정하고 macOS 전달 오류를 표시하며 알림·앱 검색·바로 실행에 지연 로딩 앱 아이콘 캐시를 적용하고 FPS 버튼 간격을 해상도 프리셋과 통일했습니다.
 - Cleaned legacy and Flow Bridge-owned DEX overlays on reconnect when no screen session is active, preferred the Galaxy-configured device name, and hid the redundant call-list picker label.

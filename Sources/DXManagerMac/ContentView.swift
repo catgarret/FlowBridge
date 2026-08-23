@@ -55,13 +55,14 @@ struct ContentView: View {
                             case .diagnostics: DiagnosticsView()
                             case .about: AboutView()
                             }
-                        }.frame(maxWidth: 920, alignment: .leading).padding(28)
+                        }.frame(maxWidth: 1120, alignment: .leading).frame(maxWidth: .infinity, alignment: .top).padding(28)
                     }
                 }
                 statusBar
             }.background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(minWidth: 980, minHeight: 680)
+        .controlSize(.regular)
         .overlay {
             if isGlobalDropTarget {
                 RoundedRectangle(cornerRadius: 16).strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 3, dash: [8]))
@@ -70,11 +71,12 @@ struct ContentView: View {
         }
         .onDrop(of: [UTType.fileURL], isTargeted: $isGlobalDropTarget, perform: acceptGlobalDrop)
         .onPasteCommand(of: [UTType.fileURL]) { _ in
-            if model.pasteFilesFromClipboard() { section = .transfer }
+            if hasConnectedDevice, model.pasteFilesFromClipboard() { section = .transfer }
         }
     }
 
     private func acceptGlobalDrop(_ providers: [NSItemProvider]) -> Bool {
+        guard hasConnectedDevice else { return false }
         loadFileURLs(from: providers) { urls in
             guard !urls.isEmpty else { return }
             section = .transfer
@@ -90,7 +92,9 @@ struct ContentView: View {
                 Text(localized(pageDescription)).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
-            Button(action: refreshCurrentSection) { Label("새로고침", systemImage: "arrow.clockwise") }.disabled(model.isBusy)
+            Button(action: refreshCurrentSection) { Label("새로고침", systemImage: "arrow.clockwise") }
+                .disabled(model.isBusy || refreshNeedsDevice && !hasConnectedDevice)
+                .help(refreshNeedsDevice && !hasConnectedDevice ? "Galaxy를 연결하면 새 정보를 불러올 수 있습니다." : "현재 화면 새로고침")
         }
     }
 
@@ -106,13 +110,23 @@ struct ContentView: View {
         }
     }
 
+    private var hasConnectedDevice: Bool {
+        model.devices.contains { $0.serial == model.selectedSerial }
+    }
+
+    private var refreshNeedsDevice: Bool {
+        switch section ?? .home {
+        case .phone, .apps, .transfer, .notifications, .settings, .diagnostics: return true
+        case .home, .about: return false
+        }
+    }
+
     private var statusBar: some View {
         HStack(spacing: 10) {
             if model.isBusy { ProgressView().controlSize(.small) }
             Text(LocalizedStringKey(model.status)).font(.caption).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(1)
             Spacer()
             if model.isTransferring { Text(model.transferStatus).font(.caption); Button("취소", action: model.cancelTransfer).controlSize(.small) }
-            Button("로그 저장", action: model.saveLog).controlSize(.small)
         }.padding(.horizontal, 16).frame(height: 38).background(.bar).overlay(alignment: .top) { Divider() }
     }
 
@@ -121,7 +135,7 @@ struct ContentView: View {
         case .home: return "Galaxy 연결과 화면 실행을 한곳에서 관리합니다."
         case .phone: return "Galaxy 주소록, 최근 통화와 메시지를 확인하고 상대를 선택해 바로 이어서 작업합니다."
         case .apps: return "지정한 앱을 단축키로 실행하거나 검색해 변경합니다."
-        case .transfer: return "파일과 폴더를 Galaxy의 Download 폴더로 보냅니다."
+        case .transfer: return "파일과 폴더를 Galaxy로 보내거나 Mac으로 가져옵니다."
         case .notifications: return "전화·문자·앱 알림을 Mac 알림 센터로 전달합니다."
         case .settings: return "화면 품질, 자동 연결과 Mac 동작을 설정합니다."
         case .diagnostics: return "기기 정보와 화면 복구 도구 상태를 확인합니다."
@@ -271,6 +285,7 @@ private struct DeviceLaunchButtons: View {
 private struct AppsView: View {
     @EnvironmentObject private var model: AppModel
     @State private var showAppPicker = false
+    private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack { Spacer(); Picker("실행 모드", selection: $model.appLaunchMode) { Text("DEX 모드").tag(AppLaunchMode.desktopWindow); Text("휴대폰 미러링 모드").tag(AppLaunchMode.phoneScreen) }.pickerStyle(.segmented).labelsHidden().frame(width: 420).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }; Spacer() }
@@ -279,9 +294,9 @@ private struct AppsView: View {
                     ForEach(0..<3, id: \.self) { slot in
                         let name = model.installedApps.first(where: { $0.package == model.packageNames[slot] })?.name ?? (model.packageNames[slot] == "com.android.settings" ? "설정" : "지정 안 됨")
                         HStack(spacing: 14) {
-                            AppIconView(package: model.packageNames[slot], url: model.appIconURLs[model.packageNames[slot]], fallback: "\(slot + 1)").onAppear { model.requestAppIcon(package: model.packageNames[slot]) }
+                            AppIconView(package: model.packageNames[slot], url: model.appIconURLs[model.packageNames[slot]], fallback: "\(slot + 1)").onAppear { if isConnected { model.requestAppIcon(package: model.packageNames[slot]) } }
                             VStack(alignment: .leading, spacing: 2) { Text(name).font(.headline).lineLimit(1); Text("⌘\(slot + 1)").font(.caption).foregroundStyle(.secondary) }
-                            Spacer(); Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent).disabled(model.packageNames[slot].isEmpty).keyboardShortcut(KeyEquivalent(Character(String(slot + 1))), modifiers: .command)
+                            Spacer(); Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent).disabled(model.packageNames[slot].isEmpty || !isConnected).keyboardShortcut(KeyEquivalent(Character(String(slot + 1))), modifiers: .command)
                         }.padding(.vertical, 13)
                         if slot < 2 { Divider() }
                     }
@@ -296,6 +311,7 @@ private struct AppsView: View {
 private struct AppPickerSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
+    private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(spacing: 0) {
             HStack { Text("앱 검색").font(.title2.weight(.semibold)); Spacer(); Button("완료") { dismiss() } }.padding(20)
@@ -305,7 +321,7 @@ private struct AppPickerSheet: View {
             let grouped = Dictionary(grouping: Array(matches.prefix(300))) { indexKey($0.name) }.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
             ScrollViewReader { proxy in
                 ZStack(alignment: .trailing) {
-                    List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in HStack { AppIconView(package: app.package, url: model.appIconURLs[app.package], fallback: String(app.name.prefix(1))).onAppear { model.requestAppIcon(package: app.package) }; VStack(alignment: .leading, spacing: 2) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.secondary) }; Spacer(); HStack(spacing: 5) { ForEach(0..<3) { slot in Button("\(slot + 1)") { model.toggleFavorite(package: app.package, slot: slot) }.buttonStyle(.borderedProminent).tint(model.packageNames[slot] == app.package ? Color.accentColor : Color.secondary.opacity(0.35)).help("⌘\(slot + 1) 바로 실행 지정") } }; Button("실행") { model.startApp(package: app.package) } } } }.id(letter) } }
+                    List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in HStack { AppIconView(package: app.package, url: model.appIconURLs[app.package], fallback: String(app.name.prefix(1))).onAppear { if isConnected { model.requestAppIcon(package: app.package) } }; VStack(alignment: .leading, spacing: 2) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.secondary) }; Spacer(); HStack(spacing: 5) { ForEach(0..<3) { slot in Button("\(slot + 1)") { model.toggleFavorite(package: app.package, slot: slot) }.buttonStyle(.borderedProminent).tint(model.packageNames[slot] == app.package ? Color.accentColor : Color.secondary.opacity(0.35)).help("⌘\(slot + 1) 바로 실행 지정") } }; Button("실행") { model.startApp(package: app.package) }.disabled(!isConnected) } } }.id(letter) } }
                     if model.appSearch.isEmpty { VStack(spacing: 1) { ForEach(grouped.map(\.key), id: \.self) { letter in Button(letter) { withAnimation { proxy.scrollTo(letter, anchor: .top) } }.buttonStyle(.plain).font(.caption2.weight(.semibold)).foregroundStyle(.blue) } }.padding(.trailing, 6) }
                 }
             }
@@ -328,15 +344,17 @@ private struct AppPickerSheet: View {
 private struct ConnectionOption<Accessory: View>: View {
     let icon: String; let title: String; let subtitle: String; @ViewBuilder let accessory: Accessory
     init(icon: String, title: String, subtitle: String, @ViewBuilder accessory: () -> Accessory) { self.icon = icon; self.title = title; self.subtitle = subtitle; self.accessory = accessory() }
-    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(.blue).frame(width: 28); VStack(alignment: .leading, spacing: 3) { Text(title).fontWeight(.medium); Text(subtitle).font(.caption).foregroundStyle(.secondary) }; Spacer(); accessory }.padding(14).background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 10)).overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.07))) }
+    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(.blue).frame(width: 30); VStack(alignment: .leading, spacing: 4) { Text(title).fontWeight(.semibold); Text(subtitle).font(.caption).foregroundStyle(.secondary) }; Spacer(); accessory }.padding(.vertical, 14).padding(.horizontal, 4) }
 }
 
 private struct ConnectionSetupView: View {
     @EnvironmentObject private var model: AppModel
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 0) {
             ConnectionOption(icon: "cable.connector", title: "USB로 기기 추가", subtitle: "Galaxy에서 이 Mac의 USB 디버깅을 허용한 뒤 무선 연결로 전환합니다.") { Button("USB 기기 추가", action: model.prepareWirelessFromUSB).buttonStyle(.borderedProminent) }
+            Divider()
             ConnectionOption(icon: "wifi", title: "무선으로 기기 추가", subtitle: "Galaxy의 무선 디버깅 페어링 화면에서 기기를 검색합니다.") { Button("기기 검색", action: model.discoverWirelessSetup) }
+            Divider()
             DisclosureGroup("IP 주소로 직접 연결") {
                 VStack(spacing: 10) {
                     HStack { TextField(localized("무선 ADB 주소  예: 172.30.1.3:44065"), text: $model.wirelessEndpoint); Button("직접 연결", action: model.connectWireless) }
@@ -355,13 +373,14 @@ private struct PhoneView: View {
     @State private var selectedRowID = ""
     @State private var showDialPad = false
     @State private var showCallToast = false
+    private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(spacing: 0) {
             HStack {
                 Spacer()
-                Picker("", selection: $tab) { Label("통화", systemImage: "phone.fill").tag(0); Label("메시지", systemImage: "message.fill").tag(1) }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(maxWidth: 440)
+                Picker("", selection: $tab) { Label("통화", systemImage: "phone.fill").tag(0); Label("메시지", systemImage: "message.fill").tag(1) }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(width: 320)
                 Spacer()
-            }.padding(.bottom, 14)
+            }.padding(.bottom, 16)
             Divider()
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
@@ -375,7 +394,7 @@ private struct PhoneView: View {
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay(alignment: .top) { if showCallToast { Label("Galaxy에서 통화를 확인해 주세요.", systemImage: "iphone.gen3").padding(.horizontal, 16).padding(.vertical, 10).background(.regularMaterial, in: Capsule()).shadow(radius: 8).padding(.top, 8).transition(.move(edge: .top).combined(with: .opacity)) } }
-            .onAppear { if model.contacts.isEmpty { model.refreshPhoneData() } }
+            .onAppear { if isConnected && model.contacts.isEmpty { model.refreshPhoneData() } }
     }
 
     private var callList: some View {
@@ -408,7 +427,7 @@ private struct PhoneView: View {
         if showDialPad { return AnyView(dialPad) }
         let calls = model.recentCalls.filter { $0.number == selectedNumber }.sorted { $0.date > $1.date }
         return AnyView(VStack(spacing: 0) {
-            VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화", systemImage: "phone.fill") }.buttonStyle(.borderedProminent) } }.padding(24)
+            VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화", systemImage: "phone.fill") }.buttonStyle(.borderedProminent).disabled(!isConnected) } }.padding(24)
             Divider()
             HStack { Text("통화 기록").font(.headline); Spacer(); Text("\(calls.count)건").foregroundStyle(.secondary) }.padding(14)
             List(calls) { call in HStack(spacing: 12) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down").foregroundStyle(call.type == 3 ? .red : .secondary); VStack(alignment: .leading, spacing: 3) { Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화"); Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary) } }.listStyle(.inset)
@@ -428,7 +447,7 @@ private struct PhoneView: View {
                     Button { model.phoneNumber += digit } label: { VStack(spacing: 1) { Text(digit).font(.system(size: 25, weight: .medium, design: .rounded)); Text(letters).font(.system(size: 8, weight: .semibold)).tracking(1) }.frame(width: 58, height: 58).background(Color.primary.opacity(0.08), in: Circle()).contentShape(Circle()) }.buttonStyle(.plain)
                 }
             }
-            Button(action: placeCall) { Image(systemName: "phone.fill").font(.title2).foregroundStyle(.white).frame(width: 62, height: 62).background(Color.green, in: Circle()).shadow(color: .green.opacity(0.25), radius: 8, y: 3) }.buttonStyle(.plain).disabled(model.phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).help("전화")
+            Button(action: placeCall) { Image(systemName: "phone.fill").font(.title2).foregroundStyle(.white).frame(width: 62, height: 62).background(Color.green, in: Circle()).shadow(color: .green.opacity(0.25), radius: 8, y: 3) }.buttonStyle(.plain).disabled(model.phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !isConnected).help("전화")
             Text("전화").font(.caption).foregroundStyle(.secondary)
             Spacer(minLength: 0)
         }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -437,11 +456,11 @@ private struct PhoneView: View {
     private var messageDetail: some View {
         let conversation = model.recentMessages.filter { $0.address == selectedNumber }.sorted { $0.date < $1.date }
         return VStack(spacing: 0) {
-            HStack(spacing: 10) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber)); VStack(alignment: .leading) { Text(contactName(selectedNumber)).fontWeight(.semibold); Text(selectedNumber).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.openDialer) { Image(systemName: "phone") }.help("전화 화면 열기") }.padding(14)
+            HStack(spacing: 10) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber)); VStack(alignment: .leading) { Text(contactName(selectedNumber)).fontWeight(.semibold); Text(selectedNumber).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.openDialer) { Image(systemName: "phone") }.disabled(!isConnected).help("전화 화면 열기") }.padding(14)
             Divider()
-            ScrollViewReader { proxy in ScrollView { LazyVStack(spacing: 10) { ForEach(conversation) { message in HStack { if message.isOutgoing { Spacer(minLength: 80) }; VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 4) { Text(message.body).textSelection(.enabled); Text(message.date, style: .time).font(.caption2).foregroundStyle(.secondary) }.padding(10).background(message.isOutgoing ? Color.accentColor.opacity(0.16) : Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 12)); if !message.isOutgoing { Spacer(minLength: 80) } }.id(message.id) } }.padding(16) }.onAppear { if let last = conversation.last { proxy.scrollTo(last.id, anchor: .bottom) } } }
+            ScrollViewReader { proxy in ScrollView { LazyVStack(spacing: 12) { ForEach(conversation) { message in HStack { if message.isOutgoing { Spacer(minLength: 96) }; VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 5) { Text(message.body).textSelection(.enabled); Text(message.date, style: .time).font(.caption2).opacity(0.7) }.foregroundStyle(message.isOutgoing ? Color.white : Color.primary).padding(.horizontal, 13).padding(.vertical, 10).background(message.isOutgoing ? Color.green : Color.secondary.opacity(0.14), in: RoundedRectangle(cornerRadius: 16)); if !message.isOutgoing { Spacer(minLength: 96) } }.id(message.id) } }.padding(18) }.onAppear { if let last = conversation.last { proxy.scrollTo(last.id, anchor: .bottom) } } }
             Divider()
-            HStack(alignment: .bottom, spacing: 10) { TextEditor(text: $model.messageBody).frame(minHeight: 38, maxHeight: 90).padding(5).background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.1))); Button(action: model.composeMessage) { Image(systemName: "paperplane.fill") }.buttonStyle(.borderedProminent).controlSize(.large).help("Galaxy 메시지 앱에서 확인") }.padding(12)
+            HStack(alignment: .bottom, spacing: 10) { TextEditor(text: $model.messageBody).frame(minHeight: 38, maxHeight: 90).padding(5).background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.1))).disabled(!isConnected); Button(action: model.composeMessage) { Image(systemName: "paperplane.fill") }.buttonStyle(.borderedProminent).controlSize(.large).disabled(!isConnected || model.messageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).help("Galaxy 메시지 앱에서 확인") }.padding(12)
         }.frame(maxWidth: .infinity)
     }
 
@@ -485,9 +504,20 @@ private struct TransferView: View {
     @EnvironmentObject private var model: AppModel
     @State private var selectedRemote: RemoteFile?
     @State private var isDropTarget = false
+    @State private var direction = 0
+    private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Card("Mac에서 Galaxy로", icon: "arrow.up.circle") {
+            HStack {
+                Spacer()
+                Picker("전송 방향", selection: $direction) {
+                    Label("Galaxy로 보내기", systemImage: "arrow.up.circle.fill").tag(0)
+                    Label("Mac으로 가져오기", systemImage: "arrow.down.circle.fill").tag(1)
+                }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(width: 440)
+                Spacer()
+            }
+            if direction == 0 {
+                Card("Galaxy로 보내기", icon: "arrow.up.circle") {
                 VStack(spacing: 14) {
                     Image(systemName: isDropTarget ? "arrow.down.doc.fill" : "doc.on.doc").font(.system(size: 38)).foregroundStyle(.blue)
                     Text("Finder 파일을 여기에 놓거나, Finder에서 ⌘C한 뒤 아래 버튼을 누르세요.").foregroundStyle(.secondary)
@@ -499,35 +529,40 @@ private struct TransferView: View {
                 }.frame(maxWidth: .infinity).padding(.vertical, 22)
                     .background(isDropTarget ? Color.blue.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
                     .onDrop(of: [UTType.fileURL], isTargeted: $isDropTarget, perform: acceptDrop)
-            }
-            Card("Galaxy에서 Mac으로", icon: "arrow.down.circle") {
-                HStack {
-                    Text("Galaxy Download").fontWeight(.medium)
-                    Spacer()
+                    .disabled(!isConnected)
+                    .overlay { if !isConnected { DisconnectedOverlay() } }
                 }
-                if model.remoteFiles.isEmpty {
-                    VStack(spacing: 10) {
-                        Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.secondary)
-                        Text("불러온 파일 없음").fontWeight(.medium)
-                        Text("파일 목록 갱신을 눌러 Galaxy의 Download 폴더를 확인하세요.").font(.caption).foregroundStyle(.secondary)
-                    }.frame(maxWidth: .infinity, minHeight: 180)
-                } else {
-                    List(model.remoteFiles, selection: $selectedRemote) { file in
-                        Label(file.name, systemImage: file.isDirectory ? "folder" : "doc").tag(file).onDrag { model.remoteFileProvider(file) }
-                    }.frame(minHeight: 240)
-                }
-                HStack {
-                    Text("선택한 파일을 Finder로 드래그하거나 ⌘C 후 Finder에서 ⌘V 하세요.").font(.caption).foregroundStyle(.secondary)
-                    Spacer()
-                    Button("Mac 클립보드에 복사") { if let selectedRemote { model.copyRemoteFile(selectedRemote) } }
-                        .keyboardShortcut("c", modifiers: .command).disabled(selectedRemote == nil)
-                    Button("다른 이름으로 저장") { if let selectedRemote { model.downloadRemoteFile(selectedRemote) } }.disabled(selectedRemote == nil)
+            } else {
+                Card("Mac으로 가져오기", icon: "arrow.down.circle") {
+                    HStack {
+                        Text("Galaxy Download").fontWeight(.medium)
+                        Spacer()
+                    }
+                    if model.remoteFiles.isEmpty {
+                        VStack(spacing: 10) {
+                            Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.secondary)
+                            Text("불러온 파일 없음").fontWeight(.medium)
+                            Text(isConnected ? "상단 새로고침을 눌러 Galaxy의 Download 폴더를 확인하세요." : "Galaxy를 연결하면 파일 목록을 불러올 수 있습니다.").font(.caption).foregroundStyle(.secondary)
+                        }.frame(maxWidth: .infinity, minHeight: 180)
+                    } else {
+                        List(model.remoteFiles, selection: $selectedRemote) { file in
+                            Label(file.name, systemImage: file.isDirectory ? "folder" : "doc").tag(file).onDrag { model.remoteFileProvider(file) }
+                        }.frame(minHeight: 240)
+                    }
+                    HStack {
+                        Text("선택한 파일을 Finder로 드래그하거나 ⌘C 후 Finder에서 ⌘V 하세요.").font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Mac 클립보드에 복사") { if let selectedRemote { model.copyRemoteFile(selectedRemote) } }
+                            .keyboardShortcut("c", modifiers: .command).disabled(selectedRemote == nil || !isConnected)
+                        Button("다른 이름으로 저장") { if let selectedRemote { model.downloadRemoteFile(selectedRemote) } }.disabled(selectedRemote == nil || !isConnected)
+                    }
                 }
             }
         }
     }
 
     private func acceptDrop(_ providers: [NSItemProvider]) -> Bool {
+        guard isConnected else { return false }
         loadFileURLs(from: providers) { model.transfer(urls: $0) }
         return !providers.isEmpty
     }
@@ -560,6 +595,7 @@ private final class URLCollector: @unchecked Sendable {
 
 private struct NotificationsView: View {
     @EnvironmentObject private var model: AppModel
+    private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Card("알림 항목 선택", icon: "bell.badge") {
@@ -573,12 +609,22 @@ private struct NotificationsView: View {
                 .onChange(of: model.appNotificationsEnabled) { _ in model.notificationSettingsChanged() }
             }
             Card("Galaxy 알림", icon: "iphone.and.arrow.forward") {
-                HStack { Text("Galaxy 알림창에 남아 있는 항목").foregroundStyle(.secondary); Spacer(); Button("모두 지우기", role: .destructive, action: model.dismissAllNotifications).disabled(model.activeNotifications.isEmpty) }
+                HStack { Text("Galaxy 알림창에 남아 있는 항목").foregroundStyle(.secondary); Spacer(); Button("모두 지우기", role: .destructive, action: model.dismissAllNotifications).disabled(model.activeNotifications.isEmpty || !isConnected) }
                 if model.activeNotifications.isEmpty { VStack(spacing: 8) { Image(systemName: "bell.slash").font(.system(size: 30)).foregroundStyle(.secondary); Text("남아 있는 알림 없음").foregroundStyle(.secondary) }.frame(maxWidth: .infinity).padding(28) }
-                else { VStack(spacing: 0) { ForEach(model.activeNotifications) { item in HStack(spacing: 14) { AppIconView(package: item.package, url: model.appIconURLs[item.package], fallback: "", systemFallback: item.kind == .call ? "phone.fill" : item.kind == .message ? "message.fill" : "app.fill").onAppear { model.requestAppIcon(package: item.package) }; VStack(alignment: .leading, spacing: 4) { Text(item.title.isEmpty ? item.package : item.title).fontWeight(.semibold); Text(item.body).font(.subheadline).foregroundStyle(.secondary).lineLimit(2); Text(item.package).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Button { model.dismissNotification(item) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).help("Galaxy에서 알림 지우기") }.padding(.vertical, 13); Divider() } } }
+                else { VStack(spacing: 0) { ForEach(model.activeNotifications) { item in HStack(spacing: 14) { AppIconView(package: item.package, url: model.appIconURLs[item.package], fallback: "", systemFallback: item.kind == .call ? "phone.fill" : item.kind == .message ? "message.fill" : "app.fill").onAppear { if isConnected { model.requestAppIcon(package: item.package) } }; VStack(alignment: .leading, spacing: 4) { Text(item.title.isEmpty ? item.package : item.title).fontWeight(.semibold); Text(item.body).font(.subheadline).foregroundStyle(.secondary).lineLimit(2); Text(item.package).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Button { model.dismissNotification(item) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).disabled(!isConnected).help("Galaxy에서 알림 지우기") }.padding(.vertical, 13); Divider() } } }
                 if !model.notificationDeliveryStatus.isEmpty { Text(model.notificationDeliveryStatus).font(.caption).foregroundStyle(.secondary) }
             }
-        }.onAppear(perform: model.loadActiveNotifications)
+        }.onAppear { if isConnected { model.loadActiveNotifications() } }
+    }
+}
+
+private struct DisconnectedOverlay: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "iphone.slash").font(.title2)
+            Text("Galaxy 연결 필요").fontWeight(.semibold)
+            Text("기기를 연결하면 이 작업을 사용할 수 있습니다.").font(.caption)
+        }.foregroundStyle(.secondary).padding(18).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -651,7 +697,7 @@ private struct DiagnosticsView: View {
             Card("선택 기기", icon: "info.circle") {
                 HStack(alignment: .top) {
                     Text(model.diagnostics.isEmpty ? "갱신을 눌러 기기와 실행 환경을 확인하세요." : model.diagnostics).font(.system(.body, design: .monospaced)).textSelection(.enabled)
-                    Spacer()
+                    Spacer(); Button("로그 저장", action: model.saveLog).buttonStyle(.borderedProminent)
                 }
             }
             Card("화면 복구 도구", icon: "cross.case") {
@@ -671,10 +717,10 @@ private struct Card<Content: View>: View {
     let title: String; let icon: String; @ViewBuilder let content: Content
     init(_ title: String, icon: String, @ViewBuilder content: () -> Content) { self.title = title; self.icon = icon; self.content = content() }
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) { Label(localized(title), systemImage: icon).font(.headline); content }
-            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.08)))
+        VStack(alignment: .leading, spacing: 16) { Label(localized(title), systemImage: icon).font(.headline); content }
+            .padding(20).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.primary.opacity(0.028), in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.09), lineWidth: 1))
     }
 }
 
