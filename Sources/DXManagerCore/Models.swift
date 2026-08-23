@@ -83,6 +83,7 @@ public enum AppPresenceMode: String, Codable, CaseIterable, Sendable {
 }
 
 public enum AppLaunchMode: String, Codable, CaseIterable, Sendable { case desktopWindow, phoneScreen }
+public enum ControlBarPosition: String, Codable, CaseIterable, Sendable { case top, bottom }
 
 public struct WindowPlacement: Codable, Equatable, Sendable {
     public let x: Int; public let y: Int; public let width: Int; public let height: Int
@@ -103,6 +104,7 @@ public struct AppSettings: Codable, Sendable {
     public var openMainWindowAtLaunch = true
     public var appLaunchMode: AppLaunchMode = .desktopWindow
     public var windowPlacements: [String: WindowPlacement] = [:]
+    public var controlBarPosition: ControlBarPosition = .bottom
     public var autoHideMinutes = 10
     public var lastWirelessEndpoint = ""
     public var automaticReconnect = true
@@ -112,7 +114,7 @@ public struct AppSettings: Codable, Sendable {
     public var turnPhoneScreenOffOnStart = false
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
+    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, controlBarPosition, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -130,6 +132,7 @@ public struct AppSettings: Codable, Sendable {
         openMainWindowAtLaunch = try values.decodeIfPresent(Bool.self, forKey: .openMainWindowAtLaunch) ?? true
         appLaunchMode = try values.decodeIfPresent(AppLaunchMode.self, forKey: .appLaunchMode) ?? .desktopWindow
         windowPlacements = try values.decodeIfPresent([String: WindowPlacement].self, forKey: .windowPlacements) ?? [:]
+        controlBarPosition = try values.decodeIfPresent(ControlBarPosition.self, forKey: .controlBarPosition) ?? .bottom
         autoHideMinutes = try values.decodeIfPresent(Int.self, forKey: .autoHideMinutes) ?? 10
         lastWirelessEndpoint = try values.decodeIfPresent(String.self, forKey: .lastWirelessEndpoint) ?? ""
         automaticReconnect = try values.decodeIfPresent(Bool.self, forKey: .automaticReconnect) ?? true

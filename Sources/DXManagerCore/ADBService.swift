@@ -73,6 +73,28 @@ public struct ADBService: Sendable {
         return Self.parsePhoneScreenState(power: power, policy: policy)
     }
 
+    public func isProtectedScreenFocused(serial: String) throws -> Bool {
+        Self.parseProtectedScreen(try shell(serial: serial, ["dumpsys", "window"]))
+    }
+
+    public static func parseProtectedScreen(_ output: String) -> Bool {
+        let focusTokens = output.split(whereSeparator: \.isNewline).compactMap { line -> String? in
+            guard line.contains("mCurrentFocus=Window{"), !line.contains("mCurrentFocus=null"), let start = line.range(of: "Window{") else { return nil }
+            return line[start.upperBound...].split(whereSeparator: \.isWhitespace).first.map(String.init)
+        }
+        for token in focusTokens {
+            guard let focus = output.range(of: "Window{\(token)") else { continue }
+            let lower = output[..<focus.lowerBound].range(of: "Window #", options: .backwards)?.lowerBound ?? focus.lowerBound
+            let upper = output[focus.upperBound...].range(of: "Window #")?.lowerBound ?? output.endIndex
+            let block = output[lower..<upper]
+            for line in block.split(whereSeparator: \.isNewline) where line.trimmingCharacters(in: .whitespaces).hasPrefix("fl=") {
+                let hex = line.split(separator: "=").last.map(String.init) ?? "0"
+                if let flags = UInt64(hex, radix: 16), flags & 0x2000 != 0 { return true }
+            }
+        }
+        return false
+    }
+
     public static func parsePhoneScreenState(power: String, policy: String) -> PhoneScreenState {
         let awake = power.contains("mWakefulness=Awake") || policy.contains("screenState=SCREEN_STATE_ON")
         let locked = policy.contains("showing=true") || policy.contains("isKeyguardShowing=true")

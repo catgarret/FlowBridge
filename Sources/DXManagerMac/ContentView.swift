@@ -90,7 +90,7 @@ struct ContentView: View {
                 Text(localized(pageDescription)).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
-            Button { model.refresh() } label: { Label("새로고침", systemImage: "arrow.clockwise") }.disabled(model.isBusy)
+            Button { if section == .phone { model.refreshPhoneData() } else { model.refresh() } } label: { Label("새로고침", systemImage: "arrow.clockwise") }.disabled(model.isBusy)
         }
     }
 
@@ -108,7 +108,7 @@ struct ContentView: View {
         switch section ?? .home {
         case .home: return "Galaxy 연결과 화면 실행을 한곳에서 관리합니다."
         case .phone: return "Galaxy 주소록, 최근 통화와 메시지를 확인하고 상대를 선택해 바로 이어서 작업합니다."
-        case .apps: return "앱 이름으로 검색하거나 즐겨찾기 단축키로 바로 실행합니다."
+        case .apps: return "지정한 앱을 단축키로 실행하거나 검색해 변경합니다."
         case .transfer: return "파일과 폴더를 Galaxy의 Download 폴더로 보냅니다."
         case .notifications: return "전화·문자·앱 알림을 Mac 알림 센터로 전달합니다."
         case .settings: return "화면 품질, 자동 연결과 Mac 동작을 설정합니다."
@@ -200,23 +200,14 @@ private struct HomeView: View {
                     HStack { Label("화면 실행 중", systemImage: "checkmark.circle.fill").foregroundStyle(.green); Spacer(); Button("화면 종료 및 정리", role: .destructive, action: model.stop) }
                 } else {
                     HStack(spacing: 14) {
-                        LaunchTile(title: "데스크톱 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
+                        LaunchTile(title: "DEX 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
                         LaunchTile(title: "휴대폰 미러링", subtitle: "기본 화면 그대로", icon: "iphone", tint: .purple, action: model.startPhoneMirror)
                     }
                 }
                 Toggle("화면을 열면 Galaxy 밝기를 최저로 낮추기", isOn: $model.turnPhoneScreenOffOnStart)
                     .toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.save() }
                 if model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
-                Text("데스크톱 모드의 Galaxy 오버레이는 Samsung 데스크톱 화면에 필요한 Android 가상 디스플레이입니다. 데스크톱 모드 실행 중에만 유지되고 종료 즉시 제거됩니다. 일반 미러링에는 표시되지 않습니다.").font(.caption).foregroundStyle(.secondary)
-            }
-            if model.hasActiveSession {
-                Card("보호된 화면 안내", icon: "lock.shield") {
-                    Text("비밀번호·결제·DRM 화면은 Android 보안 정책으로 Mac에서 검게 표시될 수 있습니다. 우회하지 않으며 Galaxy에서 직접 입력하거나 진행해야 합니다.")
-                    HStack {
-                        Text("일반 입력 화면이라면 Flow Bridge 창에 키보드로 입력한 뒤 Enter를 눌러도 됩니다.").font(.caption).foregroundStyle(.secondary)
-                        Spacer(); Button("휴대폰 화면 켜기") { model.sendKeyEvent(224, label: "화면 켜기") }
-                    }
-                }
+                Text("DEX 모드 오버레이는 실행 중에만 유지되고 종료하면 자동으로 제거됩니다.").font(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -224,55 +215,45 @@ private struct HomeView: View {
 
 private struct AppsView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var showAppPicker = false
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-        Card("실행 위치", icon: "rectangle.on.rectangle") {
-            Picker("실행 위치", selection: $model.appLaunchMode) {
-                Text("데스크톱 모드에서 실행").tag(AppLaunchMode.desktopWindow)
-                Text("휴대폰 화면에서 실행").tag(AppLaunchMode.phoneScreen)
-            }.pickerStyle(.segmented).labelsHidden().onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
-            Text(model.appLaunchMode == .desktopWindow ? "앱마다 별도 가상 화면 창을 엽니다." : "앱을 Galaxy 기본 화면에서 실행하고 휴대폰 미러링으로 엽니다.").font(.caption).foregroundStyle(.secondary)
-        }
-        Card("즐겨찾기", icon: "star") {
-            VStack(spacing: 0) {
-                ForEach(0..<3, id: \.self) { slot in
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Text("⌘\(slot + 1)").font(.headline).frame(width: 52, alignment: .leading)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(model.installedApps.first(where: { $0.package == model.packageNames[slot] })?.name ?? (model.packageNames[slot] == "com.android.settings" ? "설정" : "지정되지 않음")).fontWeight(.medium)
-                                Text(model.packageNames[slot].isEmpty ? "아래 검색 결과에서 지정하세요." : model.packageNames[slot]).font(.caption2).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent).keyboardShortcut(KeyEquivalent(Character(String(slot + 1))), modifiers: .command)
-                                .disabled(model.packageNames[slot].isEmpty)
-                        }
-                        HStack {
-                            Button("현재 화면 설정 저장") { model.saveAppProfile(slot: slot) }
-                            Button("저장 설정 적용") { model.applyAppProfile(slot: slot) }
-                        }.controlSize(.small)
-                    }.padding(.vertical, 14)
-                    if slot < 2 { Divider() }
-                }
+            HStack {
+                Picker("실행 모드", selection: $model.appLaunchMode) { Text("DEX 모드").tag(AppLaunchMode.desktopWindow); Text("휴대폰 미러링 모드").tag(AppLaunchMode.phoneScreen) }.pickerStyle(.segmented).labelsHidden().frame(maxWidth: 420).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
+                Spacer(); Button { showAppPicker = true } label: { Label("앱 검색 및 지정", systemImage: "magnifyingglass") }.buttonStyle(.borderedProminent)
             }
-            Text("⌘1 · ⌘2 · ⌘3으로 지정한 앱을 즉시 실행합니다.").font(.caption).foregroundStyle(.secondary)
-        }
-        Card("앱 검색 및 바로 실행", icon: "magnifyingglass") {
-            TextField("앱 이름 검색", text: $model.appSearch).textFieldStyle(.roundedBorder)
-            let matches = model.installedApps.filter { model.appSearch.isEmpty || $0.name.localizedCaseInsensitiveContains(model.appSearch) || $0.package.localizedCaseInsensitiveContains(model.appSearch) }
-            if matches.isEmpty { Text("일치하는 앱이 없습니다.").foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 100) }
-            else {
-                LazyVStack(spacing: 0) {
-                    ForEach(matches.prefix(30)) { app in
-                        HStack { VStack(alignment: .leading) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Menu("즐겨찾기") { ForEach(0..<3) { slot in Button("\(slot + 1)에 지정") { model.assignFavorite(package: app.package, slot: slot) } } }; Button("열기") { model.startApp(package: app.package) }.buttonStyle(.borderedProminent) }
-                            .padding(.vertical, 9)
-                        Divider()
+            Card("앱 바로 실행 지정", icon: "bolt.square") {
+                HStack(spacing: 12) {
+                    ForEach(0..<3, id: \.self) { slot in
+                        let name = model.installedApps.first(where: { $0.package == model.packageNames[slot] })?.name ?? (model.packageNames[slot] == "com.android.settings" ? "설정" : "지정 안 됨")
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("⌘\(slot + 1)").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                            Text(name).font(.headline).lineLimit(1)
+                            Spacer()
+                            HStack { Button("변경") { showAppPicker = true }; Spacer(); Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent).disabled(model.packageNames[slot].isEmpty).keyboardShortcut(KeyEquivalent(Character(String(slot + 1))), modifiers: .command) }
+                        }.padding(14).frame(maxWidth: .infinity, minHeight: 120, alignment: .leading).background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 10)).overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.08)))
                     }
                 }
             }
-            HStack { Button(action: model.loadPackages) { Label("앱 목록 갱신", systemImage: "arrow.clockwise") }; Spacer(); Text("검색 결과는 최대 30개까지 표시합니다.").font(.caption).foregroundStyle(.secondary) }
         }
-        }
+        .sheet(isPresented: $showAppPicker) { AppPickerSheet().environmentObject(model) }
+    }
+}
+
+private struct AppPickerSheet: View {
+    @EnvironmentObject private var model: AppModel
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack { Text("앱 검색 및 바로 실행 지정").font(.title2.weight(.semibold)); Spacer(); Button("완료") { dismiss() } }.padding(20)
+            Divider()
+            TextField("앱 이름 검색", text: $model.appSearch).textFieldStyle(.roundedBorder).padding(16)
+            let matches = model.installedApps.filter { model.appSearch.isEmpty || $0.name.localizedCaseInsensitiveContains(model.appSearch) || $0.package.localizedCaseInsensitiveContains(model.appSearch) }
+            List(matches.prefix(100)) { app in
+                HStack { VStack(alignment: .leading, spacing: 2) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.secondary) }; Spacer(); Menu("지정") { ForEach(0..<3) { slot in Button("⌘\(slot + 1)에 지정") { model.assignFavorite(package: app.package, slot: slot) } } }; Button("바로 실행") { model.startApp(package: app.package) } }
+            }
+            HStack { Button("앱 목록 새로고침", action: model.loadPackages); Spacer(); Text("\(matches.count)개 앱").foregroundStyle(.secondary) }.padding(16)
+        }.frame(width: 620, height: 600)
     }
 }
 
@@ -307,8 +288,9 @@ private struct PhoneView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
+                Spacer()
                 Picker("", selection: $tab) { Label("통화", systemImage: "phone.fill").tag(0); Label("메시지", systemImage: "message.fill").tag(1) }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(maxWidth: 440)
-                Spacer(); Button(action: model.refreshPhoneData) { Label("새로고침", systemImage: "arrow.clockwise") }
+                Spacer()
             }.padding(.bottom, 14)
             Divider()
             HStack(spacing: 0) {
@@ -345,7 +327,7 @@ private struct PhoneView: View {
         let latest = Dictionary(grouping: model.recentMessages, by: \.address).compactMap { $0.value.max(by: { $0.date < $1.date }) }.sorted { $0.date > $1.date }
         let filtered = latest.filter { model.phoneSearch.isEmpty || $0.address.contains(model.phoneSearch) || $0.body.localizedCaseInsensitiveContains(model.phoneSearch) || contactName($0.address).localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered) { message in
-            HStack(spacing: 10) { ContactAvatar(name: contactName(message.address)); VStack(alignment: .leading, spacing: 3) { HStack { Text(contactName(message.address)).fontWeight(.medium); Spacer(); Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }; Text(message.body).lineLimit(2).font(.caption).foregroundStyle(.secondary) } }.tag(message.address).contentShape(Rectangle()).onTapGesture { select(message.address) }
+            HStack(spacing: 10) { ContactAvatar(name: contactName(message.address)); VStack(alignment: .leading, spacing: 3) { HStack { Text(contactName(message.address)).fontWeight(.medium).lineLimit(1); Spacer(); Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }; Text(message.body.replacingOccurrences(of: "\n", with: " ")).lineLimit(1).truncationMode(.tail).font(.caption).foregroundStyle(.secondary) } }.frame(height: 52).tag(message.address).contentShape(Rectangle()).onTapGesture { select(message.address) }
         }.listStyle(.inset)
     }
 
@@ -535,6 +517,10 @@ private struct SettingsView: View {
                     }
                     Toggle("앱을 시작할 때 메인 창 열기", isOn: $model.openMainWindowAtLaunch).onChange(of: model.openMainWindowAtLaunch) { _ in model.presentationSettingsChanged() }
                     Text("메뉴 막대만 선택하면 Dock 아이콘 없이 백그라운드에서 실행되며, 상단 Flow Bridge 아이콘으로 창을 열 수 있습니다.").font(.caption).foregroundStyle(.secondary)
+                    HStack {
+                        Text("화면 제어 바 위치").frame(width: 130, alignment: .leading)
+                        Picker("화면 제어 바 위치", selection: $model.controlBarPosition) { Text("화면 상단").tag(ControlBarPosition.top); Text("화면 하단").tag(ControlBarPosition.bottom) }.pickerStyle(.segmented).labelsHidden().frame(maxWidth: 280).onChange(of: model.controlBarPosition) { _ in model.controlBarPositionChanged() }
+                    }
                     HStack { Text("사용하지 않을 때 자동 숨김"); TextField("분", value: $model.autoHideMinutes, format: .number).frame(width: 54); Text("분 · 0이면 사용 안 함").foregroundStyle(.secondary) }
                     Divider()
                     HStack {

@@ -49,6 +49,8 @@ final class AppModel: ObservableObject {
     @Published var openMainWindowAtLaunch = true
     @Published var appLaunchMode: AppLaunchMode = .desktopWindow
     @Published var mediaVolume = 8
+    @Published var controlBarPosition: ControlBarPosition = .bottom
+    @Published var protectedScreenDetected = false
     @Published var automaticReconnect = true
     @Published var phoneNotificationsEnabled = false
     @Published var messageNotificationsEnabled = false
@@ -77,6 +79,7 @@ final class AppModel: ObservableObject {
     private var brightnessBeforeSession: Int?
     private var sessionAttempt = UUID()
     private var didConfigureLaunchPresentation = false
+    private var protectedScreenPollInProgress = false
 
     init() {
         load()
@@ -85,6 +88,7 @@ final class AppModel: ObservableObject {
         presenceMode = appSettings.presenceMode
         openMainWindowAtLaunch = appSettings.openMainWindowAtLaunch
         appLaunchMode = appSettings.appLaunchMode
+        controlBarPosition = appSettings.controlBarPosition
         wirelessEndpoint = appSettings.lastWirelessEndpoint
         automaticReconnect = appSettings.automaticReconnect
         phoneNotificationsEnabled = appSettings.phoneNotificationsEnabled
@@ -107,6 +111,7 @@ final class AppModel: ObservableObject {
                 self.syncMiniBars()
                 self.applyAutoHide()
                 self.pollPhoneNotifications()
+                self.pollProtectedScreen()
                 if Date().timeIntervalSince(self.lastPhoneDataRefresh) >= 30, !self.isBusy, !self.selectedSerial.isEmpty { self.refreshPhoneData(silent: true) }
             }
         }
@@ -457,12 +462,13 @@ final class AppModel: ObservableObject {
     }
 
     func appLaunchModeChanged() { appSettings.appLaunchMode = appLaunchMode; save() }
+    func controlBarPositionChanged() { appSettings.controlBarPosition = controlBarPosition; save() }
 
     func assignFavorite(package: String, slot: Int) {
         guard packageNames.indices.contains(slot) else { return }
         packageNames[slot] = package
         save()
-        status = "즐겨찾기 \(slot + 1)에 저장했습니다."
+        status = "앱 바로 실행 \(slot + 1)에 지정했습니다."
     }
 
     func chooseAndTransfer() {
@@ -758,7 +764,7 @@ final class AppModel: ObservableObject {
             status = "화면 창이 종료되어 세션을 정리했습니다."
         }
         keyboardCorrection.setTargets(Set(sessions.map(\.processID)))
-        miniBars.sync(sessions: sessions, capture: { [weak self] windowID, title in
+        miniBars.sync(sessions: sessions, position: controlBarPosition, protectedScreen: protectedScreenDetected, capture: { [weak self] windowID, title in
             self?.captureScrcpyWindow(windowID: windowID, title: title)
         }, initialVolume: mediaVolume, setVolume: { [weak self] level in
             self?.setMediaVolume(level)
@@ -781,6 +787,7 @@ final class AppModel: ObservableObject {
         appSettings.presenceMode = presenceMode
         appSettings.openMainWindowAtLaunch = openMainWindowAtLaunch
         appSettings.appLaunchMode = appLaunchMode
+        appSettings.controlBarPosition = controlBarPosition
         if !selectedSerial.isEmpty { appSettings.deviceDisplays[selectedSerial] = settings }
         guard let data = try? JSONEncoder().encode(appSettings) else { return }
         try? data.write(to: Self.settingsURL, options: .atomic)
@@ -922,6 +929,17 @@ final class AppModel: ObservableObject {
             } catch {
                 await MainActor.run { self?.notificationPollInProgress = false }
             }
+        }
+    }
+
+    private func pollProtectedScreen() {
+        guard hasActiveSession, !protectedScreenPollInProgress, !selectedSerial.isEmpty else { if !hasActiveSession { protectedScreenDetected = false }; return }
+        protectedScreenPollInProgress = true
+        let serial = selectedSerial, settings = appSettings
+        Task.detached { [weak self] in
+            let detected: Bool
+            if let adbPath = ToolLocator.adb(settings.adbPath) { detected = (try? ADBService(executable: adbPath).isProtectedScreenFocused(serial: serial)) ?? false } else { detected = false }
+            await MainActor.run { self?.protectedScreenDetected = detected; self?.protectedScreenPollInProgress = false }
         }
     }
 

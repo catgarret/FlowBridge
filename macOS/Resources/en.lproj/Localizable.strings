@@ -231,6 +231,15 @@
 "수신 통화" = "Incoming Call";
 "발신 통화" = "Outgoing Call";
 "부재중 통화" = "Missed Call";
+"화면 제어 바 위치" = "Screen Control Bar Position";
+"화면 상단" = "Top of Screen";
+"화면 하단" = "Bottom of Screen";
+"DEX 모드" = "DEX Mode";
+"휴대폰 미러링 모드" = "Phone Mirroring Mode";
+"앱 바로 실행 지정" = "Quick Launch Assignments";
+"앱 검색 및 지정" = "Search and Assign Apps";
+"앱 검색 및 바로 실행 지정" = "Search and Assign Quick Launch Apps";
+"DEX 모드 오버레이는 실행 중에만 유지되고 종료하면 자동으로 제거됩니다." = "The DEX Mode overlay remains only during the session and is removed automatically afterward.";
 "Galaxy 주소록, 최근 통화와 메시지를 확인하고 상대를 선택해 바로 이어서 작업합니다." = "Browse Galaxy contacts, recent calls, and messages, then select someone to continue.";
 "주소록" = "Contacts";
 "최근 통화" = "Recent Calls";

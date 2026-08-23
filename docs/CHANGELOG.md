@@ -4,6 +4,16 @@
 
 ## Unreleased - experimental macOS port
 
+- Remove duplicate phone refresh controls, center the Calls/Messages switch, clamp
+  message previews, move app search into a dedicated assignment sheet, standardize
+  DEX/mirroring names, and show secure-screen guidance only on detected sessions.
+- 전화·문자 중복 새로고침을 제거하고 전환 탭을 중앙 정렬했으며 메시지 미리보기
+  높이를 고정하고 앱 검색을 별도 지정 창으로 옮겼습니다. DEX·미러링 명칭을
+  통일하고 보호 화면 안내는 감지된 영상 세션에만 표시합니다.
+- Attach the session control bar to the top or bottom inside each video window,
+  keep it centered while the window moves, and add compact collapse/expand states.
+- 세션 제어 바를 영상 창 내부 상단·하단에 선택 배치하고 창 이동 시 중앙 정렬을
+  유지하며 작은 손잡이로 접고 펼칠 수 있도록 개선했습니다.
 - Add app quick-launch targets for desktop virtual windows or the mirrored phone,
   restore per-device desktop/mirror window geometry, replace floating controls with
   a titleless horizontal volume slider bar, simplify Home, and expand call details.
