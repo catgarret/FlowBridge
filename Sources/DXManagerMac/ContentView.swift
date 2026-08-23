@@ -286,8 +286,8 @@ private struct AppsView: View {
                         if slot < 2 { Divider() }
                     }
                 }
-                HStack { Spacer(); Button { showAppPicker = true } label: { Label("앱 검색", systemImage: "magnifyingglass") }.buttonStyle(.borderedProminent) }.padding(.top, 6)
             }
+            .overlay(alignment: .topTrailing) { Button { showAppPicker = true } label: { Label("앱 검색", systemImage: "magnifyingglass") }.buttonStyle(.borderedProminent).padding(.top, 14).padding(.trailing, 18) }
         }
         .sheet(isPresented: $showAppPicker) { AppPickerSheet().environmentObject(model) }
     }

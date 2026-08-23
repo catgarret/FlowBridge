@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Aligned the App Search action to the right side of the Quick Launch Assignments card header.
+- 앱 검색 버튼을 앱 바로 실행 지정 카드 제목과 같은 줄의 오른쪽 끝으로 옮겼습니다.
 - Moved DEX and phone-mirroring actions directly into the connected-device row and removed inactive accent tint from Calls and Messages lists.
 - DEX와 휴대폰 미러링 실행 버튼을 연결된 기기 행 오른쪽으로 옮기고 전화·문자 목록의 비선택 강조색을 제거했습니다.
 - Replaced the compact call controls with a native-style dial pad, direct phone-number entry, and a Galaxy handoff toast while removing redundant call-audio copy and hang-up controls.
