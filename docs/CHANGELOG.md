@@ -4,6 +4,10 @@
 
 ## Unreleased - experimental macOS port
 
+- Keep the device-maximum quality preset visibly selected and show the detected
+  native resolution until another preset or manual value is chosen.
+- 기기 최대 화질 프리셋에 조회된 실제 해상도를 표시하고 다른 값으로 변경할 때까지
+  선택 상태가 유지되도록 개선했습니다.
 - Redesign Home around a prominent live connection summary with secondary device
   setup collapsed, and replace the phone page with a searchable desktop three-pane
   calls, contacts, message threads, conversation, dial-pad, and composer layout.

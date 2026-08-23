@@ -20,6 +20,8 @@ final class AppModel: ObservableObject {
     @Published var selectedSerial = ""
     @Published var deviceAlias = ""
     @Published var settings = DisplaySettings()
+    @Published var nativeDisplayWidth = 0
+    @Published var nativeDisplayHeight = 0
     @Published var packageNames = ["com.android.settings", "", ""]
     @Published var installedApps: [InstalledApp] = []
     @Published var appSearch = ""
@@ -113,7 +115,11 @@ final class AppModel: ObservableObject {
                 if !apps.isEmpty { model.installedApps = apps }
                 if !list.contains(where: { $0.serial == model.selectedSerial }) { model.selectedSerial = list.first?.serial ?? "" }
                 if let selected = list.first(where: { $0.serial == model.selectedSerial }) {
-                    model.deviceAlias = model.appSettings.deviceAliases[model.deviceIdentityKey(selected)] ?? ""
+                    let key = model.deviceIdentityKey(selected)
+                    model.deviceAlias = model.appSettings.deviceAliases[key] ?? ""
+                    if let native = model.appSettings.deviceNativeDisplays[key] {
+                        model.nativeDisplayWidth = native.width; model.nativeDisplayHeight = native.height
+                    }
                 }
                 if !silent { model.status = list.isEmpty ? "연결된 ADB 기기가 없습니다." : String(format: NSLocalizedString("%d대의 기기를 찾았습니다.", comment: ""), list.count) }
             }
@@ -271,8 +277,21 @@ final class AppModel: ObservableObject {
             guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
             let size = try ADBService(executable: adbPath).nativeDisplaySize(serial: serial)
-            return { model in model.settings.width = size.width; model.settings.height = size.height; model.save(); model.status = "Galaxy 최대 해상도 \(size.width)×\(size.height)를 적용했습니다." }
+            return { model in
+                model.nativeDisplayWidth = size.width; model.nativeDisplayHeight = size.height
+                model.settings.width = size.width; model.settings.height = size.height
+                if let key = model.selectedDeviceKey { model.appSettings.deviceNativeDisplays[key] = DisplaySettings(width: size.width, height: size.height, dpi: model.settings.dpi, bitrate: model.settings.bitrate, fps: model.settings.fps) }
+                model.save(); model.status = "Galaxy 최대 해상도 \(size.width)×\(size.height)를 적용했습니다."
+            }
         }
+    }
+
+    var isNativeDisplayPresetSelected: Bool {
+        nativeDisplayWidth > 0 && settings.width == nativeDisplayWidth && settings.height == nativeDisplayHeight
+    }
+
+    var nativeDisplayPresetTitle: String {
+        nativeDisplayWidth > 0 ? "기기 최대 · \(nativeDisplayWidth)×\(nativeDisplayHeight)" : "기기 최대"
     }
     func loadPackages() {
         let serial = selectedSerial
@@ -321,6 +340,9 @@ final class AppModel: ObservableObject {
 
     func applyDeviceSettings() {
         if let saved = appSettings.deviceDisplays[selectedSerial] { settings = saved }
+        if let key = selectedDeviceKey, let native = appSettings.deviceNativeDisplays[key] {
+            nativeDisplayWidth = native.width; nativeDisplayHeight = native.height
+        } else { nativeDisplayWidth = 0; nativeDisplayHeight = 0 }
         deviceAlias = selectedDeviceKey.map { appSettings.deviceAliases[$0] ?? "" } ?? ""
         notificationBaselineSerial = ""
         seenNotificationFingerprints.removeAll()

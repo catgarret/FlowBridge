@@ -506,7 +506,7 @@ private struct SettingsView: View {
                     HStack(spacing: 8) {
                         PresetButton(title: "720p", selected: model.settings.width == 1280 && model.settings.height == 720) { model.applyDisplayPreset(width: 1280, height: 720) }
                         PresetButton(title: "1080p", selected: model.settings.width == 1920 && model.settings.height == 1080) { model.applyDisplayPreset(width: 1920, height: 1080) }
-                        Button(action: model.applyNativeDisplayPreset) { Label("기기 최대", systemImage: "arrow.up.left.and.arrow.down.right") }
+                        PresetButton(title: model.nativeDisplayPresetTitle, selected: model.isNativeDisplayPresetSelected, action: model.applyNativeDisplayPreset)
                     }
                     HStack {
                         Text("프레임").fontWeight(.medium).frame(width: 72, alignment: .leading)

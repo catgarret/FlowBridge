@@ -65,6 +65,7 @@ check(migrated.appProfiles.isEmpty, "legacy app-profile migration")
 check(!migrated.phoneNotificationsEnabled, "legacy notification settings migration")
 check(migrated.favoritePackages.count == 3, "legacy favorites migration")
 check(migrated.deviceAliases.isEmpty, "legacy device aliases migration")
+check(migrated.deviceNativeDisplays.isEmpty, "legacy native display migration")
 
 let screenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", policy: "showing=true screenState=SCREEN_STATE_ON")
 check(screenState.isAwake && screenState.isLocked, "screen and keyguard state parsing")
