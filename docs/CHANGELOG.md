@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Simplified scrcpy window titles to `[Phone Mirroring] device alias` and `[DEX Mode] device alias`, removing transport identifiers.
+- scrcpy 창 제목을 `[휴대폰 미러링] 기기 별칭`, `[DEX 모드] 기기 별칭`으로 단순화하고 연결 식별자를 제거했습니다.
 - Added Back, Home, and Recent Apps controls to the phone-mirroring control bar using Android system key events.
 - 휴대폰 미러링 제어 바에 Android 시스템 키 이벤트로 동작하는 뒤로가기·홈·최근 앱 버튼을 추가했습니다.
 - Added nested Galaxy Download folder navigation with safe paths containing spaces, increased recent-call row spacing, simplified settings headings, and rounded the mirror control bar's outer bottom corners.

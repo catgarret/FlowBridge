@@ -293,12 +293,14 @@ final class AppModel: ObservableObject {
     func startDeX() {
         activeScreenMode = "DEX 모드"
         let placement = savedPlacement(kind: "desktop")
-        start(exclusiveMainDisplay: true, trackMainSession: true, createsOverlay: true) { try $0.startDeX(serial: $1, settings: $2, placement: placement) }
+        let deviceName = selectedScreenDeviceName
+        start(exclusiveMainDisplay: true, trackMainSession: true, createsOverlay: true) { try $0.startDeX(serial: $1, deviceName: deviceName, settings: $2, placement: placement) }
     }
     func startPhoneMirror() {
         activeScreenMode = "휴대폰 미러링"
         let placement = savedPlacement(kind: "phone")
-        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, settings: $2, placement: placement) }
+        let deviceName = selectedScreenDeviceName
+        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, deviceName: deviceName, settings: $2, placement: placement) }
     }
 
     func volumeDown() { sendKeyEvent(25, label: "볼륨 낮추기") }
@@ -543,7 +545,8 @@ final class AppModel: ObservableObject {
     private func launchApp(package: String, slot: Int) {
         if appLaunchMode == .phoneScreen {
             let placement = savedPlacement(kind: "phone")
-            start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startAppOnPhone(serial: $1, package: package, settings: $2, placement: placement) }
+            let deviceName = selectedScreenDeviceName
+            start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startAppOnPhone(serial: $1, deviceName: deviceName, package: package, settings: $2, placement: placement) }
         } else {
             start { try $0.startApp(serial: $1, package: package, settings: $2, slot: slot) }
         }
@@ -1252,6 +1255,10 @@ final class AppModel: ObservableObject {
 
     private var selectedDeviceKey: String? {
         devices.first(where: { $0.serial == selectedSerial }).map(deviceIdentityKey)
+    }
+
+    private var selectedScreenDeviceName: String {
+        devices.first(where: { $0.serial == selectedSerial }).map(deviceLabel) ?? "Galaxy"
     }
 
     private func deviceIdentityKey(_ device: Device) -> String {

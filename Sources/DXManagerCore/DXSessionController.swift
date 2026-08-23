@@ -23,7 +23,7 @@ public final class DXSessionController: @unchecked Sendable {
         self.scrcpy = scrcpy
     }
 
-    public func startDeX(serial: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
+    public func startDeX(serial: String, deviceName: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
         guard settings.isValid else { throw DXError.invalidSettings }
         // A previous unclean shutdown can leave Android's single global overlay
         // setting behind. Clear it first so the before/after ID comparison stays
@@ -43,7 +43,7 @@ public final class DXSessionController: @unchecked Sendable {
             _ = try? adb.shell(serial: serial, ["settings", "delete", "global", "overlay_display_devices"])
             throw DXError.displayNotFound
         }
-        let title = "Flow Bridge - Desktop - \(serial)"
+        let title = "[DEX 모드] \(Self.cleanDeviceName(deviceName))"
         try launch(key: "dex:\(serial)", serial: serial, title: title, arguments: baseArguments(serial, settings) + (placement?.scrcpyArguments ?? []) + ["--display-id", String(displayID), "--window-title", title])
     }
 
@@ -57,16 +57,22 @@ public final class DXSessionController: @unchecked Sendable {
         try launch(key: "app:\(serial):\(slot)", serial: serial, title: title, arguments: baseArguments(serial, settings) + ["--new-display=\(settings.width)x\(settings.height)/\(settings.dpi)", "--start-app=\(cleanPackage)", "--window-title", title])
     }
 
-    public func startPhoneMirror(serial: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
+    public func startPhoneMirror(serial: String, deviceName: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
         guard settings.isValid else { throw DXError.invalidSettings }
-        let title = "Flow Bridge - Phone Mirror - \(serial)"
+        let title = "[휴대폰 미러링] \(Self.cleanDeviceName(deviceName))"
         try launch(key: "phone:\(serial)", serial: serial, title: title,
                    arguments: baseArguments(serial, settings) + (placement?.scrcpyArguments ?? []) + ["--window-title", title])
     }
 
-    public func startAppOnPhone(serial: String, package: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
+    public func startAppOnPhone(serial: String, deviceName: String, package: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
         try adb.launchApp(serial: serial, package: package)
-        try startPhoneMirror(serial: serial, settings: settings, placement: placement)
+        try startPhoneMirror(serial: serial, deviceName: deviceName, settings: settings, placement: placement)
+    }
+
+    private static func cleanDeviceName(_ value: String) -> String {
+        let cleaned = value.replacingOccurrences(of: "[\\r\\n\\t]+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleaned.isEmpty ? "Galaxy" : String(cleaned.prefix(40))
     }
 
     public func stop(serial: String) {
