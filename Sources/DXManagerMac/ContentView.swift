@@ -366,7 +366,7 @@ private struct PhoneView: View {
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
                     TextField("이름, 번호 또는 내용 검색", text: $model.phoneSearch).textFieldStyle(.roundedBorder).padding(16)
-                    if tab == 0 { HStack(spacing: 10) { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented); Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.borderedProminent).help("다이얼 열기") }.padding(.horizontal, 16).padding(.bottom, 14) }
+                    if tab == 0 { HStack(spacing: 10) { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).labelsHidden(); Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.borderedProminent).help("다이얼 열기") }.padding(.horizontal, 16).padding(.bottom, 14) }
                     Divider()
                     if tab == 0 { callSource == 0 ? AnyView(callList) : AnyView(contactList) } else { messageThreadList }
                 }.frame(width: 360)

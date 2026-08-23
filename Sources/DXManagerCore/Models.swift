@@ -5,12 +5,14 @@ public struct Device: Identifiable, Hashable, Sendable {
     public let state: String
     public let model: String
     public let physicalSerial: String
+    public let customName: String
     public var id: String { serial }
     public var isReady: Bool { state == "device" }
-    public var displayName: String { model.isEmpty ? serial : model.replacingOccurrences(of: "_", with: " ") }
+    public var displayName: String { customName.isEmpty ? (model.isEmpty ? serial : model.replacingOccurrences(of: "_", with: " ")) : customName }
+    public var modelName: String { model.isEmpty ? serial : model.replacingOccurrences(of: "_", with: " ") }
 
-    public init(serial: String, state: String, model: String, physicalSerial: String = "") {
-        self.serial = serial; self.state = state; self.model = model; self.physicalSerial = physicalSerial
+    public init(serial: String, state: String, model: String, physicalSerial: String = "", customName: String = "") {
+        self.serial = serial; self.state = state; self.model = model; self.physicalSerial = physicalSerial; self.customName = customName
     }
 }
 
@@ -120,9 +122,11 @@ public struct AppSettings: Codable, Sendable {
     public var appNotificationsEnabled = false
     public var turnPhoneScreenOffOnStart = false
     public var pendingBrightnessRestores: [String: ScreenBrightnessState] = [:]
+    public var managedOverlaySerials: Set<String> = []
+    public var didCleanLegacyOverlay = false
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, controlBarPosition, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart, pendingBrightnessRestores }
+    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, controlBarPosition, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart, pendingBrightnessRestores, managedOverlaySerials, didCleanLegacyOverlay }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -149,6 +153,8 @@ public struct AppSettings: Codable, Sendable {
         appNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .appNotificationsEnabled) ?? false
         turnPhoneScreenOffOnStart = try values.decodeIfPresent(Bool.self, forKey: .turnPhoneScreenOffOnStart) ?? false
         pendingBrightnessRestores = try values.decodeIfPresent([String: ScreenBrightnessState].self, forKey: .pendingBrightnessRestores) ?? [:]
+        managedOverlaySerials = try values.decodeIfPresent(Set<String>.self, forKey: .managedOverlaySerials) ?? []
+        didCleanLegacyOverlay = try values.decodeIfPresent(Bool.self, forKey: .didCleanLegacyOverlay) ?? false
     }
 }
 

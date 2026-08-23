@@ -70,6 +70,7 @@ check(migrated.presenceMode == .dockAndMenuBar && migrated.openMainWindowAtLaunc
 check(migrated.appLaunchMode == .desktopWindow && migrated.windowPlacements.isEmpty, "legacy launch mode and placement migration")
 check(migrated.controlBarPosition == .bottom, "legacy control bar position migration")
 check(migrated.pendingBrightnessRestores.isEmpty, "legacy brightness restore migration")
+check(migrated.managedOverlaySerials.isEmpty && !migrated.didCleanLegacyOverlay, "legacy overlay cleanup migration")
 
 let screenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", policy: "showing=true screenState=SCREEN_STATE_ON")
 check(screenState.isAwake && screenState.isLocked, "screen and keyguard state parsing")

@@ -16,7 +16,8 @@ public struct ADBService: Sendable {
         for device in observed where device.isReady {
             let identity = (try? shell(serial: device.serial, ["getprop", "ro.serialno"]))?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            enriched.append(Device(serial: device.serial, state: device.state, model: device.model, physicalSerial: identity))
+            let configuredName = (try? shell(serial: device.serial, ["settings", "get", "global", "device_name"]))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            enriched.append(Device(serial: device.serial, state: device.state, model: device.model, physicalSerial: identity, customName: configuredName == "null" ? "" : configuredName))
         }
         return Self.mergeTransports(enriched)
     }

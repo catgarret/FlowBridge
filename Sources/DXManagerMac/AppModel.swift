@@ -83,6 +83,7 @@ final class AppModel: ObservableObject {
     private var sessionAttempt = UUID()
     private var didConfigureLaunchPresentation = false
     private var protectedScreenPollInProgress = false
+    private var overlayCleanupInProgress: Set<String> = []
 
     init() {
         load()
@@ -138,6 +139,7 @@ final class AppModel: ObservableObject {
                     if let native = model.appSettings.deviceNativeDisplays[key] {
                         model.nativeDisplayWidth = native.width; model.nativeDisplayHeight = native.height
                     }
+                    model.cleanupStaleOverlayIfNeeded(serial: selected.serial)
                 }
                 if !silent { model.status = list.isEmpty ? "연결된 ADB 기기가 없습니다." : String(format: NSLocalizedString("%d대의 기기를 찾았습니다.", comment: ""), list.count) }
             }
@@ -280,7 +282,7 @@ final class AppModel: ObservableObject {
 
     func startDeX() {
         let placement = savedPlacement(kind: "desktop")
-        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startDeX(serial: $1, settings: $2, placement: placement) }
+        start(exclusiveMainDisplay: true, trackMainSession: true, createsOverlay: true) { try $0.startDeX(serial: $1, settings: $2, placement: placement) }
     }
     func startPhoneMirror() {
         let placement = savedPlacement(kind: "phone")
@@ -890,7 +892,7 @@ final class AppModel: ObservableObject {
         save()
     }
 
-    private func start(exclusiveMainDisplay: Bool = false, trackMainSession: Bool = false, _ action: @escaping @Sendable (DXSessionController, String, DisplaySettings) throws -> Void) {
+    private func start(exclusiveMainDisplay: Bool = false, trackMainSession: Bool = false, createsOverlay: Bool = false, _ action: @escaping @Sendable (DXSessionController, String, DisplaySettings) throws -> Void) {
         if trackMainSession && sessionPhase == .launching { return }
         let serial = selectedSerial
         let display = settings
@@ -939,6 +941,7 @@ final class AppModel: ObservableObject {
                     model.sessionPhase = .running
                     model.phoneNeedsUnlock = screenState.isLocked
                 }
+                if createsOverlay { model.appSettings.managedOverlaySerials.insert(serial); model.save() }
                 model.status = screenState.isLocked ? "화면은 열렸습니다. 보호된 내용은 Galaxy 잠금을 해제해야 표시됩니다." : (dimPhone ? "화면을 열고 Galaxy 밝기를 최저로 낮췄습니다." : "화면이 준비되었습니다.")
             }
         }
@@ -970,6 +973,26 @@ final class AppModel: ObservableObject {
                 try ADBService(executable: adbPath).restoreScreenBrightness(serial: serial, state: state)
                 await MainActor.run { self?.appSettings.pendingBrightnessRestores.removeValue(forKey: serial); self?.save() }
             } catch { }
+        }
+    }
+
+    private func cleanupStaleOverlayIfNeeded(serial: String) {
+        guard (appSettings.managedOverlaySerials.contains(serial) || !appSettings.didCleanLegacyOverlay),
+              !overlayCleanupInProgress.contains(serial), sessionPhase == .idle,
+              let adbPath = ToolLocator.adb(appSettings.adbPath) else { return }
+        overlayCleanupInProgress.insert(serial)
+        Task.detached { [weak self] in
+            do {
+                _ = try ADBService(executable: adbPath).shell(serial: serial, ["settings", "delete", "global", "overlay_display_devices"])
+                await MainActor.run {
+                    guard let self else { return }
+                    self.overlayCleanupInProgress.remove(serial)
+                    self.appSettings.managedOverlaySerials.remove(serial)
+                    self.appSettings.didCleanLegacyOverlay = true
+                    self.save()
+                    self.status = "남아 있던 DEX 오버레이를 정리했습니다."
+                }
+            } catch { await MainActor.run { if let self { self.overlayCleanupInProgress.remove(serial) } } }
         }
     }
 

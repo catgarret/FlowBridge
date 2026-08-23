@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Cleaned legacy and Flow Bridge-owned DEX overlays on reconnect when no screen session is active, preferred the Galaxy-configured device name, and hid the redundant call-list picker label.
+- 화면 세션이 없을 때 재연결 시 과거 및 Flow Bridge 소유 DEX 오버레이를 정리하고 Galaxy에 설정된 기기 이름을 우선 표시하며 불필요한 통화 목록 라벨을 숨겼습니다.
 - Aligned the App Search action to the right side of the Quick Launch Assignments card header.
 - 앱 검색 버튼을 앱 바로 실행 지정 카드 제목과 같은 줄의 오른쪽 끝으로 옮겼습니다.
 - Moved DEX and phone-mirroring actions directly into the connected-device row and removed inactive accent tint from Calls and Messages lists.
