@@ -414,7 +414,9 @@ private struct PhoneView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(spacing: 0) {
-            PageTabBar(selection: $tab, items: [("통화", "phone.fill"), ("메시지", "message.fill")])
+            CompactTabSwitcher(selection: $tab, items: [("통화", "phone.fill"), ("메시지", "message.fill")])
+                .padding(.bottom, 16)
+            Divider()
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
                     if tab == 0 { HStack(spacing: 10) { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).labelsHidden(); Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.bordered).help("다이얼 열기") }.padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 10) }
@@ -751,6 +753,31 @@ private struct PageTabBar: View {
                 }.buttonStyle(.plain)
             }
         }.padding(5).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.08))).frame(maxWidth: 560).frame(maxWidth: .infinity).padding(.bottom, 4)
+    }
+}
+
+private struct CompactTabSwitcher: View {
+    @Binding var selection: Int
+    let items: [(String, String)]
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                Button { withAnimation(.easeInOut(duration: 0.15)) { selection = index } } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: item.1)
+                        Text(localized(item.0)).fontWeight(.semibold)
+                    }
+                    .foregroundStyle(selection == index ? Color.white : Color.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 38)
+                    .background(selection == index ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+                    .contentShape(RoundedRectangle(cornerRadius: 8))
+                }.buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .frame(width: 360)
+        .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 11))
+        .overlay(RoundedRectangle(cornerRadius: 11).stroke(Color.primary.opacity(0.08)))
     }
 }
 

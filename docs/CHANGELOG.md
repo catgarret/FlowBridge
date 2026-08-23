@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Restored Calls and Messages to a compact centered switcher while keeping a larger hit target and unmistakable selected state.
+- 전화·문자 전환은 넓은 페이지 탭에서 분리해 중앙의 간결한 전환 컨트롤로 되돌리고 클릭 영역과 선택 상태만 명확하게 개선했습니다.
 - Rebuilt Quick Launch selection around directly editable slots, repaired the app picker spacing and alphabet rail, labeled the launch-mode control, standardized primary in-page switchers, and aligned Mac import copy and icon color with Galaxy send.
 - 바로 실행 슬롯 전체에서 앱을 직접 지정·변경하도록 고치고 앱 검색 창 여백과 색인 막대를 재구성했습니다. 실행 방식 라벨과 주요 화면 전환 탭 규격을 통일하고 Mac 가져오기의 불필요한 문구 및 아이콘 색상을 Galaxy 보내기와 맞췄습니다.
 - Simplified Home to a titleless device surface with full-row connection expansion, made Galaxy Notifications the default, equalized app-location controls, cleaned About links/update actions, and fixed and reordered the phone dialer controls.
