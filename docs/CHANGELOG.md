@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Redesigned Home screen-mode actions and right-aligned settings rows, corrected mDNS Wi-Fi labels, removed transport serials from the UI, split notification views, simplified Mac file import, added exact-time tooltips, and rejected corrupt contact-photo cache entries.
+- 홈 화면 실행 버튼과 설정 행을 재디자인하고 mDNS Wi-Fi 표시를 바로잡았으며 transport serial 노출을 제거했습니다. 알림 화면을 분리하고 Mac 파일 가져오기를 단순화했으며 정확한 날짜·시간 툴팁과 손상된 연락처 사진 캐시 검증을 추가했습니다.
 - Reworked spacing, card hierarchy, connection setup, phone message bubbles, and content width; made disconnected views cache-readable but action-safe; split file transfer into prominent send/receive modes; and moved log export into Diagnostics.
 - 공통 여백·카드 위계·연결 설정·문자 말풍선·콘텐츠 폭을 정리하고, 연결 해제 시 캐시는 열람하되 기기 작업은 막도록 개선했으며, 파일 전송을 보내기·가져오기 전환 화면으로 분리하고 로그 저장을 진단으로 옮겼습니다.
 - Fixed repeated Galaxy notifications being suppressed, surfaced macOS delivery errors, added lazy cached app icons across notifications/search/quick launch, and matched FPS button spacing to resolution presets.

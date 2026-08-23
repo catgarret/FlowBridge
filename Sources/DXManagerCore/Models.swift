@@ -10,6 +10,8 @@ public struct Device: Identifiable, Hashable, Sendable {
     public var isReady: Bool { state == "device" }
     public var displayName: String { customName.isEmpty ? (model.isEmpty ? serial : model.replacingOccurrences(of: "_", with: " ")) : customName }
     public var modelName: String { model.isEmpty ? serial : model.replacingOccurrences(of: "_", with: " ") }
+    public var isWireless: Bool { serial.contains(":") || serial.contains("._adb-tls-") }
+    public var connectionName: String { isWireless ? "Wi-Fi" : "USB" }
 
     public init(serial: String, state: String, model: String, physicalSerial: String = "", customName: String = "") {
         self.serial = serial; self.state = state; self.model = model; self.physicalSerial = physicalSerial; self.customName = customName

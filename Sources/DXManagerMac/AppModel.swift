@@ -30,6 +30,7 @@ final class AppModel: ObservableObject {
     @Published var phoneSearch = ""
     @Published var contacts: [PhoneContact] = []
     @Published var contactPhotoURLs: [String: URL] = [:]
+    @Published var deviceProfilePhotoURL: URL?
     @Published var activeNotifications: [PhoneNotification] = []
     @Published var appIconURLs: [String: URL] = [:]
     @Published var notificationDeliveryStatus = ""
@@ -398,7 +399,8 @@ final class AppModel: ObservableObject {
             guard !key.isEmpty else { continue }
             let digest = SHA256.hash(data: Data("\(serial)|\(key)".utf8)).map { String(format: "%02x", $0) }.joined()
             let url = directory.appendingPathComponent("\(digest).jpg")
-            if FileManager.default.fileExists(atPath: url.path) { cached[key] = url }
+            if FileManager.default.fileExists(atPath: url.path), NSImage(contentsOf: url) != nil { cached[key] = url }
+            else if FileManager.default.fileExists(atPath: url.path) { try? FileManager.default.removeItem(at: url); missing.append((key, contact.photoURI, url)) }
             else { missing.append((key, contact.photoURI, url)) }
         }
         contactPhotoURLs = cached
@@ -408,8 +410,7 @@ final class AppModel: ObservableObject {
             for (key, uri, url) in missing {
                 do {
                     try adb.pullContactPhoto(serial: serial, photoURI: uri, localURL: url)
-                    let fileSize = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
-                    guard (fileSize ?? 0) > 0 else { try? FileManager.default.removeItem(at: url); continue }
+                    guard NSImage(contentsOf: url) != nil else { try? FileManager.default.removeItem(at: url); continue }
                     await MainActor.run { self?.contactPhotoURLs[key] = url }
                 } catch { try? FileManager.default.removeItem(at: url) }
             }
@@ -433,7 +434,7 @@ final class AppModel: ObservableObject {
 
     func deviceLabel(_ device: Device) -> String {
         let alias = appSettings.deviceAliases[deviceIdentityKey(device)]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return alias.isEmpty ? "\(device.displayName)  ·  \(device.serial)" : "\(alias)  ·  \(device.displayName)"
+        return alias.isEmpty ? "\(device.displayName)  ·  \(device.connectionName)" : "\(alias)  ·  \(device.modelName)"
     }
 
     var hasSavedDeviceAlias: Bool {

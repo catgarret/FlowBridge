@@ -19,6 +19,11 @@
 "버전, 업데이트, 오픈소스 라이선스와 프로젝트 링크를 확인합니다." = "View the version, updates, open-source licenses, and project links.";
 "새로고침" = "Refresh";
 "로그 저장" = "Save Log";
+"데스크톱 화면" = "Desktop Screen";
+"휴대폰 화면" = "Phone Screen";
+"알림 항목" = "Notification Types";
+"Mac에 저장" = "Save to Mac";
+"키보드 입력" = "Keyboard Input";
 "취소" = "Cancel";
 "기기 연결" = "Device Connection";
 "연결된 기기 없음" = "No connected device";
