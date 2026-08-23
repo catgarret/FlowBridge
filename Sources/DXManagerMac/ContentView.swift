@@ -89,7 +89,7 @@ struct ContentView: View {
         case .transfer: return "파일과 폴더를 Galaxy의 Download 폴더로 보냅니다."
         case .notifications: return "전화·문자·앱 알림을 Mac 알림 센터로 전달합니다."
         case .settings: return "화면 품질, 자동 연결과 Mac 동작을 설정합니다."
-        case .diagnostics: return "기기 정보와 DX Companion 상태를 확인합니다."
+        case .diagnostics: return "기기 정보와 화면 복구 도구 상태를 확인합니다."
         }
     }
 }
@@ -119,7 +119,7 @@ private struct HomeView: View {
             }
             Card("화면 열기", icon: "macwindow.on.rectangle") {
                 HStack(spacing: 14) {
-                    LaunchTile(title: "Samsung DeX", subtitle: "데스크톱 화면", icon: "display", tint: .blue, action: model.startDeX)
+                    LaunchTile(title: "데스크톱 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
                     LaunchTile(title: "휴대폰 미러링", subtitle: "기본 화면 그대로", icon: "iphone", tint: .purple, action: model.startPhoneMirror)
                 }
                 HStack {
@@ -136,6 +136,14 @@ private struct HomeView: View {
                     Button(action: model.captureRegion) { Label("화면 영역 캡처", systemImage: "viewfinder") }
                     Button(action: model.loadPackages) { Label("앱 목록 갱신", systemImage: "square.grid.2x2") }
                 }
+            }
+            Card("텍스트 클립보드", icon: "doc.on.clipboard") {
+                HStack(spacing: 22) {
+                    Label("Mac에서 복사 → 화면 창에서 ⌘V", systemImage: "macbook.and.iphone")
+                    Label("휴대폰에서 선택 → 화면 창에서 ⌘C", systemImage: "iphone.and.arrow.forward")
+                }
+                Text("데스크톱 모드, 휴대폰 미러링과 독립 앱 창에서 텍스트가 양방향으로 동기화됩니다.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -288,8 +296,8 @@ private struct DiagnosticsView: View {
                     Spacer(); Button("진단 갱신", action: model.loadDiagnostics)
                 }
             }
-            Card("DX Companion", icon: "cross.case") {
-                Text("비정상 종료 후 Galaxy에 남은 DeX 가상 화면을 안전하게 복구합니다.").foregroundStyle(.secondary)
+            Card("화면 복구 도구", icon: "cross.case") {
+                Text("비정상 종료 후 Galaxy에 남은 데스크톱 가상 화면을 안전하게 복구합니다.").foregroundStyle(.secondary)
                 HStack {
                     Button("설치·업데이트", action: model.installCompanion).buttonStyle(.borderedProminent)
                     Button("복구 권한 부여", action: model.grantCompanionPermission)

@@ -43,7 +43,7 @@ public final class DXSessionController: @unchecked Sendable {
             _ = try? adb.shell(serial: serial, ["settings", "delete", "global", "overlay_display_devices"])
             throw DXError.displayNotFound
         }
-        let title = "Flow Bridge - DeX Station - \(serial)"
+        let title = "Flow Bridge - Desktop - \(serial)"
         try launch(key: "dex:\(serial)", serial: serial, title: title, arguments: baseArguments(serial, settings) + ["--display-id", String(displayID), "--window-title", title])
     }
 
@@ -87,7 +87,7 @@ public final class DXSessionController: @unchecked Sendable {
     }
 
     private func baseArguments(_ serial: String, _ settings: DisplaySettings) -> [String] {
-        ["-s", serial, "--video-bit-rate", "\(settings.bitrate)M", "--max-fps", String(settings.fps)]
+        ["-s", serial, "--video-bit-rate", "\(settings.bitrate)M", "--max-fps", String(settings.fps), "--shortcut-mod=lsuper"]
     }
 
     private func launch(key: String, serial: String, title: String, arguments: [String]) throws {

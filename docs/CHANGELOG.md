@@ -4,6 +4,9 @@
 
 ## Unreleased - experimental macOS port
 
+- Make macOS Command the explicit scrcpy shortcut modifier for reliable two-way
+  text copy and paste, add clipboard guidance to Home, and rename user-facing
+  DeX/DX Companion wording to Flow Bridge Desktop Mode and Display Recovery Tool.
 - Replace the application icon with the project owner's final Flow Bridge vector
   artwork and regenerate the complete macOS icon set from the canonical SVG.
 - Rename the macOS app to Flow Bridge, add Korean and English localization,
@@ -59,6 +62,9 @@
   공개 저장소용 출처·라이선스·상표·개인정보·빌드·배포 문서를 추가했습니다.
 - 프로젝트 소유자가 제공한 Flow Bridge 최종 벡터 아이콘으로 교체하고 원본 SVG에서
   전체 macOS 아이콘 세트를 다시 생성했습니다.
+- 양방향 텍스트 복사·붙여넣기의 scrcpy 단축키를 macOS Command로 명시 고정하고 홈에
+  사용법을 추가했으며, 사용자 화면의 DeX·DX Companion 표현을 Flow Bridge 데스크톱
+  모드와 화면 복구 도구로 변경했습니다.
 
 ## 2026-08 - v2.0.0
 

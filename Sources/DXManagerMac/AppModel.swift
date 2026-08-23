@@ -290,7 +290,7 @@ final class AppModel: ObservableObject {
         companionAction({ adb, serial, apk in
             _ = try adb.install(serial: serial, apk: apk)
             try Self.verifyInstalledCompanion(adb: adb, serial: serial)
-        }, success: "DX Companion을 설치했습니다.")
+        }, success: "화면 복구 도구를 설치했습니다.")
     }
 
     func uninstallCompanion() {
@@ -299,7 +299,7 @@ final class AppModel: ObservableObject {
             guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
             _ = try ADBService(executable: adbPath).uninstall(serial: serial, package: "io.github.mazemei.dxdisplaycleanup")
-            return { model in model.status = "DX Companion을 삭제했습니다." }
+            return { model in model.status = "화면 복구 도구를 삭제했습니다." }
         }
     }
 
@@ -312,7 +312,7 @@ final class AppModel: ObservableObject {
             try Self.verifyInstalledCompanion(adb: adb, serial: serial)
             try adb.grant(serial: serial, package: "io.github.mazemei.dxdisplaycleanup", permission: "android.permission.WRITE_SECURE_SETTINGS")
             try Self.verifyInstalledCompanion(adb: adb, serial: serial)
-            return { model in model.status = "DX Companion 복구 권한을 부여했습니다." }
+            return { model in model.status = "화면 복구 도구에 복구 권한을 부여했습니다." }
         }
     }
 
@@ -321,10 +321,10 @@ final class AppModel: ObservableObject {
         perform { [settings = appSettings] in
             guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
             guard let apk = Bundle.main.resourceURL?.appendingPathComponent("companion/DX-Companion.apk"),
-                  let data = try? Data(contentsOf: apk) else { throw DXError.commandFailed("번들 DX Companion APK가 없습니다.") }
+                  let data = try? Data(contentsOf: apk) else { throw DXError.commandFailed("번들 화면 복구 도구 APK가 없습니다.") }
             let digest = SHA256.hash(data: data).map { String(format: "%02X", $0) }.joined()
             guard digest == "7CD40017789E22440DCA0291AB0C45ADB564A19D8A623E669F373395536B880F" else {
-                throw DXError.commandFailed("DX Companion APK 해시 검증에 실패했습니다.")
+                throw DXError.commandFailed("화면 복구 도구 APK 해시 검증에 실패했습니다.")
             }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
             try action(ADBService(executable: adbPath), serial, apk)
@@ -334,7 +334,7 @@ final class AppModel: ObservableObject {
 
     nonisolated private static func verifyInstalledCompanion(adb: ADBService, serial: String) throws {
         let output = try adb.packagePath(serial: serial, package: "io.github.mazemei.dxdisplaycleanup")
-        guard output.hasPrefix("package:") else { throw DXError.commandFailed("공식 DX Companion 설치를 확인하지 못했습니다.") }
+        guard output.hasPrefix("package:") else { throw DXError.commandFailed("공식 화면 복구 도구 설치를 확인하지 못했습니다.") }
         let remote = String(output.dropFirst(8))
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("FlowBridge-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -344,14 +344,14 @@ final class AppModel: ObservableObject {
         let data = try Data(contentsOf: local)
         let digest = SHA256.hash(data: data).map { String(format: "%02X", $0) }.joined()
         guard digest == "7CD40017789E22440DCA0291AB0C45ADB564A19D8A623E669F373395536B880F" else {
-            throw DXError.commandFailed("설치된 DX Companion이 공식 APK와 일치하지 않습니다. 권한을 부여하지 않았습니다.")
+            throw DXError.commandFailed("설치된 화면 복구 도구가 공식 APK와 일치하지 않습니다. 권한을 부여하지 않았습니다.")
         }
     }
 
     func stop() {
         let serial = selectedSerial
         controller?.stop(serial: serial)
-        status = serial.isEmpty ? "선택된 기기가 없습니다." : "세션과 DeX 가상 디스플레이를 정리했습니다."
+        status = serial.isEmpty ? "선택된 기기가 없습니다." : "세션과 데스크톱 가상 디스플레이를 정리했습니다."
     }
 
     func quit() {

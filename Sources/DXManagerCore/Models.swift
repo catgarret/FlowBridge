@@ -100,7 +100,7 @@ public enum DXError: LocalizedError {
         case .toolMissing(let tool): return "\(tool)을 찾을 수 없습니다. Homebrew로 설치하거나 설정에서 경로를 지정해 주세요."
         case .commandFailed(let message): return message
         case .invalidSettings: return "해상도, DPI, 비트레이트 또는 FPS 값이 허용 범위를 벗어났습니다."
-        case .displayNotFound: return "생성된 DeX 가상 디스플레이 ID를 확인하지 못했습니다."
+        case .displayNotFound: return "생성된 데스크톱 가상 디스플레이 ID를 확인하지 못했습니다."
         }
     }
 }
