@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Replaced the draggable floating session remote with a full-width status bar docked inside the top or bottom of each DEX and mirror window, scoped its window ordering to the video window, and separated the volume label from its slider.
+- 드래그식 플로팅 화면 리모컨을 제거하고 DEX·미러링 창 내부 상단 또는 하단에 붙는 전체 폭 상태 표시줄로 바꿨습니다. 영상 창 위에서만 표시되도록 순서를 제한하고 볼륨 라벨과 슬라이더 간격을 분리했습니다.
 - Removed vertical alphabet rails while retaining localized section sorting, resized the app picker to fit, removed its redundant search launcher, flush-aligned launch mode, staged outbound files before explicit transfer, auto-loaded inbound files on tab entry, and tightened right-aligned Settings controls.
 - 세로 알파벳 색인은 제거하되 로컬 섹션 정렬은 유지하고, 앱 검색 창을 화면 안에 맞게 줄였으며 중복 앱 검색 버튼을 제거했습니다. 보낼 파일은 명시적 전송 전까지 대기 목록에 쌓이고, 가져오기는 탭 진입 시 자동 갱신되며, 설정 컨트롤은 우측 정렬과 간격을 정리했습니다.
 - Removed the redundant display-quality Save button, made FPS presets persist immediately, and matched the About heading to the bundled Flow Bridge app icon with clearer license line breaks.
