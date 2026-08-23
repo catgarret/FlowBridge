@@ -178,7 +178,7 @@ public struct ADBService: Sendable {
     }
 
     public func recentMessages(serial: String) throws -> [PhoneMessage] {
-        Array(Self.parseMessages(try shell(serial: serial, ["content", "query", "--uri", "content://sms", "--projection", "address:body:date"])).prefix(100))
+        Array(Self.parseMessages(try shell(serial: serial, ["content", "query", "--uri", "content://sms", "--projection", "address:body:date:type"])).prefix(200))
     }
 
     public static func parseContacts(_ output: String) -> [PhoneContact] {
@@ -201,7 +201,10 @@ public struct ADBService: Sendable {
     public static func parseMessages(_ output: String) -> [PhoneMessage] {
         output.split(whereSeparator: \.isNewline).compactMap { raw in
             let line = String(raw); guard let a = line.range(of: "address="), let b = line.range(of: ", body="), let d = line.range(of: ", date=", options: .backwards) else { return nil }
-            return PhoneMessage(address: String(line[a.upperBound..<b.lowerBound]), body: String(line[b.upperBound..<d.lowerBound]), date: Date(timeIntervalSince1970: (Double(line[d.upperBound...]) ?? 0) / 1000))
+            let typeMark = line.range(of: ", type=", range: d.upperBound..<line.endIndex)
+            let dateEnd = typeMark?.lowerBound ?? line.endIndex
+            let type = typeMark.flatMap { Int(line[$0.upperBound...]) } ?? 1
+            return PhoneMessage(address: String(line[a.upperBound..<b.lowerBound]), body: String(line[b.upperBound..<d.lowerBound]), date: Date(timeIntervalSince1970: (Double(line[d.upperBound..<dateEnd]) ?? 0) / 1000), type: type)
         }.sorted { $0.date > $1.date }
     }
 

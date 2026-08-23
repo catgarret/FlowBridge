@@ -4,6 +4,11 @@
 
 ## Unreleased - experimental macOS port
 
+- Redesign Home around a prominent live connection summary with secondary device
+  setup collapsed, and replace the phone page with a searchable desktop three-pane
+  calls, contacts, message threads, conversation, dial-pad, and composer layout.
+- 홈을 실시간 연결 상태 중심으로 재구성하고 추가 기기 설정을 접었으며, 전화·문자를
+  검색 가능한 3열 통화·주소록·대화 목록·대화창·다이얼패드·작성 화면으로 개편했습니다.
 - Add 720p, 1080p, and device-native resolution presets plus 30/60/120 FPS
   controls while retaining manual expert settings, and clarify overlay lifetime.
 - 720p·1080p·기기 실제 최대 해상도와 30·60·120 FPS 선택을 추가하고 전문가용

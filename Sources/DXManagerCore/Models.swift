@@ -53,8 +53,10 @@ public struct PhoneCall: Identifiable, Hashable, Sendable {
     public init(number: String, type: Int, date: Date) { self.number = number; self.type = type; self.date = date }
 }
 public struct PhoneMessage: Identifiable, Hashable, Sendable {
-    public let address: String; public let body: String; public let date: Date; public var id: String { "\(address)|\(date.timeIntervalSince1970)|\(body.hashValue)" }
-    public init(address: String, body: String, date: Date) { self.address = address; self.body = body; self.date = date }
+    public let address: String; public let body: String; public let date: Date; public let type: Int
+    public var id: String { "\(address)|\(date.timeIntervalSince1970)|\(body.hashValue)" }
+    public init(address: String, body: String, date: Date, type: Int = 1) { self.address = address; self.body = body; self.date = date; self.type = type }
+    public var isOutgoing: Bool { type == 2 || type == 4 || type == 5 || type == 6 }
 }
 
 public struct DisplaySettings: Codable, Equatable, Sendable {
