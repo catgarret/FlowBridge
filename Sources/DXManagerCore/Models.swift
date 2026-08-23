@@ -122,13 +122,14 @@ public struct AppSettings: Codable, Sendable {
     public var phoneNotificationsEnabled = false
     public var messageNotificationsEnabled = false
     public var appNotificationsEnabled = false
+    public var blockedNotificationPackages: Set<String> = []
     public var turnPhoneScreenOffOnStart = false
     public var pendingBrightnessRestores: [String: ScreenBrightnessState] = [:]
     public var managedOverlaySerials: Set<String> = []
     public var didCleanLegacyOverlay = false
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, controlBarPosition, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart, pendingBrightnessRestores, managedOverlaySerials, didCleanLegacyOverlay }
+    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, controlBarPosition, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, blockedNotificationPackages, turnPhoneScreenOffOnStart, pendingBrightnessRestores, managedOverlaySerials, didCleanLegacyOverlay }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -153,6 +154,7 @@ public struct AppSettings: Codable, Sendable {
         phoneNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .phoneNotificationsEnabled) ?? false
         messageNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .messageNotificationsEnabled) ?? false
         appNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .appNotificationsEnabled) ?? false
+        blockedNotificationPackages = try values.decodeIfPresent(Set<String>.self, forKey: .blockedNotificationPackages) ?? []
         turnPhoneScreenOffOnStart = try values.decodeIfPresent(Bool.self, forKey: .turnPhoneScreenOffOnStart) ?? false
         pendingBrightnessRestores = try values.decodeIfPresent([String: ScreenBrightnessState].self, forKey: .pendingBrightnessRestores) ?? [:]
         managedOverlaySerials = try values.decodeIfPresent(Set<String>.self, forKey: .managedOverlaySerials) ?? []

@@ -772,10 +772,27 @@ private struct NotificationsView: View {
                 .onChange(of: model.phoneNotificationsEnabled) { _ in model.notificationSettingsChanged() }
                 .onChange(of: model.messageNotificationsEnabled) { _ in model.notificationSettingsChanged() }
                 .onChange(of: model.appNotificationsEnabled) { _ in model.notificationSettingsChanged() }
+                let packages = Array(Set(model.activeNotifications.map(\.package)).union(model.blockedNotificationPackages)).filter { !$0.isEmpty }.sorted { model.appDisplayName(package: $0).localizedStandardCompare(model.appDisplayName(package: $1)) == .orderedAscending }
+                if !packages.isEmpty {
+                    Divider()
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("앱별 알림").font(.headline).padding(.vertical, 12)
+                        ForEach(packages, id: \.self) { package in
+                            HStack(spacing: 12) {
+                                AppIconView(package: package, url: model.appIconURLs[package], fallback: String(model.appDisplayName(package: package).prefix(1)))
+                                    .onAppear { if isConnected { model.requestAppIcon(package: package) } }
+                                VStack(alignment: .leading, spacing: 3) { Text(model.appDisplayName(package: package)).fontWeight(.medium); Text(package).font(.caption2).foregroundStyle(.secondary) }
+                                Spacer()
+                                Toggle("", isOn: Binding(get: { model.isNotificationAllowed(package: package) }, set: { model.setNotificationAllowed($0, package: package) })).labelsHidden().toggleStyle(.switch)
+                            }.padding(.vertical, 9)
+                            if package != packages.last { Divider() }
+                        }
+                    }
+                }
             } } else { Card("Galaxy 알림", icon: "iphone.and.arrow.forward") {
                 HStack { Text("Galaxy 알림창에 남아 있는 항목").foregroundStyle(.secondary); Spacer(); Button("모두 지우기", role: .destructive, action: model.dismissAllNotifications).disabled(model.activeNotifications.isEmpty || !isConnected) }
                 if model.activeNotifications.isEmpty { VStack(spacing: 8) { Image(systemName: "bell.slash").font(.system(size: 30)).foregroundStyle(.secondary); Text("남아 있는 알림 없음").foregroundStyle(.secondary) }.frame(maxWidth: .infinity).padding(28) }
-                else { VStack(spacing: 0) { ForEach(model.activeNotifications) { item in HStack(spacing: 14) { AppIconView(package: item.package, url: model.appIconURLs[item.package], fallback: "", systemFallback: item.kind == .call ? "phone.fill" : item.kind == .message ? "message.fill" : "app.fill").onAppear { if isConnected { model.requestAppIcon(package: item.package) } }; VStack(alignment: .leading, spacing: 4) { Text(item.title.isEmpty ? item.package : item.title).fontWeight(.semibold); Text(item.body).font(.subheadline).foregroundStyle(.secondary).lineLimit(2); Text(item.package).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Button { model.dismissNotification(item) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).disabled(!isConnected).help("Galaxy에서 알림 지우기") }.padding(.vertical, 13); Divider() } } }
+                else { VStack(spacing: 0) { ForEach(model.activeNotifications) { item in HStack(spacing: 14) { AppIconView(package: item.package, url: model.appIconURLs[item.package], fallback: "", systemFallback: item.kind == .call ? "phone.fill" : item.kind == .message ? "message.fill" : "app.fill").onAppear { if isConnected { model.requestAppIcon(package: item.package) } }; VStack(alignment: .leading, spacing: 4) { Text(item.title.isEmpty ? model.appDisplayName(package: item.package) : item.title).fontWeight(.semibold); Text(item.body).font(.subheadline).foregroundStyle(.secondary).lineLimit(2); Text(model.appDisplayName(package: item.package)).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Button { model.setNotificationAllowed(!model.isNotificationAllowed(package: item.package), package: item.package) } label: { Image(systemName: model.isNotificationAllowed(package: item.package) ? "bell.fill" : "bell.slash.fill").foregroundStyle(model.isNotificationAllowed(package: item.package) ? Color.accentColor : Color.secondary).frame(width: 28, height: 28) }.buttonStyle(.plain).help(model.isNotificationAllowed(package: item.package) ? "이 앱의 Mac 알림 끄기" : "이 앱의 Mac 알림 켜기"); Button { model.dismissNotification(item) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).disabled(!isConnected).help("Galaxy에서 알림 지우기") }.padding(.vertical, 13); Divider() } } }
                 if !model.notificationDeliveryStatus.isEmpty { Text(LocalizedStringKey(model.notificationDeliveryStatus)).font(.caption).foregroundStyle(.secondary) }
             } }
         }.onAppear { if isConnected && tab == 0 { model.loadActiveNotifications() } }

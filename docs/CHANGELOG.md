@@ -4,6 +4,10 @@
 
 ## Unreleased - experimental macOS port
 
+- Added persistent per-app Mac notification controls in both Notification Settings and each live Galaxy notification row.
+- 알림 설정과 Galaxy 현재 알림 행 양쪽에서 앱별 Mac 알림을 켜고 끌 수 있으며 선택은 연결이 끊겨도 유지됩니다.
+- Replaced package identifiers in Mac notification titles with friendly app names, corrected the test alert title, and attached cached Galaxy app icons where macOS supports notification attachments.
+- Mac 알림 제목의 패키지명을 일반 앱 이름으로 바꾸고 테스트 알림 제목을 바로잡았으며, macOS 알림 첨부를 지원하는 경우 캐시된 Galaxy 앱 아이콘을 함께 표시합니다.
 - Kept call details positioned at the newest call and message conversations at the newest message after selection and refresh.
 - 상대를 선택하거나 데이터를 갱신한 뒤 통화 상세는 최신 통화, 문자 대화는 최신 메시지가 바로 보이도록 스크롤 위치를 유지했습니다.
 - Made SMS send actions complete through the Galaxy messaging UI, replaced the fixed-height editor with a native expanding composer, and flattened and relaxed call-detail history rows.

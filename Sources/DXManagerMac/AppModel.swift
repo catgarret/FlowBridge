@@ -63,6 +63,7 @@ final class AppModel: ObservableObject {
     @Published var phoneNotificationsEnabled = false
     @Published var messageNotificationsEnabled = false
     @Published var appNotificationsEnabled = false
+    @Published var blockedNotificationPackages: Set<String> = []
     @Published var turnPhoneScreenOffOnStart = false
     @Published var hasActiveSession = false
     @Published var sessionPhase: SessionPhase = .idle
@@ -108,6 +109,7 @@ final class AppModel: ObservableObject {
         phoneNotificationsEnabled = appSettings.phoneNotificationsEnabled
         messageNotificationsEnabled = appSettings.messageNotificationsEnabled
         appNotificationsEnabled = appSettings.appNotificationsEnabled
+        blockedNotificationPackages = appSettings.blockedNotificationPackages
         turnPhoneScreenOffOnStart = appSettings.turnPhoneScreenOffOnStart
         packageNames = appSettings.favoritePackages
         UNUserNotificationCenter.current().delegate = notificationDelegate
@@ -488,6 +490,7 @@ final class AppModel: ObservableObject {
         appSettings.phoneNotificationsEnabled = phoneNotificationsEnabled
         appSettings.messageNotificationsEnabled = messageNotificationsEnabled
         appSettings.appNotificationsEnabled = appNotificationsEnabled
+        appSettings.blockedNotificationPackages = blockedNotificationPackages
         save()
         guard phoneNotificationsEnabled || messageNotificationsEnabled || appNotificationsEnabled else { return }
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { [weak self] granted, error in
@@ -515,7 +518,21 @@ final class AppModel: ObservableObject {
     }
 
     func sendTestNotification() {
-        deliver(PhoneNotification(key: UUID().uuidString, package: "io.github.catgarret.flowbridge", title: "Flow Bridge", body: "Mac 알림 센터 전달이 정상적으로 동작합니다.", kind: .application))
+        deliver(PhoneNotification(key: UUID().uuidString, package: "", title: "알림 테스트", body: "Mac 알림 센터 전달이 정상적으로 동작합니다.", kind: .application))
+    }
+
+    func isNotificationAllowed(package: String) -> Bool { !blockedNotificationPackages.contains(package) }
+
+    func setNotificationAllowed(_ allowed: Bool, package: String) {
+        guard !package.isEmpty else { return }
+        if allowed { blockedNotificationPackages.remove(package) }
+        else { blockedNotificationPackages.insert(package) }
+        notificationSettingsChanged()
+        status = allowed ? "\(appDisplayName(package: package)) 알림을 허용했습니다." : "\(appDisplayName(package: package)) 알림을 껐습니다."
+    }
+
+    func appDisplayName(package: String) -> String {
+        installedApps.first(where: { $0.package == package })?.name ?? ADBService.friendlyAppName(for: package)
     }
 
     func openMacNotificationSettings() {
@@ -1019,6 +1036,7 @@ final class AppModel: ObservableObject {
         appSettings.phoneNotificationsEnabled = phoneNotificationsEnabled
         appSettings.messageNotificationsEnabled = messageNotificationsEnabled
         appSettings.appNotificationsEnabled = appNotificationsEnabled
+        appSettings.blockedNotificationPackages = blockedNotificationPackages
         appSettings.turnPhoneScreenOffOnStart = turnPhoneScreenOffOnStart
         appSettings.favoritePackages = packageNames
         appSettings.presenceMode = presenceMode
@@ -1194,7 +1212,7 @@ final class AppModel: ObservableObject {
                     }
                     for item in notifications where !self.seenNotificationFingerprints.contains(item.fingerprint) {
                         let enabled = item.kind == .call ? options.0 : item.kind == .message ? options.1 : options.2
-                        if enabled { self.deliver(item) }
+                        if enabled && !self.blockedNotificationPackages.contains(item.package) { self.deliver(item) }
                     }
                     self.seenNotificationFingerprints = current
                 }
@@ -1217,16 +1235,43 @@ final class AppModel: ObservableObject {
 
     private func deliver(_ item: PhoneNotification) {
         let content = UNMutableNotificationContent()
-        content.title = item.title.isEmpty ? item.package : item.title
-        content.subtitle = item.kind == .call ? "Galaxy 전화" : item.kind == .message ? "Galaxy 문자" : item.package
+        let appName = notificationAppName(for: item)
+        content.title = appName
+        let sourceTitle = item.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        content.subtitle = sourceTitle.isEmpty || sourceTitle == appName
+            ? (item.kind == .call ? "Galaxy 전화" : item.kind == .message ? "Galaxy 문자" : "Galaxy 알림")
+            : sourceTitle
         content.body = item.body
         content.sound = .default
-        content.threadIdentifier = "galaxy.\(item.package)"
+        content.threadIdentifier = item.package.isEmpty ? "flowbridge.test" : "galaxy.\(item.package)"
+        if let iconURL = appIconURLs[item.package], let attachmentURL = notificationAttachmentURL(package: item.package, iconURL: iconURL),
+           let attachment = try? UNNotificationAttachment(identifier: "galaxy-app-icon", url: attachmentURL) {
+            content.attachments = [attachment]
+        } else if !item.package.isEmpty {
+            requestAppIcon(package: item.package)
+        }
         let deliveredTitle = content.title
         let request = UNNotificationRequest(identifier: "flowbridge.\(UUID().uuidString)", content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { [weak self] error in
             Task { @MainActor in self?.notificationDeliveryStatus = error.map { "macOS 알림 전달 실패: \($0.localizedDescription)" } ?? "최근 전달: \(deliveredTitle)" }
         }
+    }
+
+    private func notificationAppName(for item: PhoneNotification) -> String {
+        if item.package.isEmpty { return "Flow Bridge" }
+        return appDisplayName(package: item.package)
+    }
+
+    private func notificationAttachmentURL(package: String, iconURL: URL) -> URL? {
+        guard let image = NSImage(contentsOf: iconURL), let tiff = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff), let png = bitmap.representation(using: .png, properties: [:]) else { return nil }
+        let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("FlowBridge/NotificationIcons", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let digest = SHA256.hash(data: Data(package.utf8)).map { String(format: "%02x", $0) }.joined()
+        let output = directory.appendingPathComponent("\(digest).png")
+        if !FileManager.default.fileExists(atPath: output.path) { try? png.write(to: output, options: .atomic) }
+        return FileManager.default.fileExists(atPath: output.path) ? output : nil
     }
 
     func requestAppIcon(package: String) {

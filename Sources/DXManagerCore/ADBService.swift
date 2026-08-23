@@ -386,7 +386,7 @@ public struct ADBService: Sendable {
         return 3
     }
 
-    private static func friendlyAppName(for package: String) -> String {
+    public static func friendlyAppName(for package: String) -> String {
         let known: [String: String] = [
             "com.android.settings": "설정", "com.android.vending": "Google Play 스토어",
             "com.google.android.apps.maps": "Google 지도", "com.google.android.apps.messaging": "Google 메시지",
