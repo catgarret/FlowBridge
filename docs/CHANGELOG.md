@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Moved session controls completely below the video instead of overlaying it, removed the collapse control and redundant volume label, fixed the bar to the window width, and added Back and Home actions only for phone mirroring.
+- 화면 제어 바를 영상 위에 겹치지 않고 창 바로 아래에 붙도록 옮기고 접기 버튼과 중복 볼륨 문구를 제거했습니다. 바 너비를 영상 창에 맞추고 휴대폰 미러링에만 뒤로·홈 동작을 추가했습니다.
 - Redesigned Galaxy downloads to match the outbound queue, fixed the pending count, removed the redundant paste button, added multi-selection and batch download with collision-safe names, and introduced lazy cached image thumbnails.
 - 가져오기 목록을 보내기 대기열과 같은 행형 UI로 재구성하고 대기 개수 표시를 수정했으며 붙여넣기 버튼을 제거했습니다. 복수 선택·일괄 다운로드·이름 충돌 방지와 이미지 썸네일 지연 캐시를 추가했습니다.
 - Moved the FPS guidance directly beneath the frame-rate presets instead of below the expert manual settings disclosure.

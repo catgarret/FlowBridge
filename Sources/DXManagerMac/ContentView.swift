@@ -762,10 +762,6 @@ private struct SettingsView: View {
                     Divider()
                     SettingsRow("앱을 시작할 때 메인 창 열기") { Toggle("", isOn: $model.openMainWindowAtLaunch).labelsHidden().onChange(of: model.openMainWindowAtLaunch) { _ in model.presentationSettingsChanged() } }
                     Divider()
-                    SettingsRow("화면 제어 바 위치") {
-                        ControlBarPositionSwitcher()
-                    }
-                    Divider()
                     SettingsRow("사용하지 않을 때 자동 숨김") { HStack(spacing: 8) { TextField("분", value: $model.autoHideMinutes, format: .number).frame(width: 54); Text("분 · 0이면 사용 안 함").foregroundStyle(.secondary) } }
                     Divider()
                     SettingsRow("키보드 입력") { HStack(spacing: 8) {
@@ -898,29 +894,6 @@ private struct PresenceModeSwitcher: View {
             Text(title).fontWeight(.medium).frame(maxWidth: .infinity, minHeight: 28)
                 .foregroundStyle(model.presenceMode == value ? Color.white : Color.secondary)
                 .background(model.presenceMode == value ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 6))
-        }.buttonStyle(.plain)
-    }
-}
-
-private struct ControlBarPositionSwitcher: View {
-    @EnvironmentObject private var model: AppModel
-    var body: some View {
-        HStack(spacing: 2) {
-            option("화면 상단", value: .top)
-            option("화면 하단", value: .bottom)
-        }
-        .padding(3)
-        .frame(width: 236)
-        .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 8))
-    }
-    private func option(_ title: String, value: ControlBarPosition) -> some View {
-        Button {
-            model.controlBarPosition = value
-            model.controlBarPositionChanged()
-        } label: {
-            Text(title).fontWeight(.medium).frame(maxWidth: .infinity, minHeight: 28)
-                .foregroundStyle(model.controlBarPosition == value ? Color.white : Color.secondary)
-                .background(model.controlBarPosition == value ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 6))
         }.buttonStyle(.plain)
     }
 }

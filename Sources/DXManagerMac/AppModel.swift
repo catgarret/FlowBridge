@@ -944,10 +944,14 @@ final class AppModel: ObservableObject {
             status = "화면 창이 종료되어 세션을 정리했습니다."
         }
         keyboardCorrection.setTargets(Set(sessions.map(\.processID)))
-        miniBars.sync(sessions: sessions, position: controlBarPosition, protectedScreen: protectedScreenDetected, capture: { [weak self] windowID, title in
+        miniBars.sync(sessions: sessions, protectedScreen: protectedScreenDetected, capture: { [weak self] windowID, title in
             self?.captureScrcpyWindow(windowID: windowID, title: title)
         }, initialVolume: mediaVolume, setVolume: { [weak self] level in
             self?.setMediaVolume(level)
+        }, back: { [weak self] in
+            self?.sendKeyEvent(4, label: "뒤로")
+        }, home: { [weak self] in
+            self?.sendKeyEvent(3, label: "홈")
         }, power: { [weak self] in
             self?.sendKeyEvent(26, label: "전원")
         }, stop: { [weak self] in
