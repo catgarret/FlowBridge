@@ -486,24 +486,30 @@ private struct PhoneView: View {
             VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화", systemImage: "phone.fill") }.buttonStyle(.borderedProminent).disabled(!isConnected) } }.padding(24)
             Divider()
             HStack { Text("통화 기록").font(.headline); Spacer(); Text("\(calls.count)건").foregroundStyle(.secondary) }.padding(14)
-            List(calls) { call in
-                HStack(spacing: 14) {
-                    Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down")
-                        .foregroundStyle(call.type == 3 ? .red : .secondary)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화")
-                        Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary)
+            ScrollViewReader { proxy in
+                List(calls) { call in
+                    HStack(spacing: 14) {
+                        Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down")
+                            .foregroundStyle(call.type == 3 ? .red : .secondary)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화")
+                            Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary)
                     }
-                    Spacer()
-                    Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary)
+                    .padding(.vertical, 11)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparatorTint(Color.primary.opacity(0.10))
+                    .id(call.id)
                 }
-                .padding(.vertical, 11)
-                .listRowBackground(Color.clear)
-                .listRowSeparatorTint(Color.primary.opacity(0.10))
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .onAppear { scrollToLatestCall(proxy, calls: calls) }
+                .onChange(of: selectedNumber) { _ in scrollToLatestCall(proxy, calls: calls) }
+                .onChange(of: calls.first?.id) { _ in scrollToLatestCall(proxy, calls: calls) }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Color.clear)
         }.frame(maxWidth: .infinity))
     }
 
@@ -531,7 +537,12 @@ private struct PhoneView: View {
         return VStack(spacing: 0) {
             HStack(spacing: 10) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber)); VStack(alignment: .leading) { Text(contactName(selectedNumber)).fontWeight(.semibold); Text(selectedNumber).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.openDialer) { Image(systemName: "phone") }.disabled(!isConnected).help("전화 화면 열기") }.padding(14)
             Divider()
-            ScrollViewReader { proxy in ScrollView { LazyVStack(spacing: 12) { ForEach(conversation) { message in HStack { if message.isOutgoing { Spacer(minLength: 96) }; VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 5) { Text(message.body).textSelection(.enabled); Text(message.date, style: .time).font(.caption2).opacity(0.7) }.foregroundStyle(message.isOutgoing ? Color.white : Color.primary).padding(.horizontal, 13).padding(.vertical, 10).background(message.isOutgoing ? Color.green : Color.secondary.opacity(0.14), in: RoundedRectangle(cornerRadius: 16)); if !message.isOutgoing { Spacer(minLength: 96) } }.id(message.id) } }.padding(18) }.onAppear { if let last = conversation.last { proxy.scrollTo(last.id, anchor: .bottom) } } }
+            ScrollViewReader { proxy in
+                ScrollView { LazyVStack(spacing: 12) { ForEach(conversation) { message in HStack { if message.isOutgoing { Spacer(minLength: 96) }; VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 5) { Text(message.body).textSelection(.enabled); Text(message.date, style: .time).font(.caption2).opacity(0.7) }.foregroundStyle(message.isOutgoing ? Color.white : Color.primary).padding(.horizontal, 13).padding(.vertical, 10).background(message.isOutgoing ? Color.green : Color.secondary.opacity(0.14), in: RoundedRectangle(cornerRadius: 16)); if !message.isOutgoing { Spacer(minLength: 96) } }.id(message.id) } }.padding(18) }
+                    .onAppear { scrollToLatestMessage(proxy, conversation: conversation) }
+                    .onChange(of: selectedNumber) { _ in scrollToLatestMessage(proxy, conversation: conversation) }
+                    .onChange(of: conversation.last?.id) { _ in scrollToLatestMessage(proxy, conversation: conversation) }
+            }
             Divider()
             HStack(alignment: .bottom, spacing: 10) {
                 TextField("문자 메시지 · SMS", text: $model.messageBody, axis: .vertical)
@@ -565,6 +576,14 @@ private struct PhoneView: View {
     private func normalized(_ number: String) -> String { number.filter(\.isNumber).suffix(10).description }
     private func durationText(_ seconds: Int) -> String { seconds == 0 ? "연결 안 됨" : seconds >= 60 ? "\(seconds / 60)분 \(seconds % 60)초" : "\(seconds)초" }
     private func exactDate(_ date: Date) -> String { date.formatted(date: .complete, time: .standard) }
+    private func scrollToLatestCall(_ proxy: ScrollViewProxy, calls: [PhoneCall]) {
+        guard let latest = calls.first else { return }
+        DispatchQueue.main.async { proxy.scrollTo(latest.id, anchor: .top) }
+    }
+    private func scrollToLatestMessage(_ proxy: ScrollViewProxy, conversation: [PhoneMessage]) {
+        guard let latest = conversation.last else { return }
+        DispatchQueue.main.async { proxy.scrollTo(latest.id, anchor: .bottom) }
+    }
     private func contactIndexKey(_ name: String) -> String {
         guard let scalar = name.unicodeScalars.first else { return "#" }
         let value = Int(scalar.value)

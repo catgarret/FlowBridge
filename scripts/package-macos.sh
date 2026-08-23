@@ -4,6 +4,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$ROOT"
 CACHE="$ROOT/.vendor-cache"
 VERSION=4.1
+APP_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT/macOS/Info.plist")
 ARM_ARCHIVE="$CACHE/scrcpy-aarch64-v$VERSION.tar.gz"
 INTEL_ARCHIVE="$CACHE/scrcpy-x86_64-v$VERSION.tar.gz"
 WINDOWS_RELEASE="$CACHE/DX-Manager-v2.0.0-win-x64.zip"
@@ -64,6 +65,6 @@ fi
 chmod +x "$APP/Contents/Resources/runtime/arm64/adb" "$APP/Contents/Resources/runtime/arm64/scrcpy"
 chmod +x "$APP/Contents/Resources/runtime/x86_64/adb" "$APP/Contents/Resources/runtime/x86_64/scrcpy"
 codesign --force --deep --sign - "$APP"
-rm -f "$ROOT/dist/FlowBridge-macOS-universal-v0.1.0.zip"
-ditto -c -k --sequesterRsrc --keepParent "$APP" "$ROOT/dist/FlowBridge-macOS-universal-v0.1.0.zip"
+rm -f "$ROOT/dist/FlowBridge-macOS-universal-v$APP_VERSION.zip"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ROOT/dist/FlowBridge-macOS-universal-v$APP_VERSION.zip"
 echo "$APP"

@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Kept call details positioned at the newest call and message conversations at the newest message after selection and refresh.
+- 상대를 선택하거나 데이터를 갱신한 뒤 통화 상세는 최신 통화, 문자 대화는 최신 메시지가 바로 보이도록 스크롤 위치를 유지했습니다.
 - Made SMS send actions complete through the Galaxy messaging UI, replaced the fixed-height editor with a native expanding composer, and flattened and relaxed call-detail history rows.
 - SMS 전송 동작이 Galaxy 메시지 UI에서 실제 완료되도록 연결하고 고정 높이 편집기를 기본 확장형 입력창으로 교체했으며, 통화 상세 기록의 배경과 행 간격을 정리했습니다.
 - Fixed multi-line Galaxy notification parsing, added explicit Notification Center list presentation, unique delivery requests, permission status and a test notification; redesigned narrow mirror controls with larger navigation targets and a More menu; completed missing English control strings and reduced window-placement polling overhead.
