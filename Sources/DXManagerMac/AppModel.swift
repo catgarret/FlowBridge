@@ -964,6 +964,8 @@ final class AppModel: ObservableObject {
             self?.sendKeyEvent(4, label: "뒤로")
         }, home: { [weak self] in
             self?.sendKeyEvent(3, label: "홈")
+        }, recents: { [weak self] in
+            self?.sendKeyEvent(187, label: "최근 앱")
         }, power: { [weak self] in
             self?.sendKeyEvent(26, label: "전원")
         }, stop: { [weak self] in

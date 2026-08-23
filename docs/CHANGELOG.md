@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Added Back, Home, and Recent Apps controls to the phone-mirroring control bar using Android system key events.
+- 휴대폰 미러링 제어 바에 Android 시스템 키 이벤트로 동작하는 뒤로가기·홈·최근 앱 버튼을 추가했습니다.
 - Added nested Galaxy Download folder navigation with safe paths containing spaces, increased recent-call row spacing, simplified settings headings, and rounded the mirror control bar's outer bottom corners.
 - Galaxy Download 하위 폴더 탐색과 공백 경로 처리를 추가하고 최근 통화 행 간격을 넓혔으며 설정 제목 아이콘을 제거하고 미러링 제어 바 외곽 하단 모서리를 둥글게 정리했습니다.
 - Made the mirror control bar follow the exact video width and switch to a compact layout when the window is narrowed.

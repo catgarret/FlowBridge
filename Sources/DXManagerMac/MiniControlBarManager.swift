@@ -9,14 +9,14 @@ final class MiniControlBarManager {
 
     func sync(sessions: [DXSessionController.SessionInfo], protectedScreen: Bool, capture: @escaping (CGWindowID, String) -> Void,
               initialVolume: Int, setVolume: @escaping (Int) -> Void,
-              back: @escaping () -> Void, home: @escaping () -> Void,
+              back: @escaping () -> Void, home: @escaping () -> Void, recents: @escaping () -> Void,
               power: @escaping () -> Void, stop: @escaping () -> Void) {
         if protectedScreen != lastProtectedScreen { closeAll(); lastProtectedScreen = protectedScreen }
         let active = Set(sessions.map(\.id))
         for key in panels.keys where !active.contains(key) { panels[key]?.close(); panels.removeValue(forKey: key) }
         for session in sessions {
             guard let window = windowInfo(processID: session.processID) else { continue }
-            let panel = panels[session.id] ?? makePanel(session: session, windowID: window.id, protectedScreen: protectedScreen, capture: capture, initialVolume: initialVolume, setVolume: setVolume, back: back, home: home, power: power, stop: stop)
+            let panel = panels[session.id] ?? makePanel(session: session, windowID: window.id, protectedScreen: protectedScreen, capture: capture, initialVolume: initialVolume, setVolume: setVolume, back: back, home: home, recents: recents, power: power, stop: stop)
             panels[session.id] = panel
             positionPanel(panel, below: window.bounds)
             panel.order(.above, relativeTo: Int(window.id))
@@ -27,7 +27,7 @@ final class MiniControlBarManager {
 
     private func makePanel(session: DXSessionController.SessionInfo, windowID: CGWindowID, protectedScreen: Bool, capture: @escaping (CGWindowID, String) -> Void,
                            initialVolume: Int, setVolume: @escaping (Int) -> Void,
-                           back: @escaping () -> Void, home: @escaping () -> Void,
+                           back: @escaping () -> Void, home: @escaping () -> Void, recents: @escaping () -> Void,
                            power: @escaping () -> Void, stop: @escaping () -> Void) -> NSPanel {
         let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 480, height: 48),
                             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
@@ -38,7 +38,7 @@ final class MiniControlBarManager {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.hidesOnDeactivate = false
         panel.isMovableByWindowBackground = false
-        panel.contentView = NSHostingView(rootView: CompactSessionControls(initialVolume: initialVolume, showsPhoneNavigation: session.id.hasPrefix("phone:"), protectedScreen: protectedScreen, capture: { capture(windowID, session.title) }, setVolume: setVolume, back: back, home: home, power: power, stop: stop))
+        panel.contentView = NSHostingView(rootView: CompactSessionControls(initialVolume: initialVolume, showsPhoneNavigation: session.id.hasPrefix("phone:"), protectedScreen: protectedScreen, capture: { capture(windowID, session.title) }, setVolume: setVolume, back: back, home: home, recents: recents, power: power, stop: stop))
         return panel
     }
 
@@ -65,8 +65,8 @@ private struct CompactSessionControls: View {
     @State private var volume: Double
     let showsPhoneNavigation: Bool
     let protectedScreen: Bool
-    let capture: () -> Void; let setVolume: (Int) -> Void; let back: () -> Void; let home: () -> Void; let power: () -> Void; let stop: () -> Void
-    init(initialVolume: Int, showsPhoneNavigation: Bool, protectedScreen: Bool, capture: @escaping () -> Void, setVolume: @escaping (Int) -> Void, back: @escaping () -> Void, home: @escaping () -> Void, power: @escaping () -> Void, stop: @escaping () -> Void) { _volume = State(initialValue: Double(initialVolume)); self.showsPhoneNavigation = showsPhoneNavigation; self.protectedScreen = protectedScreen; self.capture = capture; self.setVolume = setVolume; self.back = back; self.home = home; self.power = power; self.stop = stop }
+    let capture: () -> Void; let setVolume: (Int) -> Void; let back: () -> Void; let home: () -> Void; let recents: () -> Void; let power: () -> Void; let stop: () -> Void
+    init(initialVolume: Int, showsPhoneNavigation: Bool, protectedScreen: Bool, capture: @escaping () -> Void, setVolume: @escaping (Int) -> Void, back: @escaping () -> Void, home: @escaping () -> Void, recents: @escaping () -> Void, power: @escaping () -> Void, stop: @escaping () -> Void) { _volume = State(initialValue: Double(initialVolume)); self.showsPhoneNavigation = showsPhoneNavigation; self.protectedScreen = protectedScreen; self.capture = capture; self.setVolume = setVolume; self.back = back; self.home = home; self.recents = recents; self.power = power; self.stop = stop }
     var body: some View {
         ViewThatFits(in: .horizontal) {
             controlRow(compact: false)
@@ -83,6 +83,7 @@ private struct CompactSessionControls: View {
             if showsPhoneNavigation {
                 Button(action: back) { Image(systemName: "arrow.uturn.backward") }.help("뒤로")
                 Button(action: home) { Image(systemName: "house.fill") }.help("홈")
+                Button(action: recents) { Image(systemName: "rectangle.stack.fill") }.help("최근 앱")
                 if !compact { Divider().frame(height: 22) }
             }
             Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill").foregroundStyle(.secondary)
