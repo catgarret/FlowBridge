@@ -566,7 +566,7 @@ private struct AppIconView: View {
 
 private struct TransferView: View {
     @EnvironmentObject private var model: AppModel
-    @State private var selectedRemote: RemoteFile?
+    @State private var selectedRemote = Set<RemoteFile>()
     @State private var isDropTarget = false
     @State private var direction = 0
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
@@ -576,7 +576,7 @@ private struct TransferView: View {
             if direction == 0 {
                 Card("보내기", icon: "arrow.up.circle") {
                 VStack(spacing: 0) {
-                    HStack { VStack(alignment: .leading, spacing: 3) { Text("Galaxy로 보낼 항목").fontWeight(.semibold); Text("파일을 추가한 뒤 전송을 눌러야 시작됩니다.").font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.chooseAndTransfer) { Label("추가", systemImage: "plus") }; Button { _ = model.pasteFilesFromClipboard() } label: { Label("붙여넣기", systemImage: "doc.on.clipboard") } }.padding(.bottom, 12)
+                    HStack { VStack(alignment: .leading, spacing: 3) { Text("Galaxy로 보낼 항목").fontWeight(.semibold); Text("파일을 추가한 뒤 전송을 눌러야 시작됩니다.").font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.chooseAndTransfer) { Label("추가", systemImage: "plus") } }.padding(.bottom, 12)
                     Divider()
                     if model.pendingTransferURLs.isEmpty {
                         VStack(spacing: 9) { Image(systemName: isDropTarget ? "arrow.down.doc.fill" : "tray.and.arrow.up").font(.system(size: 34)).foregroundStyle(.blue); Text("파일을 놓거나 추가하세요").fontWeight(.medium); Text("Finder 드래그 앤 드롭과 파일 붙여넣기를 지원합니다.").font(.caption).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, minHeight: 190)
@@ -584,7 +584,7 @@ private struct TransferView: View {
                         VStack(spacing: 0) { ForEach(model.pendingTransferURLs, id: \.self) { url in HStack(spacing: 12) { Image(systemName: url.hasDirectoryPath ? "folder.fill" : "doc.fill").foregroundStyle(.blue).frame(width: 28); VStack(alignment: .leading, spacing: 3) { Text(url.lastPathComponent).fontWeight(.medium).lineLimit(1); Text(url.deletingLastPathComponent().path).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }; Spacer(); Button { model.removePendingTransfer(url) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain) }.padding(.vertical, 11); Divider() } }.frame(minHeight: 180)
                     }
                     Divider()
-                    HStack { Text("(model.pendingTransferURLs.count)개 대기 중").font(.caption).foregroundStyle(.secondary); Spacer(); if !model.pendingTransferURLs.isEmpty { Button("모두 지우기", action: model.clearPendingTransfers) }; Button("전송") { model.startPendingTransfers() }.buttonStyle(.borderedProminent).disabled(model.pendingTransferURLs.isEmpty || !isConnected || model.isTransferring) }.padding(.top, 12)
+                    HStack { Text("\(model.pendingTransferURLs.count)개 대기 중").font(.caption).foregroundStyle(.secondary); Spacer(); if !model.pendingTransferURLs.isEmpty { Button("모두 지우기", action: model.clearPendingTransfers) }; Button("전송") { model.startPendingTransfers() }.buttonStyle(.borderedProminent).disabled(model.pendingTransferURLs.isEmpty || !isConnected || model.isTransferring) }.padding(.top, 12)
                     if model.isTransferring { ProgressView().padding(.top, 12); HStack { Text(model.transferStatus).font(.caption).foregroundStyle(.secondary); Spacer(); Button("전송 취소", action: model.cancelTransfer) } }
                 }
                     .background(isDropTarget ? Color.blue.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
@@ -594,6 +594,12 @@ private struct TransferView: View {
                 }
             } else {
                 Card("가져오기", icon: "arrow.down.circle") {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) { Text("Galaxy에서 가져올 항목").fontWeight(.semibold); Text("여러 항목을 선택해 Mac으로 한 번에 다운로드합니다.").font(.caption).foregroundStyle(.secondary) }
+                        Spacer()
+                        if !model.remoteFiles.isEmpty { Button(selectedRemote.count == model.remoteFiles.count ? "선택 해제" : "모두 선택") { selectedRemote = selectedRemote.count == model.remoteFiles.count ? [] : Set(model.remoteFiles) } }
+                    }.padding(.bottom, 12)
+                    Divider()
                     if model.remoteFiles.isEmpty {
                         VStack(spacing: 10) {
                             Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.blue)
@@ -602,14 +608,26 @@ private struct TransferView: View {
                         }.frame(maxWidth: .infinity, minHeight: 180)
                     } else {
                         List(model.remoteFiles, selection: $selectedRemote) { file in
-                            Label(file.name, systemImage: file.isDirectory ? "folder" : "doc").tag(file)
-                        }.frame(minHeight: 240)
+                            HStack(spacing: 12) {
+                                RemoteFileThumbnail(file: file, url: model.remoteThumbnailURLs[file.path])
+                                    .onAppear { model.requestRemoteThumbnail(file) }
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(file.name).fontWeight(.medium).lineLimit(1)
+                                    Text(file.isDirectory ? "폴더" : fileTypeLabel(file.name)).font(.caption2).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if selectedRemote.contains(file) { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) }
+                            }.padding(.vertical, 7).tag(file)
+                        }.listStyle(.plain).scrollContentBackground(.hidden).frame(minHeight: 260)
                     }
+                    Divider()
                     HStack {
+                        Text("\(model.remoteFiles.count)개 · \(selectedRemote.count)개 선택").font(.caption).foregroundStyle(.secondary)
                         Spacer()
-                        Button("Mac에 저장") { if let selectedRemote { model.downloadRemoteFile(selectedRemote) } }
-                            .buttonStyle(.borderedProminent).disabled(selectedRemote == nil || !isConnected)
-                    }
+                        Button("다운로드") { model.downloadRemoteFiles(Array(selectedRemote)) }
+                            .buttonStyle(.borderedProminent).disabled(selectedRemote.isEmpty || !isConnected || model.isTransferring)
+                    }.padding(.top, 12)
+                    if model.isTransferring { HStack(spacing: 10) { ProgressView().controlSize(.small); Text(model.transferStatus).font(.caption).foregroundStyle(.secondary).lineLimit(1) }.padding(.top, 8) }
                 }
             }
         }.onAppear { if direction == 1 && isConnected { model.loadRemoteFiles() } }.onChange(of: direction) { value in if value == 1 && isConnected { model.loadRemoteFiles() } }
@@ -619,6 +637,22 @@ private struct TransferView: View {
         guard isConnected else { return false }
         loadFileURLs(from: providers) { model.enqueueTransfer(urls: $0) }
         return !providers.isEmpty
+    }
+
+    private func fileTypeLabel(_ name: String) -> String {
+        let ext = URL(fileURLWithPath: name).pathExtension.uppercased()
+        return ext.isEmpty ? "파일" : "\(ext) 파일"
+    }
+}
+
+private struct RemoteFileThumbnail: View {
+    let file: RemoteFile
+    let url: URL?
+    var body: some View {
+        Group {
+            if let url, let image = NSImage(contentsOf: url) { Image(nsImage: image).resizable().scaledToFill() }
+            else { ZStack { RoundedRectangle(cornerRadius: 8).fill(Color.blue.opacity(0.10)); Image(systemName: file.isDirectory ? "folder.fill" : "doc.fill").foregroundStyle(.blue) } }
+        }.frame(width: 42, height: 42).clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 

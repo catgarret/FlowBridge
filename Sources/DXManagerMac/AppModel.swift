@@ -43,6 +43,7 @@ final class AppModel: ObservableObject {
     @Published var transferStatus = ""
     @Published var isTransferring = false
     @Published var remoteFiles: [RemoteFile] = []
+    @Published var remoteThumbnailURLs: [String: URL] = [:]
     @Published var pendingTransferURLs: [URL] = []
     @Published var status = "ADB 기기를 검색하는 중입니다."
     @Published var isBusy = false
@@ -89,6 +90,7 @@ final class AppModel: ObservableObject {
     private var protectedScreenPollInProgress = false
     private var overlayCleanupInProgress: Set<String> = []
     private var iconLoadsInProgress: Set<String> = []
+    private var remoteThumbnailLoadsInProgress: Set<String> = []
 
     init() {
         load()
@@ -628,6 +630,30 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func requestRemoteThumbnail(_ file: RemoteFile) {
+        let supported = Set(["jpg", "jpeg", "png", "webp", "heic", "heif", "gif", "bmp"])
+        let ext = URL(fileURLWithPath: file.name).pathExtension.lowercased()
+        guard !file.isDirectory, supported.contains(ext), remoteThumbnailURLs[file.path] == nil,
+              !remoteThumbnailLoadsInProgress.contains(file.path), !selectedSerial.isEmpty,
+              let adbPath = ToolLocator.adb(appSettings.adbPath) else { return }
+        remoteThumbnailLoadsInProgress.insert(file.path)
+        let serial = selectedSerial
+        Task.detached { [weak self] in
+            let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("FlowBridge/RemoteThumbnails", isDirectory: true)
+            try? FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true)
+            let digest = SHA256.hash(data: Data("\(serial)|\(file.path)".utf8)).map { String(format: "%02x", $0) }.joined()
+            let output = cache.appendingPathComponent("\(digest).\(ext)")
+            if !FileManager.default.fileExists(atPath: output.path) {
+                try? ADBService(executable: adbPath).pull(serial: serial, remotePath: file.path, localURL: output)
+            }
+            await MainActor.run {
+                if NSImage(contentsOf: output) != nil { self?.remoteThumbnailURLs[file.path] = output }
+                else { try? FileManager.default.removeItem(at: output) }
+                self?.remoteThumbnailLoadsInProgress.remove(file.path)
+            }
+        }
+    }
+
     func copyRemoteFile(_ file: RemoteFile) {
         let serial = selectedSerial
         perform { [settings = appSettings] in
@@ -664,6 +690,35 @@ final class AppModel: ObservableObject {
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
             try ADBService(executable: adbPath).pull(serial: serial, remotePath: file.path, localURL: destination)
             return { model in model.status = "Galaxy 파일을 Mac에 저장했습니다." }
+        }
+    }
+
+    func downloadRemoteFiles(_ files: [RemoteFile]) {
+        guard !files.isEmpty else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "다운로드"
+        panel.message = "선택한 \(files.count)개 항목을 저장할 폴더를 선택하세요."
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        let serial = selectedSerial
+        isTransferring = true
+        transferStatus = "다운로드 준비 중"
+        perform { [settings = appSettings] in
+            guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let adb = ADBService(executable: adbPath)
+            var completed = 0
+            for file in files.sorted(by: { $0.name.localizedStandardCompare($1.name) == .orderedAscending }) {
+                let destination = Self.availableDestination(in: folder, name: file.name, isDirectory: file.isDirectory)
+                try adb.pull(serial: serial, remotePath: file.path, localURL: destination)
+                completed += 1
+                let progress = completed
+                Task { @MainActor in self.transferStatus = "\(file.name) · \(progress)/\(files.count)" }
+            }
+            return { model in model.isTransferring = false; model.transferStatus = "다운로드 완료"; model.status = "Galaxy에서 \(completed)개 항목을 다운로드했습니다." }
         }
     }
 
@@ -1199,6 +1254,21 @@ final class AppModel: ObservableObject {
 
     nonisolated private static var clipboardDirectory: URL {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("FlowBridge/Clipboard", isDirectory: true)
+    }
+
+    nonisolated private static func availableDestination(in folder: URL, name: String, isDirectory: Bool) -> URL {
+        let manager = FileManager.default
+        let original = folder.appendingPathComponent(name, isDirectory: isDirectory)
+        guard manager.fileExists(atPath: original.path) else { return original }
+        let source = URL(fileURLWithPath: name)
+        let ext = isDirectory ? "" : source.pathExtension
+        let stem = isDirectory || ext.isEmpty ? name : source.deletingPathExtension().lastPathComponent
+        for index in 2...999 {
+            let candidateName = ext.isEmpty ? "\(stem) \(index)" : "\(stem) \(index).\(ext)"
+            let candidate = folder.appendingPathComponent(candidateName, isDirectory: isDirectory)
+            if !manager.fileExists(atPath: candidate.path) { return candidate }
+        }
+        return folder.appendingPathComponent("\(UUID().uuidString)-\(name)", isDirectory: isDirectory)
     }
 }
 
