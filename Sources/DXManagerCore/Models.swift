@@ -21,6 +21,15 @@ public struct InstalledApp: Identifiable, Hashable, Sendable {
     public init(name: String, package: String) { self.name = name; self.package = package }
 }
 
+public struct ADBMDNSService: Hashable, Sendable {
+    public let name: String
+    public let type: String
+    public let endpoint: String
+    public var isPairing: Bool { type == "_adb-tls-pairing._tcp" }
+    public var isConnect: Bool { type == "_adb-tls-connect._tcp" }
+    public init(name: String, type: String, endpoint: String) { self.name = name; self.type = type; self.endpoint = endpoint }
+}
+
 public struct DisplaySettings: Codable, Equatable, Sendable {
     public var width = 1920
     public var height = 1080

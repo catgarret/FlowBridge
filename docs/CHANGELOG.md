@@ -4,6 +4,9 @@
 
 ## Unreleased - experimental macOS port
 
+- Add one-click USB-to-wireless setup, mDNS pairing and connect endpoint discovery,
+  code-only Android 11+ pairing, automatic endpoint saving, and a manual fallback
+  reserved for isolated networks and Tailscale addresses.
 - Make macOS Command the explicit scrcpy shortcut modifier for reliable two-way
   text copy and paste, add clipboard guidance to Home, and rename user-facing
   DeX/DX Companion wording to Flow Bridge Desktop Mode and Display Recovery Tool.
@@ -65,6 +68,9 @@
 - 양방향 텍스트 복사·붙여넣기의 scrcpy 단축키를 macOS Command로 명시 고정하고 홈에
   사용법을 추가했으며, 사용자 화면의 DeX·DX Companion 표현을 Flow Bridge 데스크톱
   모드와 화면 복구 도구로 변경했습니다.
+- USB 연결을 한 번에 무선으로 전환하고 mDNS로 페어링·연결 주소를 자동 검색해
+  6자리 코드만으로 연결하며 주소 저장·자동 재연결까지 처리하도록 개선했습니다.
+  격리 네트워크와 Tailscale 주소용 수동 입력은 고급 항목으로 이동했습니다.
 
 ## 2026-08 - v2.0.0
 

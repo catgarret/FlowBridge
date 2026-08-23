@@ -104,15 +104,42 @@ private struct HomeView: View {
                         if model.devices.isEmpty { Text("연결된 기기 없음").tag("") }
                         ForEach(model.devices) { Text("\($0.displayName)  ·  \($0.serial)").tag($0.serial) }
                     }.onChange(of: model.selectedSerial) { _ in model.applyDeviceSettings() }
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("USB가 연결되어 있나요?").fontWeight(.medium)
+                            Text("한 번 승인한 USB 연결을 자동으로 무선 연결로 바꿉니다.").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button(action: model.prepareWirelessFromUSB) { Label("USB에서 무선으로 전환", systemImage: "wifi") }
+                            .buttonStyle(.borderedProminent)
+                    }.padding(12).background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 9))
+
                     HStack {
-                        TextField(localized("무선 ADB 주소  예: 172.30.1.3:44065"), text: $model.wirelessEndpoint)
-                        Button("연결", action: model.connectWireless).buttonStyle(.borderedProminent)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("USB 없이 처음 연결하시나요?").fontWeight(.medium)
+                            Text("휴대폰의 무선 디버깅 페어링 화면을 연 다음 검색하세요.").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer(); Button("페어링 화면 자동 검색", action: model.discoverWirelessSetup)
                     }
-                    DisclosureGroup("처음 무선 연결할 때만 페어링") {
+                    if !model.pairingEndpoint.isEmpty {
                         HStack {
-                            TextField(localized("페어링 IP:포트"), text: $model.pairingEndpoint)
-                            SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 120)
-                            Button("페어링", action: model.pairWireless)
+                            Label(model.pairingEndpoint, systemImage: "dot.radiowaves.left.and.right")
+                            Spacer()
+                            SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 130)
+                            Button("페어링 완료", action: model.pairWireless).buttonStyle(.borderedProminent)
+                        }.padding(10).background(Color.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 9))
+                    }
+                    DisclosureGroup("고급·수동 연결") {
+                        VStack(spacing: 10) {
+                            HStack {
+                                TextField(localized("무선 ADB 주소  예: 172.30.1.3:44065"), text: $model.wirelessEndpoint)
+                                Button("직접 연결", action: model.connectWireless)
+                            }
+                            HStack {
+                                TextField(localized("페어링 IP:포트"), text: $model.pairingEndpoint)
+                                SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 120)
+                                Button("직접 페어링", action: model.pairWireless)
+                            }
                         }.padding(.top, 10)
                     }.font(.subheadline)
                 }

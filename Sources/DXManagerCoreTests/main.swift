@@ -22,6 +22,17 @@ let merged = ADBService.mergeTransports([
 check(merged.count == 1, "same physical device transport merge")
 check(merged.first?.serial == "172.30.1.3:38735", "explicit wireless endpoint preference")
 
+let mdnsDump = """
+List of discovered mdns services
+adb-test _adb-tls-pairing._tcp 192.168.0.4:37123
+adb-test _adb-tls-connect._tcp 192.168.0.4:38911
+adb-test _adb-tls-connect._tcp 192.168.0.4:38911
+"""
+let mdns = ADBService.parseMDNSServices(mdnsDump)
+check(mdns.count == 2, "mDNS service parsing and deduplication")
+check(mdns.first?.isPairing == true, "mDNS pairing classification")
+check(mdns.last?.endpoint == "192.168.0.4:38911", "mDNS connect endpoint")
+
 let launcherDump = """
 3 activities found:
   Activity #0:

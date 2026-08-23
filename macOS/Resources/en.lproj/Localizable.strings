@@ -26,6 +26,16 @@
 "페어링 IP:포트" = "Pairing IP:port";
 "6자리 코드" = "6-digit code";
 "페어링" = "Pair";
+"USB가 연결되어 있나요?" = "Is USB connected?";
+"한 번 승인한 USB 연결을 자동으로 무선 연결로 바꿉니다." = "Automatically convert an authorized USB connection to wireless ADB.";
+"USB에서 무선으로 전환" = "Switch USB to Wireless";
+"USB 없이 처음 연결하시나요?" = "Connecting for the first time without USB?";
+"휴대폰의 무선 디버깅 페어링 화면을 연 다음 검색하세요." = "Open the Wireless debugging pairing screen on the phone, then search.";
+"페어링 화면 자동 검색" = "Find Pairing Screen";
+"페어링 완료" = "Finish Pairing";
+"고급·수동 연결" = "Advanced Manual Connection";
+"직접 연결" = "Connect Manually";
+"직접 페어링" = "Pair Manually";
 "화면 열기" = "Open a Screen";
 "데스크톱 모드" = "Desktop Mode";
 "넓은 화면으로 작업" = "Work on a larger screen";
@@ -120,3 +130,7 @@
 "화면 복구 도구를 삭제했습니다." = "Display Recovery Tool removed.";
 "화면 복구 도구에 복구 권한을 부여했습니다." = "Recovery permission granted to the Display Recovery Tool.";
 "세션과 데스크톱 가상 디스플레이를 정리했습니다." = "Sessions and desktop virtual displays cleaned up.";
+"무선 디버깅 서비스를 찾지 못했습니다. 휴대폰에서 페어링 화면을 열어 주세요." = "No wireless debugging service found. Open the pairing screen on the phone.";
+"무선 연결 준비가 끝났습니다. 이제 USB 케이블을 분리해도 됩니다." = "Wireless setup is complete. You may now disconnect the USB cable.";
+"페어링과 무선 연결이 완료되었습니다. 다음부터 자동으로 연결합니다." = "Pairing and wireless connection completed. Flow Bridge will reconnect automatically next time.";
+"페어링은 완료되었습니다. 새로고침하면 무선 기기가 자동으로 나타납니다." = "Pairing completed. Refresh to discover the wireless device automatically.";

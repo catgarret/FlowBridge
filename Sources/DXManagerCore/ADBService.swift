@@ -37,6 +37,23 @@ public struct ADBService: Sendable {
         try runner.run(executable, ["disconnect", endpoint]).stdout.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    public func mdnsServices() throws -> [ADBMDNSService] {
+        Self.parseMDNSServices(try runner.run(executable, ["mdns", "services"]).stdout)
+    }
+
+    public func enableTCPIP(serial: String, port: Int = 5555) throws -> String {
+        try runner.run(executable, ["-s", serial, "tcpip", String(port)]).stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    public func wirelessIPv4(serial: String) throws -> String {
+        let output = try shell(serial: serial, ["ip", "route", "get", "1.1.1.1"])
+        guard let match = output.range(of: #"\bsrc\s+(\d{1,3}(?:\.\d{1,3}){3})\b"#, options: .regularExpression) else {
+            throw DXError.commandFailed("휴대폰의 Wi-Fi IP 주소를 자동으로 찾지 못했습니다.")
+        }
+        let fragment = String(output[match])
+        return fragment.split(whereSeparator: \ .isWhitespace).last.map(String.init) ?? ""
+    }
+
     public func deviceProperties(serial: String) throws -> [String: String] {
         let keys = ["ro.product.manufacturer", "ro.product.model", "ro.build.version.release", "ro.build.version.sdk", "ro.build.version.security_patch", "ro.build.version.oneui"]
         var result: [String: String] = [:]
@@ -123,6 +140,15 @@ public struct ADBService: Sendable {
             guard fields.count >= 2, !fields[0].isEmpty else { return nil }
             let model = fields.first(where: { $0.hasPrefix("model:") }).map { String($0.dropFirst(6)) } ?? ""
             return Device(serial: fields[0], state: fields[1], model: model)
+        }
+    }
+
+    public static func parseMDNSServices(_ output: String) -> [ADBMDNSService] {
+        var seen: Set<String> = []
+        return output.split(whereSeparator: \ .isNewline).compactMap { raw in
+            let fields = raw.split(whereSeparator: \ .isWhitespace).map(String.init)
+            guard fields.count >= 3, fields[1].hasPrefix("_adb-tls-"), fields[2].contains(":"), seen.insert("\(fields[1])|\(fields[2])").inserted else { return nil }
+            return ADBMDNSService(name: fields[0], type: fields[1], endpoint: fields[2])
         }
     }
 

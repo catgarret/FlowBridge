@@ -39,6 +39,20 @@ runtime installation.
 - Samsung DeX support is required only for DeX mode; ordinary mirroring works
   without DeX mode
 
+### Easy connection
+
+1. Connect and authorize the phone over USB once.
+2. Select the phone and click **Switch USB to Wireless**. Flow Bridge discovers
+   the Wi-Fi address, enables ADB TCP mode, connects, remembers the endpoint, and
+   reconnects automatically on later launches.
+3. Without USB, open **Developer options → Wireless debugging → Pair device with
+   pairing code** on the phone. Click **Find Pairing Screen** in Flow Bridge and
+   enter only the six-digit code. The IP addresses and ports are discovered by
+   mDNS and the connection endpoint is saved automatically.
+
+Manual `IP:port` fields are kept under **Advanced Manual Connection** only for
+networks that block mDNS, isolate Wi-Fi clients, or use a Tailscale address.
+
 Call audio is not transported through ADB. Calls remain on the Galaxy phone or a
 Bluetooth headset connected to it. Message drafts are opened for review and are
 never sent automatically.
@@ -76,6 +90,17 @@ SwiftUI 기반 macOS 앱입니다. Apple Silicon과 Intel용 ADB·scrcpy 실행 
 통화 음성은 ADB를 통해 Mac으로 전달되지 않으며 Galaxy 또는 Galaxy에 연결된
 Bluetooth 헤드셋에서 처리됩니다. 문자 초안은 Galaxy 메시지 앱에서 최종 확인하며
 자동으로 발송하지 않습니다.
+
+### 간편 연결
+
+1. 휴대폰을 USB로 한 번 연결하고 디버깅을 허용합니다.
+2. Flow Bridge에서 기기를 선택하고 **USB에서 무선으로 전환**을 누릅니다. 휴대폰
+   Wi-Fi 주소 확인, ADB TCP 전환, 연결과 주소 저장을 자동으로 처리합니다.
+3. USB 없이 연결하려면 휴대폰의 **개발자 옵션 → 무선 디버깅 → 페어링 코드로
+   기기 페어링**을 연 뒤 **페어링 화면 자동 검색**을 누르고 6자리 코드만 입력합니다.
+
+`IP:포트` 직접 입력은 mDNS가 차단된 네트워크, Wi-Fi 클라이언트 격리 환경 또는
+Tailscale 주소를 사용할 때만 고급·수동 연결에서 사용합니다.
 
 ## Privacy and security / 개인정보 및 보안
 

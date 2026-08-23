@@ -23,6 +23,7 @@ final class AppModel: ObservableObject {
     @Published var wirelessEndpoint = ""
     @Published var pairingEndpoint = ""
     @Published var pairingCode = ""
+    @Published var discoveredWirelessServices: [ADBMDNSService] = []
     @Published var diagnostics = ""
     @Published var transferStatus = ""
     @Published var isTransferring = false
@@ -100,8 +101,62 @@ final class AppModel: ObservableObject {
         perform { [settings = appSettings] in
             guard !endpoint.isEmpty, !code.isEmpty else { throw DXError.commandFailed("페어링 IP:포트와 코드를 입력해 주세요.") }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
-            let message = try ADBService(executable: adbPath).pair(endpoint, code: code)
-            return { model in model.status = message; model.pairingCode = "" }
+            let adb = ADBService(executable: adbPath)
+            _ = try adb.pair(endpoint, code: code)
+            Thread.sleep(forTimeInterval: 0.8)
+            let services = (try? adb.mdnsServices()) ?? []
+            let connectEndpoint = services.first(where: \.isConnect)?.endpoint
+            if let connectEndpoint { _ = try? adb.connect(connectEndpoint) }
+            return { model in
+                model.pairingCode = ""
+                model.discoveredWirelessServices = services
+                if let connectEndpoint {
+                    model.wirelessEndpoint = connectEndpoint
+                    model.appSettings.lastWirelessEndpoint = connectEndpoint
+                    model.save()
+                    model.status = "페어링과 무선 연결이 완료되었습니다. 다음부터 자동으로 연결합니다."
+                } else {
+                    model.status = "페어링은 완료되었습니다. 새로고침하면 무선 기기가 자동으로 나타납니다."
+                }
+                model.refresh()
+            }
+        }
+    }
+
+    func discoverWirelessSetup() {
+        perform { [settings = appSettings] in
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let services = try ADBService(executable: adbPath).mdnsServices()
+            return { model in
+                model.discoveredWirelessServices = services
+                if let pairing = services.first(where: \.isPairing) { model.pairingEndpoint = pairing.endpoint }
+                if let connect = services.first(where: \.isConnect) { model.wirelessEndpoint = connect.endpoint }
+                model.status = services.isEmpty ? "무선 디버깅 서비스를 찾지 못했습니다. 휴대폰에서 페어링 화면을 열어 주세요." : "무선 디버깅 서비스 \(services.count)개를 찾았습니다."
+            }
+        }
+    }
+
+    func prepareWirelessFromUSB() {
+        let serial = selectedSerial
+        perform { [settings = appSettings] in
+            guard !serial.isEmpty else { throw DXError.commandFailed("USB로 연결된 기기를 선택해 주세요.") }
+            guard serial.range(of: #"^[A-Za-z0-9]+$"#, options: .regularExpression) != nil else {
+                throw DXError.commandFailed("이미 무선으로 연결되어 있습니다. USB 케이블 연결 시 한 번에 무선 전환할 수 있습니다.")
+            }
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let adb = ADBService(executable: adbPath)
+            let ip = try adb.wirelessIPv4(serial: serial)
+            _ = try adb.enableTCPIP(serial: serial, port: 5555)
+            Thread.sleep(forTimeInterval: 1.2)
+            let endpoint = "\(ip):5555"
+            _ = try adb.connect(endpoint)
+            return { model in
+                model.wirelessEndpoint = endpoint
+                model.appSettings.lastWirelessEndpoint = endpoint
+                model.save()
+                model.status = "무선 연결 준비가 끝났습니다. 이제 USB 케이블을 분리해도 됩니다."
+                model.refresh()
+            }
         }
     }
 
