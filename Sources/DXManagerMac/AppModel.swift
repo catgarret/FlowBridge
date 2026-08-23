@@ -18,6 +18,7 @@ enum SessionPhase { case idle, launching, running, failed }
 final class AppModel: ObservableObject {
     @Published var devices: [Device] = []
     @Published var selectedSerial = ""
+    @Published var deviceAlias = ""
     @Published var settings = DisplaySettings()
     @Published var packageNames = ["com.android.settings", "", ""]
     @Published var installedApps: [InstalledApp] = []
@@ -111,6 +112,9 @@ final class AppModel: ObservableObject {
                 model.devices = list
                 if !apps.isEmpty { model.installedApps = apps }
                 if !list.contains(where: { $0.serial == model.selectedSerial }) { model.selectedSerial = list.first?.serial ?? "" }
+                if let selected = list.first(where: { $0.serial == model.selectedSerial }) {
+                    model.deviceAlias = model.appSettings.deviceAliases[model.deviceIdentityKey(selected)] ?? ""
+                }
                 if !silent { model.status = list.isEmpty ? "연결된 ADB 기기가 없습니다." : String(format: NSLocalizedString("%d대의 기기를 찾았습니다.", comment: ""), list.count) }
             }
         }
@@ -255,6 +259,21 @@ final class AppModel: ObservableObject {
 
     func volumeDown() { sendKeyEvent(25, label: "볼륨 낮추기") }
     func volumeUp() { sendKeyEvent(24, label: "볼륨 높이기") }
+
+    func applyDisplayPreset(width: Int, height: Int) {
+        settings.width = width; settings.height = height
+        save(); status = "화면 품질을 \(width)×\(height)로 설정했습니다."
+    }
+
+    func applyNativeDisplayPreset() {
+        let serial = selectedSerial
+        perform { [settings = appSettings] in
+            guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let size = try ADBService(executable: adbPath).nativeDisplaySize(serial: serial)
+            return { model in model.settings.width = size.width; model.settings.height = size.height; model.save(); model.status = "Galaxy 최대 해상도 \(size.width)×\(size.height)를 적용했습니다." }
+        }
+    }
     func loadPackages() {
         let serial = selectedSerial
         perform { [settings = appSettings] in
@@ -302,9 +321,38 @@ final class AppModel: ObservableObject {
 
     func applyDeviceSettings() {
         if let saved = appSettings.deviceDisplays[selectedSerial] { settings = saved }
+        deviceAlias = selectedDeviceKey.map { appSettings.deviceAliases[$0] ?? "" } ?? ""
         notificationBaselineSerial = ""
         seenNotificationFingerprints.removeAll()
         if installedApps.isEmpty, !selectedSerial.isEmpty { loadPackages() }
+    }
+
+    func deviceLabel(_ device: Device) -> String {
+        let alias = appSettings.deviceAliases[deviceIdentityKey(device)]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return alias.isEmpty ? "\(device.displayName)  ·  \(device.serial)" : "\(alias)  ·  \(device.displayName)"
+    }
+
+    var hasSavedDeviceAlias: Bool {
+        guard let key = selectedDeviceKey else { return false }
+        return !(appSettings.deviceAliases[key] ?? "").isEmpty
+    }
+
+    func saveDeviceAlias() {
+        guard let key = selectedDeviceKey else { status = "별칭을 지정할 기기를 선택해 주세요."; return }
+        let alias = deviceAlias.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !alias.isEmpty else { status = "기기 별칭을 입력해 주세요."; return }
+        appSettings.deviceAliases[key] = String(alias.prefix(40))
+        deviceAlias = appSettings.deviceAliases[key] ?? alias
+        save()
+        status = "기기 별칭을 저장했습니다."
+    }
+
+    func removeDeviceAlias() {
+        guard let key = selectedDeviceKey else { return }
+        appSettings.deviceAliases.removeValue(forKey: key)
+        deviceAlias = ""
+        save()
+        status = "기기 별칭을 삭제하고 기본 이름으로 되돌렸습니다."
     }
 
     func notificationSettingsChanged() {
@@ -798,6 +846,14 @@ final class AppModel: ObservableObject {
         if let data = try? Data(contentsOf: Self.settingsURL), let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
             appSettings = decoded; settings = decoded.display
         }
+    }
+
+    private var selectedDeviceKey: String? {
+        devices.first(where: { $0.serial == selectedSerial }).map(deviceIdentityKey)
+    }
+
+    private func deviceIdentityKey(_ device: Device) -> String {
+        device.physicalSerial.isEmpty ? "transport:\(device.serial)" : "physical:\(device.physicalSerial)"
     }
 
     private static var settingsURL: URL {

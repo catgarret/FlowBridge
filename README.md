@@ -28,6 +28,7 @@ runtime installation.
 - Browse live Galaxy contacts, recent calls, and SMS without persisting them on the Mac
 - Search installed apps, launch immediately, and assign Command-1/2/3 favorites
 - Drop files anywhere in the app or press Command-V outside text editing to transfer Finder items
+- Assign editable device aliases that remain stable when the transport or IP address changes
 - Forward new call, message, and application notifications to Notification Center
 - Transfer files and folders to the phone
 - Copy and paste files with Command-C/Command-V, drag files and folders in both

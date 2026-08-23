@@ -159,8 +159,15 @@ private struct HomeView: View {
                 VStack(spacing: 12) {
                     Picker("Galaxy", selection: $model.selectedSerial) {
                         if model.devices.isEmpty { Text("연결된 기기 없음").tag("") }
-                        ForEach(model.devices) { Text("\($0.displayName)  ·  \($0.serial)").tag($0.serial) }
+                        ForEach(model.devices) { Text(model.deviceLabel($0)).tag($0.serial) }
                     }.onChange(of: model.selectedSerial) { _ in model.applyDeviceSettings() }
+                    HStack(spacing: 10) {
+                        Image(systemName: "tag").foregroundStyle(.secondary).frame(width: 28)
+                        TextField("기기 별칭  예: 업무용 갤럭시", text: $model.deviceAlias).textFieldStyle(.roundedBorder)
+                            .onSubmit(model.saveDeviceAlias)
+                        Button(model.hasSavedDeviceAlias ? "저장" : "등록", action: model.saveDeviceAlias).buttonStyle(.borderedProminent)
+                        Button("별칭 삭제", role: .destructive, action: model.removeDeviceAlias).disabled(!model.hasSavedDeviceAlias)
+                    }
                     ConnectionOption(icon: "cable.connector", title: "USB 연결을 무선으로 전환", subtitle: "한 번 승인한 USB 연결을 저장하고 다음부터 자동 연결합니다.") {
                         Button("전환", action: model.prepareWirelessFromUSB).buttonStyle(.borderedProminent)
                     }
@@ -206,7 +213,7 @@ private struct HomeView: View {
                     Button { model.sendKeyEvent(26, label: "전원") } label: { Label("전원", systemImage: "power") }
                 }.padding(.top, 4)
                 if model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
-                Text("데스크톱 모드 실행 중 Galaxy에 보이는 오버레이는 가상 화면을 만드는 Android 시스템 창입니다. 실행 중에는 유지되고 종료 시 자동 제거됩니다.").font(.caption).foregroundStyle(.secondary)
+                Text("데스크톱 모드의 Galaxy 오버레이는 Samsung 데스크톱 화면에 필요한 Android 가상 디스플레이입니다. 데스크톱 모드 실행 중에만 유지되고 종료 즉시 제거됩니다. 일반 미러링에는 표시되지 않습니다.").font(.caption).foregroundStyle(.secondary)
             }
             if model.hasActiveSession {
                 Card("보호된 화면 안내", icon: "lock.shield") {
@@ -441,10 +448,25 @@ private struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Card("화면 품질", icon: "display") {
-                Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {
-                    GridRow { Text("해상도"); HStack { NumberField(value: $model.settings.width, label: "너비"); Text("×"); NumberField(value: $model.settings.height, label: "높이") } }
-                    GridRow { Text("화면 밀도"); NumberField(value: $model.settings.dpi, label: "DPI") }
-                    GridRow { Text("영상 품질"); HStack { NumberField(value: $model.settings.bitrate, label: "Mbps"); NumberField(value: $model.settings.fps, label: "FPS") } }
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("해상도 프리셋").fontWeight(.medium)
+                    HStack(spacing: 8) {
+                        PresetButton(title: "720p", selected: model.settings.width == 1280 && model.settings.height == 720) { model.applyDisplayPreset(width: 1280, height: 720) }
+                        PresetButton(title: "1080p", selected: model.settings.width == 1920 && model.settings.height == 1080) { model.applyDisplayPreset(width: 1920, height: 1080) }
+                        Button(action: model.applyNativeDisplayPreset) { Label("기기 최대", systemImage: "arrow.up.left.and.arrow.down.right") }
+                    }
+                    HStack {
+                        Text("프레임").fontWeight(.medium).frame(width: 72, alignment: .leading)
+                        Picker("프레임", selection: $model.settings.fps) { Text("30 FPS").tag(30); Text("60 FPS").tag(60); Text("120 FPS").tag(120) }.pickerStyle(.segmented).labelsHidden().frame(maxWidth: 360)
+                    }
+                    Text("60 FPS가 기본 권장값입니다. 120 FPS는 기기·연결·Mac 성능에 따라 실제 프레임이 낮아질 수 있습니다.").font(.caption).foregroundStyle(.secondary)
+                    DisclosureGroup("전문가 수동 설정") {
+                        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {
+                            GridRow { Text("해상도"); HStack { NumberField(value: $model.settings.width, label: "너비"); Text("×"); NumberField(value: $model.settings.height, label: "높이") } }
+                            GridRow { Text("화면 밀도"); NumberField(value: $model.settings.dpi, label: "DPI") }
+                            GridRow { Text("비트레이트"); NumberField(value: $model.settings.bitrate, label: "Mbps") }
+                        }.padding(.top, 10)
+                    }
                 }
                 HStack { Spacer(); Button("설정 저장", action: model.save).buttonStyle(.borderedProminent) }
             }
@@ -527,4 +549,12 @@ private struct NotificationRow: View {
 private struct NumberField: View {
     @Binding var value: Int; let label: String
     var body: some View { TextField(label, value: $value, format: .number).frame(width: 92).textFieldStyle(.roundedBorder) }
+}
+
+private struct PresetButton: View {
+    let title: String; let selected: Bool; let action: () -> Void
+    @ViewBuilder var body: some View {
+        if selected { Button(title, action: action).buttonStyle(.borderedProminent) }
+        else { Button(title, action: action).buttonStyle(.bordered) }
+    }
 }

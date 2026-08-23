@@ -89,6 +89,23 @@ public struct ADBService: Sendable {
         _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness", String(max(0, min(255, value)))])
     }
 
+    public func nativeDisplaySize(serial: String) throws -> (width: Int, height: Int) {
+        let output = try shell(serial: serial, ["wm", "size"])
+        guard let size = Self.parseNativeDisplaySize(output) else {
+            throw DXError.commandFailed("Galaxy의 실제 화면 해상도를 확인하지 못했습니다.")
+        }
+        return size
+    }
+
+    public static func parseNativeDisplaySize(_ output: String) -> (width: Int, height: Int)? {
+        guard let match = output.range(of: #"Physical size:\s*(\d+)x(\d+)"#, options: .regularExpression) else {
+            return nil
+        }
+        let values = output[match].split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }
+        guard values.count >= 2 else { return nil }
+        return (max(values[0], values[1]), min(values[0], values[1]))
+    }
+
     public func installedPackages(serial: String) throws -> [String] {
         let output = try shell(serial: serial, ["pm", "list", "packages", "-3"])
         return output.split(whereSeparator: \ .isNewline)

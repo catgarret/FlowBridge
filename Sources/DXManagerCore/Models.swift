@@ -82,6 +82,7 @@ public struct AppSettings: Codable, Sendable {
     public var deviceDisplays: [String: DisplaySettings] = [:]
     public var appProfiles: [String: DisplaySettings] = [:]
     public var favoritePackages = ["com.android.settings", "", ""]
+    public var deviceAliases: [String: String] = [:]
     public var autoHideMinutes = 10
     public var lastWirelessEndpoint = ""
     public var automaticReconnect = true
@@ -91,7 +92,7 @@ public struct AppSettings: Codable, Sendable {
     public var turnPhoneScreenOffOnStart = false
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
+    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -103,6 +104,7 @@ public struct AppSettings: Codable, Sendable {
         favoritePackages = try values.decodeIfPresent([String].self, forKey: .favoritePackages) ?? ["com.android.settings", "", ""]
         while favoritePackages.count < 3 { favoritePackages.append("") }
         favoritePackages = Array(favoritePackages.prefix(3))
+        deviceAliases = try values.decodeIfPresent([String: String].self, forKey: .deviceAliases) ?? [:]
         autoHideMinutes = try values.decodeIfPresent(Int.self, forKey: .autoHideMinutes) ?? 10
         lastWirelessEndpoint = try values.decodeIfPresent(String.self, forKey: .lastWirelessEndpoint) ?? ""
         automaticReconnect = try values.decodeIfPresent(Bool.self, forKey: .automaticReconnect) ?? true

@@ -64,6 +64,7 @@ check(migrated.deviceDisplays.isEmpty, "legacy settings migration")
 check(migrated.appProfiles.isEmpty, "legacy app-profile migration")
 check(!migrated.phoneNotificationsEnabled, "legacy notification settings migration")
 check(migrated.favoritePackages.count == 3, "legacy favorites migration")
+check(migrated.deviceAliases.isEmpty, "legacy device aliases migration")
 
 let screenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", policy: "showing=true screenState=SCREEN_STATE_ON")
 check(screenState.isAwake && screenState.isLocked, "screen and keyguard state parsing")
@@ -73,6 +74,8 @@ let parsedCalls = ADBService.parseCalls("Row: 0 number=01012345678, type=1, date
 check(parsedCalls.first?.type == 1, "call history parsing")
 let parsedMessages = ADBService.parseMessages("Row: 0 address=01012345678, body=안녕, 반가워요, date=1700000000000\n")
 check(parsedMessages.first?.body == "안녕, 반가워요", "message history parsing with comma")
+let nativeSize = ADBService.parseNativeDisplaySize("Physical size: 1440x3120\nOverride size: 1080x2340")
+check(nativeSize?.width == 3120 && nativeSize?.height == 1440, "native display size parsing and landscape normalization")
 
 let notificationDump = """
     NotificationRecord(0x01: pkg=com.samsung.android.messaging user=UserHandle{0} id=1 tag=null importance=4 key=0|com.samsung.android.messaging|1|null|10001: Notification(channel=messages category=msg))

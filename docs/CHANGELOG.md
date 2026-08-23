@@ -4,6 +4,14 @@
 
 ## Unreleased - experimental macOS port
 
+- Add 720p, 1080p, and device-native resolution presets plus 30/60/120 FPS
+  controls while retaining manual expert settings, and clarify overlay lifetime.
+- 720p·1080p·기기 실제 최대 해상도와 30·60·120 FPS 선택을 추가하고 전문가용
+  수동 설정은 유지했으며 데스크톱 오버레이의 유지 범위를 명확히 안내합니다.
+- Add editable and removable device aliases keyed by stable physical identity so
+  names survive USB, Wi-Fi, mDNS, and IP address changes.
+- USB·Wi-Fi·mDNS 및 IP 변경 후에도 유지되는 물리 기기 기준 별칭의 등록·수정·삭제를
+  추가했습니다.
 - Accept Finder file and folder drops across the entire app and route file-only
   Command-V pastes to the transfer page without intercepting active text editing.
 - 앱 전체에서 Finder 파일·폴더 드롭을 받고, 텍스트 입력 중에는 가로채지 않으면서

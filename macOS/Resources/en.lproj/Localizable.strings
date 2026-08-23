@@ -188,6 +188,17 @@
 "검색 결과는 최대 30개까지 표시합니다." = "Up to 30 search results are shown.";
 "지정되지 않음" = "Not assigned";
 "아래 검색 결과에서 지정하세요." = "Assign an app from the search results below.";
+"기기 별칭  예: 업무용 갤럭시" = "Device alias, e.g. Work Galaxy";
+"등록" = "Add";
+"저장" = "Save";
+"별칭 삭제" = "Remove Alias";
+"데스크톱 모드의 Galaxy 오버레이는 Samsung 데스크톱 화면에 필요한 Android 가상 디스플레이입니다. 데스크톱 모드 실행 중에만 유지되고 종료 즉시 제거됩니다. 일반 미러링에는 표시되지 않습니다." = "The Galaxy overlay in Desktop Mode is an Android virtual display required for the Samsung desktop screen. It remains only while Desktop Mode is running, is removed immediately afterward, and is not shown during ordinary mirroring.";
+"해상도 프리셋" = "Resolution Presets";
+"기기 최대" = "Device Maximum";
+"프레임" = "Frame Rate";
+"60 FPS가 기본 권장값입니다. 120 FPS는 기기·연결·Mac 성능에 따라 실제 프레임이 낮아질 수 있습니다." = "60 FPS is recommended. Actual performance at 120 FPS depends on the device, connection, and Mac.";
+"전문가 수동 설정" = "Expert Manual Settings";
+"비트레이트" = "Bit Rate";
 "주소록" = "Contacts";
 "최근 통화" = "Recent Calls";
 "메시지" = "Messages";
