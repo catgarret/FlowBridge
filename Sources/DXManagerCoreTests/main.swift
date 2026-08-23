@@ -72,8 +72,10 @@ check(migrated.controlBarPosition == .bottom, "legacy control bar position migra
 check(migrated.pendingBrightnessRestores.isEmpty, "legacy brightness restore migration")
 check(migrated.managedOverlaySerials.isEmpty && !migrated.didCleanLegacyOverlay, "legacy overlay cleanup migration")
 
-let screenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", policy: "showing=true screenState=SCREEN_STATE_ON")
+let screenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", policy: "isKeyguardShowing=true screenState=SCREEN_STATE_ON")
 check(screenState.isAwake && screenState.isLocked, "screen and keyguard state parsing")
+let unlockedScreenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", policy: "showing=true screenState=SCREEN_STATE_ON")
+check(unlockedScreenState.isAwake && !unlockedScreenState.isLocked, "unrelated showing flag does not imply keyguard")
 let parsedContacts = ADBService.parseContacts("Row: 0 display_name=홍길동, data1=010-1234-5678\n")
 check(parsedContacts.first == PhoneContact(name: "홍길동", number: "010-1234-5678"), "contact parsing")
 let photoContacts = ADBService.parseContacts("Row: 0 display_name=홍길동, data1=010-1234-5678, photo_thumb_uri=content://com.android.contacts/contacts/42/photo")

@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Flattened Home device controls and sidebar status labels, moved launch progress into the selected screen action, fixed keyguard false positives and zero-brightness recovery, and made the larger session remote draggable with edge snapping and faster window tracking.
+- 홈의 중첩 박스와 사이드바 기기 표시를 정리하고 화면 실행 진행 상태를 선택한 실행 영역으로 옮겼습니다. 잠금 오탐과 0 밝기 복원을 수정하고 영상 리모컨을 더 크게 조정해 드래그·가장자리 스냅·빠른 창 추적을 지원합니다.
 - Redesigned Home screen-mode actions and right-aligned settings rows, corrected mDNS Wi-Fi labels, removed transport serials from the UI, split notification views, simplified Mac file import, added exact-time tooltips, and rejected corrupt contact-photo cache entries.
 - 홈 화면 실행 버튼과 설정 행을 재디자인하고 mDNS Wi-Fi 표시를 바로잡았으며 transport serial 노출을 제거했습니다. 알림 화면을 분리하고 Mac 파일 가져오기를 단순화했으며 정확한 날짜·시간 툴팁과 손상된 연락처 사진 캐시 검증을 추가했습니다.
 - Reworked spacing, card hierarchy, connection setup, phone message bubbles, and content width; made disconnected views cache-readable but action-safe; split file transfer into prominent send/receive modes; and moved log export into Diagnostics.

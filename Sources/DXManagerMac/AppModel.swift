@@ -64,6 +64,7 @@ final class AppModel: ObservableObject {
     @Published var hasActiveSession = false
     @Published var sessionPhase: SessionPhase = .idle
     @Published var phoneNeedsUnlock = false
+    @Published var activeScreenMode = ""
     @Published var updateStatus = "업데이트를 확인하지 않았습니다."
     @Published var latestVersion = ""
     @Published var isUpdateAvailable = false
@@ -117,13 +118,13 @@ final class AppModel: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 if !self.isBusy { self.refresh(silent: true) }
-                self.syncMiniBars()
                 self.applyAutoHide()
                 self.pollPhoneNotifications()
                 self.pollProtectedScreen()
                 if Date().timeIntervalSince(self.lastPhoneDataRefresh) >= 30, !self.isBusy, !self.selectedSerial.isEmpty { self.refreshPhoneData(silent: true) }
             }
         }
+        Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in Task { @MainActor in self?.syncMiniBars() } }
     }
 
     func refresh(silent: Bool = false) {
@@ -145,6 +146,7 @@ final class AppModel: ObservableObject {
                         model.nativeDisplayWidth = native.width; model.nativeDisplayHeight = native.height
                     }
                     model.cleanupStaleOverlayIfNeeded(serial: selected.serial)
+                    if model.sessionPhase == .idle { model.restoreBrightnessIfNeeded(serial: selected.serial) }
                 }
                 if !silent { model.status = list.isEmpty ? "연결된 ADB 기기가 없습니다." : String(format: NSLocalizedString("%d대의 기기를 찾았습니다.", comment: ""), list.count) }
             }
@@ -286,10 +288,12 @@ final class AppModel: ObservableObject {
     }
 
     func startDeX() {
+        activeScreenMode = "DEX 모드"
         let placement = savedPlacement(kind: "desktop")
         start(exclusiveMainDisplay: true, trackMainSession: true, createsOverlay: true) { try $0.startDeX(serial: $1, settings: $2, placement: placement) }
     }
     func startPhoneMirror() {
+        activeScreenMode = "휴대폰 미러링"
         let placement = savedPlacement(kind: "phone")
         start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, settings: $2, placement: placement) }
     }
@@ -434,7 +438,7 @@ final class AppModel: ObservableObject {
 
     func deviceLabel(_ device: Device) -> String {
         let alias = appSettings.deviceAliases[deviceIdentityKey(device)]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return alias.isEmpty ? "\(device.displayName)  ·  \(device.connectionName)" : "\(alias)  ·  \(device.modelName)"
+        return alias.isEmpty ? device.displayName : alias
     }
 
     var hasSavedDeviceAlias: Bool {
@@ -749,6 +753,8 @@ final class AppModel: ObservableObject {
         hasActiveSession = false
         sessionPhase = .idle
         phoneNeedsUnlock = false
+        protectedScreenDetected = false
+        activeScreenMode = ""
         status = serial.isEmpty ? "선택된 기기가 없습니다." : "세션과 데스크톱 가상 디스플레이를 정리했습니다."
     }
 
@@ -858,6 +864,8 @@ final class AppModel: ObservableObject {
             sessionPhase = .idle
             hasActiveSession = false
             phoneNeedsUnlock = false
+            protectedScreenDetected = false
+            activeScreenMode = ""
             status = "화면 창이 종료되어 세션을 정리했습니다."
         }
         keyboardCorrection.setTargets(Set(sessions.map(\.processID)))
@@ -928,7 +936,8 @@ final class AppModel: ObservableObject {
                 controller.stopMainDisplays(serial: serial)
                 throw DXError.commandFailed("영상 창을 열지 못했습니다. Galaxy 잠금을 해제한 뒤 다시 시도해 주세요.")
             }
-            let previousBrightness = dimPhone && trackMainSession ? ScreenBrightnessState(value: (try? adb.screenBrightness(serial: serial)) ?? 128, mode: (try? adb.screenBrightnessMode(serial: serial)) ?? 0) : nil
+            let capturedBrightness = (try? adb.screenBrightness(serial: serial)) ?? 128
+            let previousBrightness = dimPhone && trackMainSession ? ScreenBrightnessState(value: capturedBrightness <= 0 ? 128 : capturedBrightness, mode: (try? adb.screenBrightnessMode(serial: serial)) ?? 0) : nil
             if dimPhone && trackMainSession { try? adb.setScreenBrightness(serial: serial, value: 0) }
             return { model in
                 if trackMainSession && model.sessionAttempt != attempt {
@@ -971,7 +980,8 @@ final class AppModel: ObservableObject {
     private func restoreBrightnessIfNeeded(serial: String) {
         guard !serial.isEmpty,
               let adbPath = ToolLocator.adb(appSettings.adbPath) else { return }
-        guard let state = appSettings.pendingBrightnessRestores[serial] ?? (brightnessSessionSerial == serial ? brightnessBeforeSession : nil) else { return }
+        guard let savedState = appSettings.pendingBrightnessRestores[serial] ?? (brightnessSessionSerial == serial ? brightnessBeforeSession : nil) else { return }
+        let state = ScreenBrightnessState(value: savedState.value <= 0 ? 128 : savedState.value, mode: savedState.mode)
         if brightnessSessionSerial == serial { brightnessBeforeSession = nil; brightnessSessionSerial = "" }
         Task.detached { [weak self] in
             do {

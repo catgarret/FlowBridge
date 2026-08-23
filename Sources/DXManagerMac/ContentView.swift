@@ -150,9 +150,9 @@ private struct SidebarDeviceControls: View {
         VStack(spacing: 9) {
             if let device = model.devices.first(where: { $0.serial == model.selectedSerial }) {
                 Menu {
-                    ForEach(model.devices) { candidate in Button(model.deviceLabel(candidate)) { model.selectedSerial = candidate.serial; model.applyDeviceSettings() } }
+                    ForEach(model.devices) { candidate in Button { model.selectedSerial = candidate.serial; model.applyDeviceSettings() } label: { Label("\(model.deviceLabel(candidate)) · 연결됨", systemImage: "circle.fill") } }
                 } label: {
-                    HStack { Image(systemName: "iphone.gen3"); VStack(alignment: .leading, spacing: 2) { Text(model.deviceLabel(device).components(separatedBy: "  ·  ").first ?? device.displayName).font(.caption.weight(.semibold)); Text("연결됨 · \(device.connectionName)").font(.caption2).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.up.chevron.down").font(.caption2) }.contentShape(Rectangle())
+                    HStack { Image(systemName: "iphone.gen3"); VStack(alignment: .leading, spacing: 2) { Text(model.deviceLabel(device)).font(.caption.weight(.semibold)); Text("연결됨 · \(device.connectionName)").font(.caption2).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.up.chevron.down").font(.caption2) }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
                 }.menuStyle(.borderlessButton).buttonStyle(.plain).frame(maxWidth: .infinity)
                 HStack(spacing: 8) {
                     Button(action: model.startDeX) { Label("DEX", systemImage: "display") }.disabled(model.sessionPhase != .idle)
@@ -222,7 +222,8 @@ private struct HomeView: View {
                                 Picker("기기 전환", selection: $model.selectedSerial) { ForEach(model.devices) { Text(model.deviceLabel($0)).tag($0.serial) } }.frame(maxWidth: 260).onChange(of: model.selectedSerial) { _ in model.applyDeviceSettings() }
                             }
                             DeviceLaunchButtons()
-                        }.padding(16).background(Color.green.opacity(0.07), in: RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.green.opacity(0.18)))
+                        }.padding(.vertical, 6)
+                        Divider()
                         DisclosureGroup("다른 기기 추가 또는 연결 방식 변경") { ConnectionSetupView().padding(.top, 10) }
                         Divider().padding(.vertical, 2)
                         ScreenLaunchControls()
@@ -249,17 +250,12 @@ private struct ScreenLaunchControls: View {
     private let brightnessHelp = "화면 보호와 온도 제어를 위해 DEX/휴대폰 미러링 실행 시 밝기가 자동으로 최저로 낮아지며 종료 시 원래 밝기로 복원됩니다."
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if model.sessionPhase == .launching {
-                HStack(spacing: 8) { ProgressView(); Text("화면 연결 준비 중").font(.subheadline).foregroundStyle(.secondary) }
-            } else if model.sessionPhase == .running {
-                Label("화면 실행 중", systemImage: "checkmark.circle.fill").font(.subheadline).foregroundStyle(.green)
-            }
             HStack(spacing: 6) {
                 Text("실행 시 밝기 최저 조절")
                 Button { showBrightnessHelp.toggle() } label: { Image(systemName: "questionmark.circle").foregroundStyle(.secondary) }.buttonStyle(.plain).help(brightnessHelp).popover(isPresented: $showBrightnessHelp, arrowEdge: .bottom) { Text(brightnessHelp).frame(width: 280, alignment: .leading).padding(14) }
                 Spacer(); Toggle("", isOn: $model.turnPhoneScreenOffOnStart).labelsHidden().toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.brightnessSettingChanged() }
             }
-            if model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
+            if model.sessionPhase == .running && model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
         }
     }
 }
@@ -269,9 +265,9 @@ private struct DeviceLaunchButtons: View {
     var body: some View {
         Group {
             if model.sessionPhase == .launching {
-                Button("취소", role: .destructive, action: model.stop)
+                HStack(spacing: 10) { ProgressView(); Text("\(model.activeScreenMode) 여는 중").fontWeight(.medium); Button("취소", role: .destructive, action: model.stop) }.frame(minWidth: 300, alignment: .trailing)
             } else if model.sessionPhase == .running {
-                Button("화면 종료", role: .destructive, action: model.stop)
+                HStack(spacing: 10) { Label("\(model.activeScreenMode) 실행 중", systemImage: "checkmark.circle.fill").foregroundStyle(.green); Button("종료", role: .destructive, action: model.stop).controlSize(.large) }.frame(minWidth: 300, alignment: .trailing)
             } else {
                 HStack(spacing: 10) {
                     ScreenModeButton(title: "DEX 모드", subtitle: "데스크톱 화면", icon: "display", action: model.startDeX)
@@ -743,8 +739,8 @@ private struct ScreenModeButton: View {
             HStack(spacing: 10) {
                 Image(systemName: icon).font(.title3).foregroundStyle(Color.accentColor).frame(width: 24)
                 VStack(alignment: .leading, spacing: 2) { Text(title).fontWeight(.semibold); Text(subtitle).font(.caption2).foregroundStyle(.secondary) }
-            }.frame(width: 142, alignment: .leading).padding(.horizontal, 12).padding(.vertical, 10).contentShape(Rectangle())
-        }.buttonStyle(.plain).background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 10)).overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.09)))
+            }.frame(width: 142, alignment: .leading).padding(.vertical, 5).contentShape(Rectangle())
+        }.buttonStyle(.bordered).controlSize(.large)
     }
 }
 

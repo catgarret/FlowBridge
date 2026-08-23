@@ -98,7 +98,7 @@ public struct ADBService: Sendable {
 
     public static func parsePhoneScreenState(power: String, policy: String) -> PhoneScreenState {
         let awake = power.contains("mWakefulness=Awake") || policy.contains("screenState=SCREEN_STATE_ON")
-        let locked = policy.contains("showing=true") || policy.contains("isKeyguardShowing=true")
+        let locked = policy.contains("isKeyguardShowing=true") || policy.contains("mShowingLockscreen=true") || policy.contains("keyguardShowing=true")
         return PhoneScreenState(isAwake: awake, isLocked: locked)
     }
 

@@ -24,6 +24,8 @@
 "알림 항목" = "Notification Types";
 "Mac에 저장" = "Save to Mac";
 "키보드 입력" = "Keyboard Input";
+"여는 중" = "Opening";
+"실행 중" = "Running";
 "취소" = "Cancel";
 "기기 연결" = "Device Connection";
 "연결된 기기 없음" = "No connected device";
