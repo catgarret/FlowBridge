@@ -81,7 +81,7 @@ struct ContentView: View {
         loadFileURLs(from: providers) { urls in
             guard !urls.isEmpty else { return }
             section = .transfer
-            model.transfer(urls: urls)
+            model.enqueueTransfer(urls: urls)
         }
         return !providers.isEmpty
     }
@@ -195,7 +195,8 @@ private struct AboutView: View {
                 }
             }
             Card("오픈소스와 라이선스", icon: "doc.text") {
-                Text("Flow Bridge의 macOS 코드는 MIT License로 배포됩니다. maze-mei의 MIT 라이선스 프로젝트 DX Manager를 일부 기반으로 하며, 원저작권 표시와 라이선스 전문을 보존합니다.")
+                Text("Flow Bridge의 macOS 코드는 MIT License로 배포됩니다.")
+                Text("maze-mei의 MIT 라이선스 프로젝트 DX Manager를 일부 기반으로 하며, 원저작권 표시와 라이선스 전문을 보존합니다.")
                 Text("scrcpy, Android Debug Bridge, SDL, FFmpeg와 동봉 구성요소에는 각각의 오픈소스 라이선스가 적용됩니다.")
                     .foregroundStyle(.secondary)
                 HStack(spacing: 12) {
@@ -309,10 +310,7 @@ private struct AppsView: View {
             HStack(spacing: 18) {
                 Text("앱 실행 방식").fontWeight(.semibold)
                 Spacer()
-                Picker("앱 실행 방식", selection: $model.appLaunchMode) {
-                    Text("DEX 모드").tag(AppLaunchMode.desktopWindow)
-                    Text("휴대폰 미러링 모드").tag(AppLaunchMode.phoneScreen)
-                }.pickerStyle(.segmented).labelsHidden().frame(width: 420).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
+                LaunchModeSwitcher(selection: $model.appLaunchMode).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
             }.frame(maxWidth: .infinity, alignment: .trailing)
             Card("앱 바로 실행 지정", icon: "bolt.square") {
                 VStack(spacing: 0) {
@@ -334,7 +332,6 @@ private struct AppsView: View {
                     }
                 }
             }
-            .overlay(alignment: .topTrailing) { Button { openPicker(for: nil) } label: { Label("앱 검색", systemImage: "magnifyingglass") }.buttonStyle(.bordered).padding(.top, 14).padding(.trailing, 18) }
         }
         .sheet(isPresented: $showAppPicker) { AppPickerSheet(targetSlot: editingSlot).environmentObject(model) }
     }
@@ -357,14 +354,9 @@ private struct AppPickerSheet: View {
             HStack(spacing: 10) { Image(systemName: "magnifyingglass").foregroundStyle(.secondary); TextField("앱 이름 검색", text: $model.appSearch).textFieldStyle(.plain) }.padding(.horizontal, 13).frame(height: 38).background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 9)).padding(.horizontal, 22).padding(.vertical, 14)
             let matches = model.installedApps.filter { model.appSearch.isEmpty || $0.name.localizedCaseInsensitiveContains(model.appSearch) || $0.package.localizedCaseInsensitiveContains(model.appSearch) }
             let grouped = Dictionary(grouping: Array(matches.prefix(300))) { indexKey($0.name) }.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
-            ScrollViewReader { proxy in
-                ZStack(alignment: .trailing) {
-                    List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in appRow(app) } }.id(letter) } }.listStyle(.inset).scrollContentBackground(.hidden).padding(.trailing, model.appSearch.isEmpty ? 30 : 0)
-                    if model.appSearch.isEmpty { VStack(spacing: 0) { ForEach(grouped.map(\.key), id: \.self) { letter in Button(letter) { withAnimation { proxy.scrollTo(letter, anchor: .top) } }.buttonStyle(.plain).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).frame(width: 22, height: 16) } }.padding(.vertical, 6).background(.regularMaterial, in: Capsule()).padding(.trailing, 18) }
-                }
-            }
+            List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in appRow(app) } } } }.listStyle(.inset).scrollContentBackground(.hidden)
             Divider(); HStack { Text(targetSlot == nil ? "1·2·3으로 바로 실행 지정" : "바로 실행 \((targetSlot ?? 0) + 1)에 지정").font(.caption).foregroundStyle(.secondary); Spacer(); Text("\(matches.count)개 앱").font(.caption).foregroundStyle(.secondary) }.padding(.horizontal, 22).padding(.vertical, 13)
-        }.frame(width: 720, height: 580)
+        }.frame(width: 640, height: 520)
     }
 
     @ViewBuilder private func appRow(_ app: InstalledApp) -> some View {
@@ -471,13 +463,8 @@ private struct PhoneView: View {
     private var contactList: some View {
         let filtered = model.contacts.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || $0.name.localizedCaseInsensitiveContains(model.phoneSearch) }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         let grouped = Dictionary(grouping: Array(filtered.prefix(200))) { contactIndexKey($0.name) }.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
-        return ScrollViewReader { proxy in
-            ZStack(alignment: .trailing) {
-                List { ForEach(grouped, id: \.key) { letter, contacts in Section(letter) { ForEach(contacts) { contact in HStack(spacing: 12) { ContactAvatar(name: contact.name, photoURL: model.contactPhotoURL(for: contact.number)); VStack(alignment: .leading, spacing: 5) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(contact.number, rowID: contact.id) }.listRowBackground(selectedRowID == contact.id ? Color.accentColor.opacity(0.14) : Color.clear) } }.id(letter) } }
-                    .listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor)).padding(.trailing, model.phoneSearch.isEmpty ? 22 : 0)
-                if model.phoneSearch.isEmpty { VStack(spacing: 0) { ForEach(grouped.map(\.key), id: \.self) { letter in Button(letter) { withAnimation { proxy.scrollTo(letter, anchor: .top) } }.buttonStyle(.plain).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).frame(width: 18, height: 15) } }.padding(.vertical, 5).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8)).padding(.trailing, 4) }
-            }
-        }
+        return List { ForEach(grouped, id: \.key) { letter, contacts in Section(letter) { ForEach(contacts) { contact in HStack(spacing: 12) { ContactAvatar(name: contact.name, photoURL: model.contactPhotoURL(for: contact.number)); VStack(alignment: .leading, spacing: 5) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(contact.number, rowID: contact.id) }.listRowBackground(selectedRowID == contact.id ? Color.accentColor.opacity(0.14) : Color.clear) } } } }
+            .listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var messageThreadList: some View {
@@ -585,30 +572,33 @@ private struct TransferView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            CompactTabSwitcher(selection: $direction, items: [("Galaxy로 보내기", "arrow.up.circle.fill"), ("Mac으로 가져오기", "arrow.down.circle.fill")])
+            CompactTabSwitcher(selection: $direction, items: [("보내기", "arrow.up.circle.fill"), ("가져오기", "arrow.down.circle.fill")])
             if direction == 0 {
-                Card("Galaxy로 보내기", icon: "arrow.up.circle") {
-                VStack(spacing: 14) {
-                    Image(systemName: isDropTarget ? "arrow.down.doc.fill" : "doc.on.doc").font(.system(size: 38)).foregroundStyle(.blue)
-                    Text("Finder 파일을 여기에 놓거나, Finder에서 ⌘C한 뒤 아래 버튼을 누르세요.").foregroundStyle(.secondary)
-                    HStack {
-                        Button(action: model.chooseAndTransfer) { Label("파일·폴더 선택", systemImage: "plus") }.buttonStyle(.borderedProminent)
-                        Button { _ = model.pasteFilesFromClipboard() } label: { Label("Mac 클립보드 붙여넣기", systemImage: "doc.on.clipboard") }
+                Card("보내기", icon: "arrow.up.circle") {
+                VStack(spacing: 0) {
+                    HStack { VStack(alignment: .leading, spacing: 3) { Text("Galaxy로 보낼 항목").fontWeight(.semibold); Text("파일을 추가한 뒤 전송을 눌러야 시작됩니다.").font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.chooseAndTransfer) { Label("추가", systemImage: "plus") }; Button { _ = model.pasteFilesFromClipboard() } label: { Label("붙여넣기", systemImage: "doc.on.clipboard") } }.padding(.bottom, 12)
+                    Divider()
+                    if model.pendingTransferURLs.isEmpty {
+                        VStack(spacing: 9) { Image(systemName: isDropTarget ? "arrow.down.doc.fill" : "tray.and.arrow.up").font(.system(size: 34)).foregroundStyle(.blue); Text("파일을 놓거나 추가하세요").fontWeight(.medium); Text("Finder 드래그 앤 드롭과 파일 붙여넣기를 지원합니다.").font(.caption).foregroundStyle(.secondary) }.frame(maxWidth: .infinity, minHeight: 190)
+                    } else {
+                        VStack(spacing: 0) { ForEach(model.pendingTransferURLs, id: \.self) { url in HStack(spacing: 12) { Image(systemName: url.hasDirectoryPath ? "folder.fill" : "doc.fill").foregroundStyle(.blue).frame(width: 28); VStack(alignment: .leading, spacing: 3) { Text(url.lastPathComponent).fontWeight(.medium).lineLimit(1); Text(url.deletingLastPathComponent().path).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }; Spacer(); Button { model.removePendingTransfer(url) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain) }.padding(.vertical, 11); Divider() } }.frame(minHeight: 180)
                     }
-                    if model.isTransferring { ProgressView().frame(maxWidth: 420); Text(model.transferStatus).font(.caption); Button("전송 취소", action: model.cancelTransfer) }
-                }.frame(maxWidth: .infinity).padding(.vertical, 22)
+                    Divider()
+                    HStack { Text("(model.pendingTransferURLs.count)개 대기 중").font(.caption).foregroundStyle(.secondary); Spacer(); if !model.pendingTransferURLs.isEmpty { Button("모두 지우기", action: model.clearPendingTransfers) }; Button("전송") { model.startPendingTransfers() }.buttonStyle(.borderedProminent).disabled(model.pendingTransferURLs.isEmpty || !isConnected || model.isTransferring) }.padding(.top, 12)
+                    if model.isTransferring { ProgressView().padding(.top, 12); HStack { Text(model.transferStatus).font(.caption).foregroundStyle(.secondary); Spacer(); Button("전송 취소", action: model.cancelTransfer) } }
+                }
                     .background(isDropTarget ? Color.blue.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
                     .onDrop(of: [UTType.fileURL], isTargeted: $isDropTarget, perform: acceptDrop)
                     .disabled(!isConnected)
                     .overlay { if !isConnected { DisconnectedOverlay() } }
                 }
             } else {
-                Card("Mac으로 가져오기", icon: "arrow.down.circle") {
+                Card("가져오기", icon: "arrow.down.circle") {
                     if model.remoteFiles.isEmpty {
                         VStack(spacing: 10) {
                             Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.blue)
                             Text("불러온 파일 없음").fontWeight(.medium)
-                            Text(isConnected ? "하단 새로고침을 눌러 Galaxy의 Download 폴더를 확인하세요." : "Galaxy를 연결하면 파일 목록을 불러올 수 있습니다.").font(.caption).foregroundStyle(.secondary)
+                            Text(isConnected ? "Galaxy Download 폴더에 파일이 없습니다." : "Galaxy를 연결하면 파일 목록을 불러올 수 있습니다.").font(.caption).foregroundStyle(.secondary)
                         }.frame(maxWidth: .infinity, minHeight: 180)
                     } else {
                         List(model.remoteFiles, selection: $selectedRemote) { file in
@@ -622,12 +612,12 @@ private struct TransferView: View {
                     }
                 }
             }
-        }
+        }.onAppear { if direction == 1 && isConnected { model.loadRemoteFiles() } }.onChange(of: direction) { value in if value == 1 && isConnected { model.loadRemoteFiles() } }
     }
 
     private func acceptDrop(_ providers: [NSItemProvider]) -> Bool {
         guard isConnected else { return false }
-        loadFileURLs(from: providers) { model.transfer(urls: $0) }
+        loadFileURLs(from: providers) { model.enqueueTransfer(urls: $0) }
         return !providers.isEmpty
     }
 }
@@ -696,34 +686,31 @@ private struct DisconnectedOverlay: View {
 
 private struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var showsExpertSettings = false
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
             SettingsGroup("화면 품질", icon: "display") {
-                VStack(alignment: .leading, spacing: 14) {
-                    Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 14) {
-                        GridRow {
-                            Text("해상도").fontWeight(.medium).frame(width: 72, alignment: .leading)
-                            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
+                    SettingsRow("해상도") {
+                            HStack(spacing: 6) {
                                 PresetButton(title: "720p", selected: model.settings.width == 1280 && model.settings.height == 720) { model.applyDisplayPreset(width: 1280, height: 720) }
                                 PresetButton(title: "1080p", selected: model.settings.width == 1920 && model.settings.height == 1080) { model.applyDisplayPreset(width: 1920, height: 1080) }
                                 PresetButton(title: model.nativeDisplayPresetTitle, selected: model.isNativeDisplayPresetSelected, action: model.applyNativeDisplayPreset)
-                            }.frame(width: 360, alignment: .leading)
-                        }
-                        GridRow {
-                            Text("프레임").fontWeight(.medium).frame(width: 72, alignment: .leading)
-                            HStack(spacing: 8) { PresetButton(title: "30 FPS", selected: model.settings.fps == 30) { model.settings.fps = 30 }; PresetButton(title: "60 FPS", selected: model.settings.fps == 60) { model.settings.fps = 60 }; PresetButton(title: "120 FPS", selected: model.settings.fps == 120) { model.settings.fps = 120 } }.frame(width: 360, alignment: .leading)
-                        }
+                            }.frame(width: 420, alignment: .trailing)
                     }
-                    Text("60 FPS가 기본 권장값입니다. 120 FPS는 기기·연결·Mac 성능에 따라 실제 프레임이 낮아질 수 있습니다.").font(.caption).foregroundStyle(.secondary)
-                    DisclosureGroup("전문가 수동 설정") {
+                    Divider()
+                    SettingsRow("프레임") { HStack(spacing: 6) { PresetButton(title: "30 FPS", selected: model.settings.fps == 30) { model.applyFramePreset(30) }; PresetButton(title: "60 FPS", selected: model.settings.fps == 60) { model.applyFramePreset(60) }; PresetButton(title: "120 FPS", selected: model.settings.fps == 120) { model.applyFramePreset(120) } }.frame(width: 420, alignment: .trailing) }
+                    Divider()
+                    Button { withAnimation(.easeInOut(duration: 0.18)) { showsExpertSettings.toggle() } } label: { HStack { Text("전문가 수동 설정").fontWeight(.medium); Spacer(); Image(systemName: "chevron.right").rotationEffect(.degrees(showsExpertSettings ? 90 : 0)).foregroundStyle(.secondary) }.padding(.vertical, 13).contentShape(Rectangle()) }.buttonStyle(.plain)
+                    if showsExpertSettings {
                         Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 12) {
                             GridRow { Text("해상도"); HStack { NumberField(value: $model.settings.width, label: "너비"); Text("×"); NumberField(value: $model.settings.height, label: "높이") } }
                             GridRow { Text("화면 밀도"); NumberField(value: $model.settings.dpi, label: "DPI") }
                             GridRow { Text("비트레이트"); NumberField(value: $model.settings.bitrate, label: "Mbps") }
-                        }.padding(.top, 10)
+                        }.padding(.vertical, 10)
                     }
                 }
-                HStack { Spacer(); Button("설정 저장", action: model.save).buttonStyle(.borderedProminent) }
+                Text("60 FPS 권장 · 120 FPS는 환경에 따라 낮아질 수 있음").font(.caption).foregroundStyle(.secondary)
             }
             SettingsGroup("연결과 Mac 동작", icon: "gearshape") {
                 VStack(alignment: .leading, spacing: 0) {
@@ -736,7 +723,7 @@ private struct SettingsView: View {
                             PresenceButton("Dock + 메뉴 막대", value: .dockAndMenuBar)
                             PresenceButton("메뉴 막대만", value: .menuBarOnly)
                             PresenceButton("Dock만", value: .dockOnly)
-                        }.frame(width: 390)
+                        }.frame(width: 420, alignment: .trailing)
                     }
                     Divider()
                     SettingsRow("앱을 시작할 때 메인 창 열기") { Toggle("", isOn: $model.openMainWindowAtLaunch).labelsHidden().onChange(of: model.openMainWindowAtLaunch) { _ in model.presentationSettingsChanged() } }
@@ -805,11 +792,34 @@ private struct CompactTabSwitcher: View {
     }
 }
 
+private struct LaunchModeSwitcher: View {
+    @Binding var selection: AppLaunchMode
+    var body: some View {
+        HStack(spacing: 2) {
+            option("DEX 모드", value: .desktopWindow)
+            option("휴대폰 미러링 모드", value: .phoneScreen)
+        }.padding(3).frame(width: 420).background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 8))
+    }
+    private func option(_ title: String, value: AppLaunchMode) -> some View {
+        Button { selection = value } label: { Text(localized(title)).fontWeight(.medium).frame(maxWidth: .infinity, minHeight: 28).foregroundStyle(selection == value ? Color.white : Color.secondary).background(selection == value ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 6)) }.buttonStyle(.plain)
+    }
+}
+
 private struct Card<Content: View>: View {
     let title: String; let icon: String; @ViewBuilder let content: Content
     init(_ title: String, icon: String, @ViewBuilder content: () -> Content) { self.title = title; self.icon = icon; self.content = content() }
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) { Label(localized(title), systemImage: icon).font(.headline); content }
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                if title == "Flow Bridge", let url = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"), let image = NSImage(contentsOf: url) {
+                    Image(nsImage: image).resizable().scaledToFit().frame(width: 22, height: 22).clipShape(RoundedRectangle(cornerRadius: 5))
+                } else {
+                    Image(systemName: icon).frame(width: 22)
+                }
+                Text(localized(title))
+            }.font(.headline)
+            content
+        }
             .padding(20).frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.primary.opacity(0.028), in: RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.09), lineWidth: 1))

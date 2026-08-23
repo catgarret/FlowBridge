@@ -4,6 +4,10 @@
 
 ## Unreleased - experimental macOS port
 
+- Removed vertical alphabet rails while retaining localized section sorting, resized the app picker to fit, removed its redundant search launcher, flush-aligned launch mode, staged outbound files before explicit transfer, auto-loaded inbound files on tab entry, and tightened right-aligned Settings controls.
+- 세로 알파벳 색인은 제거하되 로컬 섹션 정렬은 유지하고, 앱 검색 창을 화면 안에 맞게 줄였으며 중복 앱 검색 버튼을 제거했습니다. 보낼 파일은 명시적 전송 전까지 대기 목록에 쌓이고, 가져오기는 탭 진입 시 자동 갱신되며, 설정 컨트롤은 우측 정렬과 간격을 정리했습니다.
+- Removed the redundant display-quality Save button, made FPS presets persist immediately, and matched the About heading to the bundled Flow Bridge app icon with clearer license line breaks.
+- 중복된 화면 품질 저장 버튼을 제거하고 FPS 프리셋도 즉시 저장되도록 맞췄으며, 정보 화면 제목에 실제 Flow Bridge 아이콘을 사용하고 라이선스 문장을 개행했습니다.
 - Removed the detail view's fixed width cap, rebalanced the app picker header/list/footer, flattened Home connection setup to one disclosure level, added Messages search clearance, and locale-sorted contacts by name.
 - 상세 화면의 고정 폭 제한을 제거하고 앱 검색 창의 헤더·목록·푸터 균형을 조정했습니다. 홈 연결 설정은 한 단계로 평탄화하고 문자 검색창 여백과 연락처 이름 기준 로컬 정렬을 추가했습니다.
 - Flattened Settings into named sections with single grouped row surfaces, consistent separators, left labels, and right-aligned controls while preserving every existing option.

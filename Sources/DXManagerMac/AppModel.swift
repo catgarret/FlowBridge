@@ -43,6 +43,7 @@ final class AppModel: ObservableObject {
     @Published var transferStatus = ""
     @Published var isTransferring = false
     @Published var remoteFiles: [RemoteFile] = []
+    @Published var pendingTransferURLs: [URL] = []
     @Published var status = "ADB 기기를 검색하는 중입니다."
     @Published var isBusy = false
     @Published var autoHideMinutes = 10
@@ -314,6 +315,12 @@ final class AppModel: ObservableObject {
         save(); status = "화면 품질을 \(width)×\(height)로 설정했습니다."
     }
 
+    func applyFramePreset(_ fps: Int) {
+        settings.fps = fps
+        save()
+        status = "화면 프레임을 \(fps) FPS로 적용했습니다."
+    }
+
     func applyNativeDisplayPreset() {
         let serial = selectedSerial
         perform { [settings = appSettings] in
@@ -567,7 +574,21 @@ final class AppModel: ObservableObject {
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         guard panel.runModal() == .OK else { return }
-        transfer(urls: panel.urls)
+        enqueueTransfer(urls: panel.urls)
+    }
+
+    func enqueueTransfer(urls: [URL]) {
+        for url in urls where !pendingTransferURLs.contains(url) { pendingTransferURLs.append(url) }
+        if !urls.isEmpty { status = "전송 대기 목록에 \(pendingTransferURLs.count)개를 추가했습니다." }
+    }
+
+    func removePendingTransfer(_ url: URL) { pendingTransferURLs.removeAll { $0 == url } }
+    func clearPendingTransfers() { pendingTransferURLs.removeAll() }
+    func startPendingTransfers() {
+        let urls = pendingTransferURLs
+        guard !urls.isEmpty else { return }
+        pendingTransferURLs.removeAll()
+        transfer(urls: urls)
     }
 
     func transfer(urls: [URL]) {
@@ -593,7 +614,7 @@ final class AppModel: ObservableObject {
     func pasteFilesFromClipboard() -> Bool {
         let urls = NSPasteboard.general.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
         guard !urls.isEmpty else { status = "Mac 클립보드에 복사된 파일이 없습니다."; return false }
-        transfer(urls: urls)
+        enqueueTransfer(urls: urls)
         return true
     }
 
