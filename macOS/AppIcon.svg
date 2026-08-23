@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#168CFF"/><stop offset="1" stop-color="#6346E8"/>
+    </linearGradient>
+    <linearGradient id="bridge" x1="352" y1="512" x2="704" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D9E7FF"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="20" stdDeviation="26" flood-color="#13245C" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect x="56" y="56" width="912" height="912" rx="220" fill="url(#bg)"/>
+  <g filter="url(#shadow)" fill="none" stroke="url(#bridge)" stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="178" y="278" width="430" height="316" rx="48"/>
+    <path d="M300 706h186M393 594v112"/>
+    <rect x="650" y="354" width="196" height="372" rx="46"/>
+    <path d="M714 654h68"/>
+    <path d="M557 464c46-48 94-66 139-54M559 528c49 44 96 59 139 46"/>
+  </g>
+  <circle cx="565" cy="463" r="18" fill="#FFF"/><circle cx="565" cy="528" r="18" fill="#FFF"/>
+</svg>

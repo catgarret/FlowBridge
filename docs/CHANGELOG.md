@@ -2,6 +2,60 @@
 
 세부 변경은 Git 이력을 사용하고 여기에는 큰 이정표만 적는다.
 
+## Unreleased - experimental macOS port
+
+- Rename the macOS app to Flow Bridge, add Korean and English localization,
+  migrate existing settings, and add complete attribution, license, trademark,
+  privacy, build, and distribution documentation for the public repository.
+- Redesign the macOS interface around a persistent sidebar with focused Home,
+  app-window, transfer, notification, settings, and diagnostics pages; add clear
+  launch cards, connection state, contextual descriptions, and a fixed status bar.
+- Add a Samsung Flow symbol-based macOS icon, a phone/SMS handoff page, and a
+  launcher-app picker that presents friendly names instead of requiring package IDs.
+- Add a native SwiftUI macOS MVP for ADB device discovery, wireless connection,
+  deterministic DeX overlay creation and cleanup, scrcpy launch, app-specific
+  virtual displays, persistent display settings, tests, and ad-hoc app packaging.
+- Bundle checksum-verified official scrcpy 4.1 static releases and ADB for both
+  Apple silicon and Intel so the packaged app has no Homebrew dependency.
+- Add three independent app-window slots, installed-package browsing, file and
+  folder transfer, bundled license notices, and universal macOS ZIP packaging.
+- Add Android 11+ wireless pairing, automatic device refresh, device diagnostics,
+  power/wake/sleep controls, interactive region capture, and menu-bar controls.
+- Add per-device display settings, reusable per-app profiles, cancellable queued
+  transfer status, session-log export, and checksum-verified DX Companion
+  installation, permission grant, and removal for the selected device.
+- Add process-scoped scrcpy keyboard correction, Enter/Shift+Enter switching,
+  floating mini control bars that follow scrcpy windows, window-only capture,
+  configurable menu-bar auto-hide, and login-item registration.
+- Pull the installed Companion APK back from the selected phone and compare its
+  complete SHA-256 before and after protected permission grants.
+- Add remembered wireless reconnection, ordinary phone-screen mirroring, duplicate
+  USB/LAN/mDNS transport merging, and separately configurable Galaxy call, SMS,
+  and application notifications in macOS Notification Center.
+- ADB 기기 검색, 무선 연결, DeX overlay의 결정적 생성·정리, scrcpy 실행,
+  앱 단일 가상화면, 화면 설정 저장, 테스트와 임시 서명 앱 패키징을 지원하는
+  SwiftUI 기반 macOS MVP를 추가했습니다.
+- 체크섬을 검증한 공식 scrcpy 4.1 정적 빌드와 ADB를 Apple Silicon·Intel용으로
+  모두 포함해 패키지 앱의 Homebrew 의존성을 제거했습니다.
+- 독립 앱 단일창 슬롯 3개, 설치 앱 패키지 목록, 파일·폴더 전송, 번들 라이선스
+  고지와 macOS Universal ZIP 패키징을 추가했습니다.
+- Android 11 이상 무선 페어링, 기기 자동 갱신, 기기 진단, 전원·화면 켜기·끄기,
+  대화형 영역 캡처와 메뉴 막대 제어를 추가했습니다.
+- 기기별 화면 설정, 재사용 앱 프로필, 취소 가능한 전송 대기열·상태, 세션 로그
+  저장과 선택 기기의 DX Companion 해시 검증 설치·권한 부여·삭제를 추가했습니다.
+- scrcpy 프로세스 한정 키보드 보정, Enter/Shift+Enter 전환, scrcpy 창을 따라가는
+  미니 컨트롤바, 해당 창만 캡처, 메뉴 막대 자동 숨김과 로그인 자동 실행을 추가했습니다.
+- 보호 권한 부여 전후에 선택 휴대폰의 설치 APK를 다시 가져와 전체 SHA-256이
+  공식 APK와 일치하는지 검증하도록 보강했습니다.
+- 무선 연결 주소 기억·자동 재연결, DeX 없는 일반 휴대폰 화면 미러링, 동일 기기의
+  USB·LAN·mDNS 전송 병합과 전화·문자·애플리케이션별 macOS 알림 전달을 추가했습니다.
+- macOS 화면을 홈·앱 창·파일 전송·알림·설정·진단 사이드바 구조로 개편하고,
+  실행 카드, 연결 상태, 화면별 안내와 고정 상태 표시줄을 추가했습니다.
+- Samsung Flow 심볼 기반 macOS 아이콘, 전화·문자 전달 화면과 패키지명을 직접
+  입력할 필요가 없는 일반 앱 이름 선택기를 추가했습니다.
+- macOS 앱 이름을 Flow Bridge로 변경하고 한국어·영어 현지화, 기존 설정 마이그레이션,
+  공개 저장소용 출처·라이선스·상표·개인정보·빌드·배포 문서를 추가했습니다.
+
 ## 2026-08 - v2.0.0
 
 - 구조 감사에서 더 이상 구독되지 않던 v1 단일 기기 연결·분리 이벤트 처리기를

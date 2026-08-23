@@ -24,3 +24,7 @@ packages/
 
 # Generated release packages
 dist/
+/.build/
+/dist/
+.swiftpm/
+/.vendor-cache/
