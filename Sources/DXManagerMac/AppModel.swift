@@ -30,7 +30,6 @@ final class AppModel: ObservableObject {
     @Published var phoneSearch = ""
     @Published var contacts: [PhoneContact] = []
     @Published var contactPhotoURLs: [String: URL] = [:]
-    @Published var deviceProfilePhotoURL: URL?
     @Published var activeNotifications: [PhoneNotification] = []
     @Published var appIconURLs: [String: URL] = [:]
     @Published var notificationDeliveryStatus = ""

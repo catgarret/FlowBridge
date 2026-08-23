@@ -175,20 +175,22 @@ private struct AboutView: View {
                         Text("버전 0.1.0").font(.title3.weight(.semibold))
                         Text(model.updateStatus).foregroundStyle(model.isUpdateAvailable ? .blue : .secondary)
                     }
-                    Spacer(); Button("업데이트 확인", action: model.checkForUpdates)
-                    Link("GitHub 릴리스 열기", destination: URL(string: "https://github.com/catgarret/FlowBridge/releases")!)
+                    Spacer(); Button("업데이트 확인", action: model.checkForUpdates).buttonStyle(.borderedProminent)
                 }
             }
             Card("오픈소스와 라이선스", icon: "doc.text") {
                 Text("Flow Bridge의 macOS 코드는 MIT License로 배포됩니다. maze-mei의 MIT 라이선스 프로젝트 DX Manager를 일부 기반으로 하며, 원저작권 표시와 라이선스 전문을 보존합니다.")
                 Text("scrcpy, Android Debug Bridge, SDL, FFmpeg와 동봉 구성요소에는 각각의 오픈소스 라이선스가 적용됩니다.")
                     .foregroundStyle(.secondary)
-                HStack {
+                HStack(spacing: 12) {
                     Link("Flow Bridge 소스", destination: URL(string: "https://github.com/catgarret/FlowBridge")!)
+                    Divider().frame(height: 16)
                     Link("원본 DX Manager", destination: URL(string: "https://github.com/maze-mei/DX-Manager")!)
+                    Divider().frame(height: 16)
                     Link("scrcpy", destination: URL(string: "https://github.com/Genymobile/scrcpy")!)
+                    Divider().frame(height: 16)
                     Link("전체 라이선스 보기", destination: URL(string: "https://github.com/catgarret/FlowBridge#attribution-licenses-and-trademarks--출처라이선스상표")!)
-                }
+                }.font(.subheadline)
             }
             Card("독립 프로젝트 고지", icon: "checkmark.shield") {
                 Text("Flow Bridge는 독립적으로 개발된 오픈소스 프로젝트이며 Samsung Electronics, Apple, Google, Genymobile 또는 Microsoft와 제휴·후원·보증 관계가 없습니다.")
@@ -201,13 +203,13 @@ private struct AboutView: View {
 private struct HomeView: View {
     @EnvironmentObject private var model: AppModel
     @State private var isEditingAlias = false
+    @State private var showsConnectionSetup = false
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Card("기기 연결", icon: "cable.connector") {
+            Surface {
                 VStack(spacing: 12) {
                     if let device = model.devices.first(where: { $0.serial == model.selectedSerial }) {
                         HStack(spacing: 16) {
-                            DeviceAvatar(photoURL: model.deviceProfilePhotoURL, modelName: device.modelName)
                             VStack(alignment: .leading, spacing: 5) {
                                 if isEditingAlias {
                                     HStack(spacing: 8) { TextField(device.displayName, text: $model.deviceAlias).textFieldStyle(.roundedBorder).frame(maxWidth: 260).onSubmit { model.saveDeviceAlias(); isEditingAlias = false }; Button("완료") { model.saveDeviceAlias(); isEditingAlias = false }.buttonStyle(.borderedProminent) }
@@ -224,7 +226,10 @@ private struct HomeView: View {
                             DeviceLaunchButtons()
                         }.padding(.vertical, 6)
                         Divider()
-                        DisclosureGroup("다른 기기 추가 또는 연결 방식 변경") { ConnectionSetupView().padding(.top, 10) }
+                        Button { withAnimation(.easeInOut(duration: 0.18)) { showsConnectionSetup.toggle() } } label: {
+                            HStack(spacing: 10) { Image(systemName: "chevron.right").rotationEffect(.degrees(showsConnectionSetup ? 90 : 0)); Text("다른 기기 추가 또는 연결 방식 변경").fontWeight(.medium); Spacer() }.padding(.vertical, 8).contentShape(Rectangle())
+                        }.buttonStyle(.plain)
+                        if showsConnectionSetup { ConnectionSetupView().padding(.top, 2).transition(.opacity.combined(with: .move(edge: .top))) }
                         Divider().padding(.vertical, 2)
                         ScreenLaunchControls()
                     } else {
@@ -380,13 +385,13 @@ private struct PhoneView: View {
             Divider()
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
-                    TextField("이름, 번호 또는 내용 검색", text: $model.phoneSearch).textFieldStyle(.roundedBorder).padding(16)
-                    if tab == 0 { HStack(spacing: 10) { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).labelsHidden(); Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.borderedProminent).help("다이얼 열기") }.padding(.horizontal, 16).padding(.bottom, 14) }
+                    if tab == 0 { HStack(spacing: 10) { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).labelsHidden(); Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.bordered).help("다이얼 열기") }.padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 10) }
+                    TextField("이름, 번호 또는 내용 검색", text: $model.phoneSearch).textFieldStyle(.roundedBorder).padding(.horizontal, 16).padding(.bottom, 14)
                     Divider()
                     if tab == 0 { callSource == 0 ? AnyView(callList) : AnyView(contactList) } else { messageThreadList }
                 }.frame(width: 360)
                 Divider()
-                if selectedNumber.isEmpty { emptyDetail } else if tab == 0 { callDetail } else { messageDetail }
+                if tab == 0 && showDialPad { dialPad } else if selectedNumber.isEmpty { emptyDetail } else if tab == 0 { callDetail } else { messageDetail }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay(alignment: .top) { if showCallToast { Label("Galaxy에서 통화를 확인해 주세요.", systemImage: "iphone.gen3").padding(.horizontal, 16).padding(.vertical, 10).background(.regularMaterial, in: Capsule()).shadow(radius: 8).padding(.top, 8).transition(.move(edge: .top).combined(with: .opacity)) } }
@@ -594,8 +599,8 @@ private struct NotificationsView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack { Spacer(); Picker("알림 화면", selection: $tab) { Text("알림 항목").tag(0); Text("Galaxy 알림").tag(1) }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(width: 360); Spacer() }
-            if tab == 0 { Card("알림 항목", icon: "bell.badge") {
+            HStack { Spacer(); Picker("알림 화면", selection: $tab) { Text("Galaxy 알림").tag(0); Text("알림 설정").tag(1) }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(width: 360); Spacer() }
+            if tab == 1 { Card("알림 설정", icon: "bell.badge") {
                 VStack(spacing: 0) {
                     NotificationRow(title: "전화", subtitle: "Galaxy 수신 전화 알림", icon: "phone", isOn: $model.phoneNotificationsEnabled)
                     Divider(); NotificationRow(title: "문자", subtitle: "Samsung 메시지와 Google 메시지", icon: "message", isOn: $model.messageNotificationsEnabled)
@@ -610,8 +615,8 @@ private struct NotificationsView: View {
                 else { VStack(spacing: 0) { ForEach(model.activeNotifications) { item in HStack(spacing: 14) { AppIconView(package: item.package, url: model.appIconURLs[item.package], fallback: "", systemFallback: item.kind == .call ? "phone.fill" : item.kind == .message ? "message.fill" : "app.fill").onAppear { if isConnected { model.requestAppIcon(package: item.package) } }; VStack(alignment: .leading, spacing: 4) { Text(item.title.isEmpty ? item.package : item.title).fontWeight(.semibold); Text(item.body).font(.subheadline).foregroundStyle(.secondary).lineLimit(2); Text(item.package).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Button { model.dismissNotification(item) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).disabled(!isConnected).help("Galaxy에서 알림 지우기") }.padding(.vertical, 13); Divider() } } }
                 if !model.notificationDeliveryStatus.isEmpty { Text(model.notificationDeliveryStatus).font(.caption).foregroundStyle(.secondary) }
             } }
-        }.onAppear { if isConnected && tab == 1 { model.loadActiveNotifications() } }
-            .onChange(of: tab) { value in if value == 1 && isConnected { model.loadActiveNotifications() } }
+        }.onAppear { if isConnected && tab == 0 { model.loadActiveNotifications() } }
+            .onChange(of: tab) { value in if value == 0 && isConnected { model.loadActiveNotifications() } }
     }
 }
 
@@ -663,11 +668,11 @@ private struct SettingsView: View {
                     SettingsRow("Flow Bridge 로그인 자동 실행") { Toggle("", isOn: Binding(get: { model.launchAtLogin }, set: { value in if value != model.launchAtLogin { model.toggleLaunchAtLogin() } })).labelsHidden() }
                     Divider()
                     SettingsRow("앱 표시 위치") {
-                        Picker("앱 표시 위치", selection: $model.presenceMode) {
-                            Text("Dock + 메뉴 막대").tag(AppPresenceMode.dockAndMenuBar)
-                            Text("메뉴 막대만").tag(AppPresenceMode.menuBarOnly)
-                            Text("Dock만").tag(AppPresenceMode.dockOnly)
-                        }.pickerStyle(.segmented).labelsHidden().frame(width: 390).onChange(of: model.presenceMode) { _ in model.presentationSettingsChanged() }
+                        HStack(spacing: 6) {
+                            PresenceButton("Dock + 메뉴 막대", value: .dockAndMenuBar)
+                            PresenceButton("메뉴 막대만", value: .menuBarOnly)
+                            PresenceButton("Dock만", value: .dockOnly)
+                        }.frame(width: 390)
                     }
                     Divider()
                     SettingsRow("앱을 시작할 때 메인 창 열기") { Toggle("", isOn: $model.openMainWindowAtLaunch).labelsHidden().onChange(of: model.openMainWindowAtLaunch) { _ in model.presentationSettingsChanged() } }
@@ -722,16 +727,6 @@ private struct Card<Content: View>: View {
     }
 }
 
-private struct DeviceAvatar: View {
-    let photoURL: URL?; let modelName: String
-    var body: some View {
-        Group {
-            if let photoURL, let image = NSImage(contentsOf: photoURL) { Image(nsImage: image).resizable().scaledToFill() }
-            else { ZStack { RoundedRectangle(cornerRadius: 14).fill(Color.accentColor.opacity(0.14)); Image(systemName: "iphone.gen3").font(.system(size: 29)).foregroundStyle(Color.accentColor); Text(modelName).font(.system(size: 7, weight: .semibold)).foregroundStyle(.secondary).offset(y: 25) } }
-        }.frame(width: 62, height: 76).clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-}
-
 private struct ScreenModeButton: View {
     let title: String; let subtitle: String; let icon: String; let action: () -> Void
     var body: some View {
@@ -742,6 +737,24 @@ private struct ScreenModeButton: View {
             }.frame(width: 142, alignment: .leading).padding(.vertical, 5).contentShape(Rectangle())
         }.buttonStyle(.bordered).controlSize(.large)
     }
+}
+
+private struct Surface<Content: View>: View {
+    @ViewBuilder let content: Content
+    init(@ViewBuilder content: () -> Content) { self.content = content() }
+    var body: some View { content.padding(20).frame(maxWidth: .infinity, alignment: .leading).background(Color.primary.opacity(0.028), in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.09))) }
+}
+
+private struct PresenceButton: View {
+    @EnvironmentObject private var model: AppModel
+    let title: String; let value: AppPresenceMode
+    init(_ title: String, value: AppPresenceMode) { self.title = title; self.value = value }
+    @ViewBuilder
+    var body: some View {
+        if model.presenceMode == value { Button(title, action: select).buttonStyle(.borderedProminent).frame(maxWidth: .infinity) }
+        else { Button(title, action: select).buttonStyle(.bordered).frame(maxWidth: .infinity) }
+    }
+    private func select() { model.presenceMode = value; model.presentationSettingsChanged() }
 }
 
 private struct SettingsRow<Control: View>: View {

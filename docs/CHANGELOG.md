@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Simplified Home to a titleless device surface with full-row connection expansion, made Galaxy Notifications the default, equalized app-location controls, cleaned About links/update actions, and fixed and reordered the phone dialer controls.
+- 홈을 제목·썸네일 없는 기기 화면으로 단순화하고 연결 설정 행 전체를 클릭 가능하게 했습니다. Galaxy 알림을 기본 화면으로 바꾸고 앱 표시 위치 버튼 폭, 정보 화면 링크·업데이트 동작을 정리했으며 전화 다이얼 표시 버그와 도구 순서를 수정했습니다.
 - Flattened Home device controls and sidebar status labels, moved launch progress into the selected screen action, fixed keyguard false positives and zero-brightness recovery, and made the larger session remote draggable with edge snapping and faster window tracking.
 - 홈의 중첩 박스와 사이드바 기기 표시를 정리하고 화면 실행 진행 상태를 선택한 실행 영역으로 옮겼습니다. 잠금 오탐과 0 밝기 복원을 수정하고 영상 리모컨을 더 크게 조정해 드래그·가장자리 스냅·빠른 창 추적을 지원합니다.
 - Redesigned Home screen-mode actions and right-aligned settings rows, corrected mDNS Wi-Fi labels, removed transport serials from the UI, split notification views, simplified Mac file import, added exact-time tooltips, and rejected corrupt contact-photo cache entries.
