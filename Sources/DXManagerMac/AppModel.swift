@@ -8,7 +8,7 @@ import DXManagerCore
 
 final class MacNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.banner, .sound])
+        completionHandler([.banner, .list, .sound])
     }
 }
 
@@ -33,6 +33,7 @@ final class AppModel: ObservableObject {
     @Published var activeNotifications: [PhoneNotification] = []
     @Published var appIconURLs: [String: URL] = [:]
     @Published var notificationDeliveryStatus = ""
+    @Published var notificationAuthorizationStatus = "확인 중"
     @Published var recentCalls: [PhoneCall] = []
     @Published var recentMessages: [PhoneMessage] = []
     @Published var wirelessEndpoint = ""
@@ -92,6 +93,7 @@ final class AppModel: ObservableObject {
     private var overlayCleanupInProgress: Set<String> = []
     private var iconLoadsInProgress: Set<String> = []
     private var remoteThumbnailLoadsInProgress: Set<String> = []
+    private var lastWindowPlacementCapture = Date.distantPast
 
     init() {
         load()
@@ -109,7 +111,10 @@ final class AppModel: ObservableObject {
         turnPhoneScreenOffOnStart = appSettings.turnPhoneScreenOffOnStart
         packageNames = appSettings.favoritePackages
         UNUserNotificationCenter.current().delegate = notificationDelegate
-        if phoneNotificationsEnabled || messageNotificationsEnabled || appNotificationsEnabled { notificationSettingsChanged() }
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshNotificationAuthorization()
+            if self?.phoneNotificationsEnabled == true || self?.messageNotificationsEnabled == true || self?.appNotificationsEnabled == true { self?.notificationSettingsChanged() }
+        }
         refresh()
         if automaticReconnect, !wirelessEndpoint.isEmpty { connectWireless() }
         checkForUpdates()
@@ -373,8 +378,12 @@ final class AppModel: ObservableObject {
         perform { [settings = appSettings] in
             guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
-            try ADBService(executable: adbPath).composeMessage(serial: serial, number: number, body: body)
-            return { model in model.status = "Galaxy 메시지 작성 화면을 열었습니다." }
+            try ADBService(executable: adbPath).sendMessage(serial: serial, number: number, body: body)
+            return { model in
+                model.messageBody = ""
+                model.status = "메시지를 전송했습니다."
+                model.refreshPhoneData(silent: true)
+            }
         }
     }
 
@@ -486,8 +495,32 @@ final class AppModel: ObservableObject {
                 if let error { self?.status = "macOS 알림 권한 요청 실패: \(error.localizedDescription)" }
                 else if !granted { self?.status = "macOS 시스템 설정에서 Flow Bridge 알림을 허용해 주세요." }
                 else { self?.status = "휴대폰 알림 전달을 켰습니다."; self?.notificationDeliveryStatus = "macOS 알림 허용됨" }
+                self?.refreshNotificationAuthorization()
             }
         }
+    }
+
+    func refreshNotificationAuthorization() {
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            let authorizationStatus = settings.authorizationStatus.rawValue
+            Task { @MainActor in
+                self?.notificationAuthorizationStatus = switch UNAuthorizationStatus(rawValue: authorizationStatus) ?? .notDetermined {
+                case .authorized, .provisional, .ephemeral: "허용됨"
+                case .denied: "차단됨 · macOS 시스템 설정에서 허용 필요"
+                case .notDetermined: "권한 요청 필요"
+                @unknown default: "상태 확인 불가"
+                }
+            }
+        }
+    }
+
+    func sendTestNotification() {
+        deliver(PhoneNotification(key: UUID().uuidString, package: "io.github.catgarret.flowbridge", title: "Flow Bridge", body: "Mac 알림 센터 전달이 정상적으로 동작합니다.", kind: .application))
+    }
+
+    func openMacNotificationSettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") else { return }
+        NSWorkspace.shared.open(url)
     }
 
     func loadActiveNotifications() {
@@ -947,7 +980,10 @@ final class AppModel: ObservableObject {
     private func syncMiniBars() {
         guard let controller else { miniBars.closeAll(); return }
         let sessions = controller.sessions()
-        updateWindowPlacements(from: sessions)
+        if Date().timeIntervalSince(lastWindowPlacementCapture) >= 1 {
+            updateWindowPlacements(from: sessions)
+            lastWindowPlacementCapture = Date()
+        }
         if sessionPhase == .running && !sessions.contains(where: { $0.id.hasPrefix("dex:") || $0.id.hasPrefix("phone:") }) {
             save()
             restoreBrightnessIfNeeded(serial: selectedSerial)
@@ -1163,7 +1199,7 @@ final class AppModel: ObservableObject {
                     self.seenNotificationFingerprints = current
                 }
             } catch {
-                await MainActor.run { self?.notificationPollInProgress = false }
+                await MainActor.run { self?.notificationPollInProgress = false; self?.notificationDeliveryStatus = "Galaxy 알림 확인 실패: \(error.localizedDescription)" }
             }
         }
     }
@@ -1187,7 +1223,7 @@ final class AppModel: ObservableObject {
         content.sound = .default
         content.threadIdentifier = "galaxy.\(item.package)"
         let deliveredTitle = content.title
-        let request = UNNotificationRequest(identifier: item.fingerprint, content: content, trigger: nil)
+        let request = UNNotificationRequest(identifier: "flowbridge.\(UUID().uuidString)", content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { [weak self] error in
             Task { @MainActor in self?.notificationDeliveryStatus = error.map { "macOS 알림 전달 실패: \($0.localizedDescription)" } ?? "최근 전달: \(deliveredTitle)" }
         }

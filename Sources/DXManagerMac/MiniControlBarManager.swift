@@ -69,8 +69,8 @@ private struct CompactSessionControls: View {
     init(initialVolume: Int, showsPhoneNavigation: Bool, protectedScreen: Bool, capture: @escaping () -> Void, setVolume: @escaping (Int) -> Void, back: @escaping () -> Void, home: @escaping () -> Void, recents: @escaping () -> Void, power: @escaping () -> Void, stop: @escaping () -> Void) { _volume = State(initialValue: Double(initialVolume)); self.showsPhoneNavigation = showsPhoneNavigation; self.protectedScreen = protectedScreen; self.capture = capture; self.setVolume = setVolume; self.back = back; self.home = home; self.recents = recents; self.power = power; self.stop = stop }
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            controlRow(compact: false)
-            controlRow(compact: true)
+            fullControlRow
+            compactControlRow
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
@@ -78,27 +78,55 @@ private struct CompactSessionControls: View {
         .clipShape(BottomRoundedCorners(radius: 12))
     }
 
-    private func controlRow(compact: Bool) -> some View {
-        HStack(spacing: compact ? 5 : 10) {
+    private var fullControlRow: some View {
+        HStack(spacing: 8) {
             if showsPhoneNavigation {
-                Button(action: back) { Image(systemName: "arrow.uturn.backward") }.help("뒤로")
-                Button(action: home) { Image(systemName: "house.fill") }.help("홈")
-                Button(action: recents) { Image(systemName: "rectangle.stack.fill") }.help("최근 앱")
-                if !compact { Divider().frame(height: 22) }
+                controlButton("arrow.uturn.backward", help: "뒤로", action: back)
+                controlButton("house.fill", help: "홈", action: home)
+                controlButton("rectangle.stack.fill", help: "최근 앱", action: recents)
+                Divider().frame(height: 24)
             }
             Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill").foregroundStyle(.secondary)
-            Slider(value: $volume, in: 0...15, step: 1).frame(width: compact ? 74 : 180).onChange(of: volume) { setVolume(Int($0)) }
-            if protectedScreen && !compact { Label("보호된 화면 · Galaxy에서 계속", systemImage: "lock.fill").font(.caption.weight(.medium)).foregroundStyle(.orange) }
-            Spacer(minLength: compact ? 0 : 8)
-            if !compact { Divider().frame(height: 22) }
-            Button(action: power) { Image(systemName: "power") }.help("Galaxy 전원")
-            Button(action: capture) { Image(systemName: "camera") }.help("화면 캡처")
-            Button(action: stop) { Image(systemName: "xmark.circle.fill").foregroundStyle(.red) }.help("화면 종료")
+            Slider(value: $volume, in: 0...15, step: 1).frame(minWidth: 120, idealWidth: 180, maxWidth: 220).onChange(of: volume) { setVolume(Int($0)) }
+            if protectedScreen { Label("보호된 화면 · Galaxy에서 계속", systemImage: "lock.fill").font(.caption.weight(.medium)).foregroundStyle(.orange) }
+            Spacer(minLength: 8)
+            Divider().frame(height: 24)
+            controlButton("power", help: "Galaxy 전원", action: power)
+            controlButton("camera", help: "화면 캡처", action: capture)
+            controlButton("xmark.circle.fill", help: "화면 종료", tint: .red, action: stop)
         }
         .buttonStyle(.bordered)
-        .controlSize(compact ? .mini : .regular)
-        .padding(.horizontal, compact ? 5 : 12)
+        .controlSize(.regular)
+        .padding(.horizontal, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var compactControlRow: some View {
+        HStack(spacing: 6) {
+            if showsPhoneNavigation {
+                controlButton("arrow.uturn.backward", help: "뒤로", action: back)
+                controlButton("house.fill", help: "홈", action: home)
+                controlButton("rectangle.stack.fill", help: "최근 앱", action: recents)
+            }
+            Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill").foregroundStyle(.secondary).frame(width: 24)
+            Slider(value: $volume, in: 0...15, step: 1).frame(minWidth: 54, maxWidth: 100).onChange(of: volume) { setVolume(Int($0)) }
+            Menu {
+                Button("Galaxy 전원", systemImage: "power", action: power)
+                Button("화면 캡처", systemImage: "camera", action: capture)
+                Divider()
+                Button("화면 종료", systemImage: "xmark.circle", role: .destructive, action: stop)
+            } label: { Image(systemName: "ellipsis").frame(width: 30, height: 28) }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).help("더보기")
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.regular)
+        .padding(.horizontal, 6)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func controlButton(_ systemName: String, help: String, tint: Color? = nil, action: @escaping () -> Void) -> some View {
+        Button(action: action) { Image(systemName: systemName).foregroundStyle(tint ?? .primary).frame(width: 24, height: 22) }
+            .frame(minWidth: 38, minHeight: 30).help(help)
     }
 }
 

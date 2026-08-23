@@ -40,6 +40,25 @@ check(downloadEntries.first?.name == "Folder", "Download folder suffix trimming"
 let nestedDownloadEntries = ADBService.parseDownloadEntries("nested.jpg\n", directory: "/sdcard/Download/Photos")
 check(nestedDownloadEntries.first?.path == "/sdcard/Download/Photos/nested.jpg", "nested Download path parsing")
 
+let multilineNotificationDump = """
+NotificationRecord(0x1: pkg=com.example.chat user=UserHandle{0} id=1 key=0|com.example.chat|1|null|1000: Notification(channel=messages))
+  key=0|com.example.chat|1|null|1000
+  extras={
+        android.title=String (Alice)
+        android.text=String (first line
+second line)
+        android.showWhen=Boolean (true)
+  }
+"""
+let multilineNotifications = NotificationParser.parse(multilineNotificationDump)
+check(multilineNotifications.first?.body == "first line\nsecond line", "multiline notification body parsing")
+
+let samsungMessageHierarchy = #"<node resource-id="com.samsung.android.messaging:id/send_message_button_icon" content-desc="전송" bounds="[900,2020][1060,2180]" />"#
+let sendPoint = ADBService.messageSendButtonPoint(in: samsungMessageHierarchy)
+check(sendPoint?.x == 980 && sendPoint?.y == 2100, "Samsung Messages send button parsing")
+let googleMessageHierarchy = #"<node resource-id="" content-desc="Send" bounds="[700,1300][780,1380]" />"#
+check(ADBService.messageSendButtonPoint(in: googleMessageHierarchy)?.x == 740, "accessible send button parsing")
+
 let launcherDump = """
 3 activities found:
   Activity #0:

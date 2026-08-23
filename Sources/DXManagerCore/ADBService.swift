@@ -177,6 +177,48 @@ public struct ADBService: Sendable {
         _ = try shell(serial: serial, arguments)
     }
 
+    public func sendMessage(serial: String, number: String, body: String) throws {
+        let trimmedBody = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedBody.isEmpty else { throw DXError.commandFailed("메시지 내용을 입력해 주세요.") }
+        try composeMessage(serial: serial, number: number, body: trimmedBody)
+
+        // Android does not grant the ADB shell process SEND_SMS. Confirm the
+        // user-requested send action through the default messaging app instead.
+        // Resource IDs and accessibility labels cover Samsung Messages and the
+        // common Android/Google Messages variants without relying on coordinates.
+        for attempt in 0..<10 {
+            if attempt > 0 { Thread.sleep(forTimeInterval: 0.35) }
+            let path = "/data/local/tmp/flowbridge-message.xml"
+            _ = try? shell(serial: serial, ["uiautomator", "dump", path])
+            guard let hierarchy = try? shell(serial: serial, ["cat", path]),
+                  let point = Self.messageSendButtonPoint(in: hierarchy) else { continue }
+            _ = try shell(serial: serial, ["input", "tap", String(point.x), String(point.y)])
+            _ = try? shell(serial: serial, ["rm", "-f", path])
+            return
+        }
+        throw DXError.commandFailed("메시지 전송 버튼을 찾지 못했습니다. Galaxy 메시지 화면에서 전송을 눌러 주세요.")
+    }
+
+    public static func messageSendButtonPoint(in hierarchy: String) -> (x: Int, y: Int)? {
+        let patterns = [
+            #"resource-id=\"[^\"]*(?:send_message|send_button|send_btn)[^\"]*\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\""#,
+            #"(?:content-desc|text)=\"(?:전송|보내기|Send)\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\""#
+        ]
+        for pattern in patterns {
+            guard let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+                  let match = expression.firstMatch(in: hierarchy, range: NSRange(hierarchy.startIndex..., in: hierarchy)),
+                  match.numberOfRanges == 5 else { continue }
+            let values = (1..<5).compactMap { index -> Int? in
+                guard let range = Range(match.range(at: index), in: hierarchy) else { return nil }
+                return Int(hierarchy[range])
+            }
+            if values.count == 4, values[2] > values[0], values[3] > values[1] {
+                return ((values[0] + values[2]) / 2, (values[1] + values[3]) / 2)
+            }
+        }
+        return nil
+    }
+
     public func launchApp(serial: String, package: String) throws {
         _ = try shell(serial: serial, ["monkey", "-p", package, "-c", "android.intent.category.LAUNCHER", "1"])
     }

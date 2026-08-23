@@ -9,6 +9,14 @@
   Galaxy 휴대폰을 macOS에서 연결하고 미러링하며 관리합니다.
 </p>
 
+<p align="center">
+  <img alt="macOS 13+" src="https://img.shields.io/badge/macOS-13%2B-111111?logo=apple">
+  <img alt="Apple silicon and Intel" src="https://img.shields.io/badge/Mac-Apple%20silicon%20%7C%20Intel-1677ff">
+  <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-2f855a">
+</p>
+
+![Flow Bridge home screen on macOS](docs/images/macos/flow-bridge-home-ko.jpg)
+
 > This repository is under active development. The current release is ad-hoc
 > signed and has not yet been notarized by Apple.
 
@@ -24,7 +32,7 @@ runtime installation.
 - Discover and remember USB, LAN, mDNS, and reachable Tailscale ADB connections
 - Start a Samsung DeX virtual display or mirror the ordinary phone screen
 - Launch Android apps in independent windows by friendly app name
-- Open the Galaxy dialer, answer or end calls, and hand message drafts to the phone
+- Open the Galaxy dialer and send SMS through the phone's default messaging app
 - Browse live Galaxy contacts, recent calls, and SMS; only contact photos are cached locally for faster display
 - Search installed apps, launch immediately, and assign Command-1/2/3 favorites
 - Drop files anywhere in the app or press Command-V outside text editing to transfer Finder items
@@ -62,8 +70,9 @@ Manual `IP:port` fields are kept under **Advanced Manual Connection** only for
 networks that block mDNS, isolate Wi-Fi clients, or use a Tailscale address.
 
 Call audio is not transported through ADB. Calls remain on the Galaxy phone or a
-Bluetooth headset connected to it. Message drafts are opened for review and are
-never sent automatically.
+Bluetooth headset connected to it. SMS is sent only after the user presses the
+send button in Flow Bridge; the app confirms the action through the default
+Galaxy messaging UI without using fixed screen coordinates.
 
 ### Build
 
@@ -88,7 +97,7 @@ SwiftUI 기반 macOS 앱입니다. Apple Silicon과 Intel용 ADB·scrcpy 실행 
 - Samsung DeX 가상 화면 실행과 일반 휴대폰 화면 미러링
 - 패키지명 대신 일반 앱 이름을 선택해 독립 창으로 실행
 - Mac에서 Galaxy 주소록·최근 통화·문자를 확인하고 연락처 사진은 빠른 표시를 위해 로컬 캐시
-- Mac에서 번호를 입력해 Galaxy 전화 화면 열기와 문자 초안 전달
+- Mac에서 번호를 입력해 Galaxy 전화 화면을 열고 기본 메시지 앱을 통해 SMS 전송
 - 전화·문자·애플리케이션 새 알림을 macOS 알림 센터로 전달
 - Mac에서 Galaxy로 파일·폴더 전송
 - `⌘C/⌘V` 파일 복사·붙여넣기, 양방향 드래그 앤 드롭과 Galaxy Download 폴더 탐색
@@ -97,7 +106,8 @@ SwiftUI 기반 macOS 앱입니다. Apple Silicon과 Intel용 ADB·scrcpy 실행 
 - macOS 언어 설정을 따르는 한국어·영어 인터페이스
 - Apple Silicon·Intel 유니버설 빌드
 
-문자 초안은 Galaxy 메시지 앱에서 최종 확인하며 자동으로 발송하지 않습니다.
+문자는 사용자가 Flow Bridge의 전송 버튼을 누른 경우에만 Galaxy 기본 메시지 앱의
+접근성 전송 버튼을 확인해 발송합니다. 고정 화면 좌표는 사용하지 않습니다.
 
 ### 간편 연결
 

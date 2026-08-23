@@ -21,8 +21,13 @@ public enum NotificationParser {
     }
 
     private static func extra(_ name: String, in record: String) -> String {
-        let escaped = NSRegularExpression.escapedPattern(for: name)
-        guard let value = capture("(?m)^\\s*\(escaped)=String \\((.*)\\)\\s*$", in: record) else { return "" }
+        let marker = "\(name)=String ("
+        guard let start = record.range(of: marker) else { return "" }
+        let tail = record[start.upperBound...]
+        let boundaryPattern = #"\n\s{8,}[A-Za-z0-9_.]+="#
+        let end = tail.range(of: boundaryPattern, options: .regularExpression)?.lowerBound ?? tail.endIndex
+        var value = String(tail[..<end]).trimmingCharacters(in: .whitespacesAndNewlines)
+        if value.hasSuffix(")") { value.removeLast() }
         return value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 

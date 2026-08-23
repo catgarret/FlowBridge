@@ -4,6 +4,10 @@
 
 ## Unreleased - experimental macOS port
 
+- Made SMS send actions complete through the Galaxy messaging UI, replaced the fixed-height editor with a native expanding composer, and flattened and relaxed call-detail history rows.
+- SMS 전송 동작이 Galaxy 메시지 UI에서 실제 완료되도록 연결하고 고정 높이 편집기를 기본 확장형 입력창으로 교체했으며, 통화 상세 기록의 배경과 행 간격을 정리했습니다.
+- Fixed multi-line Galaxy notification parsing, added explicit Notification Center list presentation, unique delivery requests, permission status and a test notification; redesigned narrow mirror controls with larger navigation targets and a More menu; completed missing English control strings and reduced window-placement polling overhead.
+- 여러 줄 Galaxy 알림 본문 파싱과 알림 센터 목록 표시·고유 전달 요청을 수정하고 권한 상태와 테스트 알림을 추가했습니다. 좁은 미러링 제어 바는 큰 탐색 버튼과 더보기 메뉴로 재설계했으며 누락된 영문 제어 문구를 보완하고 창 위치 감시 부하를 줄였습니다.
 - Simplified scrcpy window titles to `[Phone Mirroring] device alias` and `[DEX Mode] device alias`, removing transport identifiers.
 - scrcpy 창 제목을 `[휴대폰 미러링] 기기 별칭`, `[DEX 모드] 기기 별칭`으로 단순화하고 연결 식별자를 제거했습니다.
 - Added Back, Home, and Recent Apps controls to the phone-mirroring control bar using Android system key events.

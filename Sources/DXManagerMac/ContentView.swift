@@ -125,7 +125,7 @@ struct ContentView: View {
             if model.isBusy { ProgressView().controlSize(.small) }
             Text(LocalizedStringKey(model.status)).font(.caption).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(1)
             Spacer()
-            if model.isTransferring { Text(model.transferStatus).font(.caption); Button("취소", action: model.cancelTransfer).controlSize(.small) }
+            if model.isTransferring { Text(LocalizedStringKey(model.transferStatus)).font(.caption); Button("취소", action: model.cancelTransfer).controlSize(.small) }
             TimelineView(.periodic(from: .now, by: 30)) { context in
                 Button(action: refreshCurrentSection) {
                     HStack(spacing: 6) { Image(systemName: "arrow.clockwise"); Text(refreshLabel(at: context.date)) }
@@ -189,7 +189,7 @@ private struct AboutView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("버전 0.1.0").font(.title3.weight(.semibold))
-                        Text(model.updateStatus).foregroundStyle(model.isUpdateAvailable ? .blue : .secondary)
+                        Text(LocalizedStringKey(model.updateStatus)).foregroundStyle(model.isUpdateAvailable ? .blue : .secondary)
                     }
                     Spacer(); Button("업데이트 확인", action: model.checkForUpdates).buttonStyle(.borderedProminent)
                 }
@@ -486,7 +486,24 @@ private struct PhoneView: View {
             VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화", systemImage: "phone.fill") }.buttonStyle(.borderedProminent).disabled(!isConnected) } }.padding(24)
             Divider()
             HStack { Text("통화 기록").font(.headline); Spacer(); Text("\(calls.count)건").foregroundStyle(.secondary) }.padding(14)
-            List(calls) { call in HStack(spacing: 12) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down").foregroundStyle(call.type == 3 ? .red : .secondary); VStack(alignment: .leading, spacing: 3) { Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화"); Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary) } }.listStyle(.inset)
+            List(calls) { call in
+                HStack(spacing: 14) {
+                    Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down")
+                        .foregroundStyle(call.type == 3 ? .red : .secondary)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화")
+                        Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 11)
+                .listRowBackground(Color.clear)
+                .listRowSeparatorTint(Color.primary.opacity(0.10))
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
         }.frame(maxWidth: .infinity))
     }
 
@@ -516,7 +533,24 @@ private struct PhoneView: View {
             Divider()
             ScrollViewReader { proxy in ScrollView { LazyVStack(spacing: 12) { ForEach(conversation) { message in HStack { if message.isOutgoing { Spacer(minLength: 96) }; VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 5) { Text(message.body).textSelection(.enabled); Text(message.date, style: .time).font(.caption2).opacity(0.7) }.foregroundStyle(message.isOutgoing ? Color.white : Color.primary).padding(.horizontal, 13).padding(.vertical, 10).background(message.isOutgoing ? Color.green : Color.secondary.opacity(0.14), in: RoundedRectangle(cornerRadius: 16)); if !message.isOutgoing { Spacer(minLength: 96) } }.id(message.id) } }.padding(18) }.onAppear { if let last = conversation.last { proxy.scrollTo(last.id, anchor: .bottom) } } }
             Divider()
-            HStack(alignment: .bottom, spacing: 10) { TextEditor(text: $model.messageBody).frame(minHeight: 38, maxHeight: 90).padding(5).background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.1))).disabled(!isConnected); Button(action: model.composeMessage) { Image(systemName: "paperplane.fill") }.buttonStyle(.borderedProminent).controlSize(.large).disabled(!isConnected || model.messageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).help("Galaxy 메시지 앱에서 확인") }.padding(12)
+            HStack(alignment: .bottom, spacing: 10) {
+                TextField("문자 메시지 · SMS", text: $model.messageBody, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .lineLimit(1...5)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 18))
+                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.primary.opacity(0.10)))
+                    .disabled(!isConnected)
+                Button(action: model.composeMessage) {
+                    Image(systemName: "arrow.up").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 36, height: 36).background(Color.accentColor, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!isConnected || model.messageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .opacity(!isConnected || model.messageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+                .help("메시지 전송")
+            }.padding(.horizontal, 14).padding(.vertical, 11)
         }.frame(maxWidth: .infinity)
     }
 
@@ -585,7 +619,7 @@ private struct TransferView: View {
                     }
                     Divider()
                     HStack { Text("\(model.pendingTransferURLs.count)개 대기 중").font(.caption).foregroundStyle(.secondary); Spacer(); if !model.pendingTransferURLs.isEmpty { Button("모두 지우기", action: model.clearPendingTransfers) }; Button("전송") { model.startPendingTransfers() }.buttonStyle(.borderedProminent).disabled(model.pendingTransferURLs.isEmpty || !isConnected || model.isTransferring) }.padding(.top, 12)
-                    if model.isTransferring { ProgressView().padding(.top, 12); HStack { Text(model.transferStatus).font(.caption).foregroundStyle(.secondary); Spacer(); Button("전송 취소", action: model.cancelTransfer) } }
+                    if model.isTransferring { ProgressView().padding(.top, 12); HStack { Text(LocalizedStringKey(model.transferStatus)).font(.caption).foregroundStyle(.secondary); Spacer(); Button("전송 취소", action: model.cancelTransfer) } }
                 }
                     .background(isDropTarget ? Color.blue.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
                     .onDrop(of: [UTType.fileURL], isTargeted: $isDropTarget, perform: acceptDrop)
@@ -640,7 +674,7 @@ private struct TransferView: View {
                         Button("다운로드") { model.downloadRemoteFiles(Array(selectedRemote)) }
                             .buttonStyle(.borderedProminent).disabled(selectedRemote.isEmpty || !isConnected || model.isTransferring)
                     }.padding(.top, 12)
-                    if model.isTransferring { HStack(spacing: 10) { ProgressView().controlSize(.small); Text(model.transferStatus).font(.caption).foregroundStyle(.secondary).lineLimit(1) }.padding(.top, 8) }
+                    if model.isTransferring { HStack(spacing: 10) { ProgressView().controlSize(.small); Text(LocalizedStringKey(model.transferStatus)).font(.caption).foregroundStyle(.secondary).lineLimit(1) }.padding(.top, 8) }
                 }
             }
         }.onAppear { if direction == 1 && isConnected { model.loadRemoteFiles() } }.onChange(of: direction) { value in if value == 1 && isConnected { model.loadRemoteFiles() } }.onChange(of: model.remoteDirectory) { _ in selectedRemote.removeAll() }
@@ -702,6 +736,15 @@ private struct NotificationsView: View {
         VStack(alignment: .leading, spacing: 18) {
             CompactTabSwitcher(selection: $tab, items: [("Galaxy 알림", "bell.fill"), ("알림 설정", "slider.horizontal.3")])
             if tab == 1 { Card("알림 설정", icon: "bell.badge") {
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) { Text("Mac 알림 권한").fontWeight(.medium); Text(model.notificationAuthorizationStatus).font(.caption).foregroundStyle(.secondary) }
+                    Spacer()
+                    HStack(spacing: 8) {
+                        if model.notificationAuthorizationStatus.contains("차단됨") { Button("시스템 설정 열기", action: model.openMacNotificationSettings) }
+                        Button("테스트 알림", action: model.sendTestNotification).disabled(model.notificationAuthorizationStatus.contains("차단됨"))
+                    }
+                }.padding(.vertical, 8)
+                Divider()
                 VStack(spacing: 0) {
                     NotificationRow(title: "전화", subtitle: "Galaxy 수신 전화 알림", icon: "phone", isOn: $model.phoneNotificationsEnabled)
                     Divider(); NotificationRow(title: "문자", subtitle: "Samsung 메시지와 Google 메시지", icon: "message", isOn: $model.messageNotificationsEnabled)
@@ -714,7 +757,7 @@ private struct NotificationsView: View {
                 HStack { Text("Galaxy 알림창에 남아 있는 항목").foregroundStyle(.secondary); Spacer(); Button("모두 지우기", role: .destructive, action: model.dismissAllNotifications).disabled(model.activeNotifications.isEmpty || !isConnected) }
                 if model.activeNotifications.isEmpty { VStack(spacing: 8) { Image(systemName: "bell.slash").font(.system(size: 30)).foregroundStyle(.secondary); Text("남아 있는 알림 없음").foregroundStyle(.secondary) }.frame(maxWidth: .infinity).padding(28) }
                 else { VStack(spacing: 0) { ForEach(model.activeNotifications) { item in HStack(spacing: 14) { AppIconView(package: item.package, url: model.appIconURLs[item.package], fallback: "", systemFallback: item.kind == .call ? "phone.fill" : item.kind == .message ? "message.fill" : "app.fill").onAppear { if isConnected { model.requestAppIcon(package: item.package) } }; VStack(alignment: .leading, spacing: 4) { Text(item.title.isEmpty ? item.package : item.title).fontWeight(.semibold); Text(item.body).font(.subheadline).foregroundStyle(.secondary).lineLimit(2); Text(item.package).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Button { model.dismissNotification(item) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain).disabled(!isConnected).help("Galaxy에서 알림 지우기") }.padding(.vertical, 13); Divider() } } }
-                if !model.notificationDeliveryStatus.isEmpty { Text(model.notificationDeliveryStatus).font(.caption).foregroundStyle(.secondary) }
+                if !model.notificationDeliveryStatus.isEmpty { Text(LocalizedStringKey(model.notificationDeliveryStatus)).font(.caption).foregroundStyle(.secondary) }
             } }
         }.onAppear { if isConnected && tab == 0 { model.loadActiveNotifications() } }
             .onChange(of: tab) { value in if value == 0 && isConnected { model.loadActiveNotifications() } }
