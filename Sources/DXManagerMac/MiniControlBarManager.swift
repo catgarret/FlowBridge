@@ -46,7 +46,7 @@ final class MiniControlBarManager {
         let screenTop = NSScreen.screens.first?.frame.maxY ?? 0
         let video = CGRect(x: frame.minX, y: screenTop - frame.maxY, width: frame.width, height: frame.height)
         let height: CGFloat = 48
-        panel.setFrame(NSRect(x: video.minX, y: video.minY - height, width: max(240, video.width), height: height), display: false)
+        panel.setFrame(NSRect(x: video.minX, y: video.minY - height, width: video.width, height: height), display: false)
     }
 
     private func windowInfo(processID: Int32) -> (id: CGWindowID, bounds: CGRect)? {
@@ -68,22 +68,34 @@ private struct CompactSessionControls: View {
     let capture: () -> Void; let setVolume: (Int) -> Void; let back: () -> Void; let home: () -> Void; let power: () -> Void; let stop: () -> Void
     init(initialVolume: Int, showsPhoneNavigation: Bool, protectedScreen: Bool, capture: @escaping () -> Void, setVolume: @escaping (Int) -> Void, back: @escaping () -> Void, home: @escaping () -> Void, power: @escaping () -> Void, stop: @escaping () -> Void) { _volume = State(initialValue: Double(initialVolume)); self.showsPhoneNavigation = showsPhoneNavigation; self.protectedScreen = protectedScreen; self.capture = capture; self.setVolume = setVolume; self.back = back; self.home = home; self.power = power; self.stop = stop }
     var body: some View {
-        HStack(spacing: 10) {
+        ViewThatFits(in: .horizontal) {
+            controlRow(compact: false)
+            controlRow(compact: true)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) { Divider() }
+    }
+
+    private func controlRow(compact: Bool) -> some View {
+        HStack(spacing: compact ? 5 : 10) {
             if showsPhoneNavigation {
                 Button(action: back) { Image(systemName: "arrow.uturn.backward") }.help("뒤로")
                 Button(action: home) { Image(systemName: "house.fill") }.help("홈")
-                Divider().frame(height: 22)
+                if !compact { Divider().frame(height: 22) }
             }
             Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill").foregroundStyle(.secondary)
-            Slider(value: $volume, in: 0...15, step: 1).frame(minWidth: 120, idealWidth: 180, maxWidth: 220).onChange(of: volume) { setVolume(Int($0)) }
-            if protectedScreen { Label("보호된 화면 · Galaxy에서 계속", systemImage: "lock.fill").font(.caption.weight(.medium)).foregroundStyle(.orange) }
-            Spacer(minLength: 8)
-            Divider().frame(height: 22)
+            Slider(value: $volume, in: 0...15, step: 1).frame(width: compact ? 74 : 180).onChange(of: volume) { setVolume(Int($0)) }
+            if protectedScreen && !compact { Label("보호된 화면 · Galaxy에서 계속", systemImage: "lock.fill").font(.caption.weight(.medium)).foregroundStyle(.orange) }
+            Spacer(minLength: compact ? 0 : 8)
+            if !compact { Divider().frame(height: 22) }
             Button(action: power) { Image(systemName: "power") }.help("Galaxy 전원")
             Button(action: capture) { Image(systemName: "camera") }.help("화면 캡처")
             Button(action: stop) { Image(systemName: "xmark.circle.fill").foregroundStyle(.red) }.help("화면 종료")
-        }.buttonStyle(.bordered).controlSize(.regular).padding(.horizontal, 12).frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.ultraThinMaterial)
-            .overlay(alignment: .top) { Divider() }
+        }
+        .buttonStyle(.bordered)
+        .controlSize(compact ? .mini : .regular)
+        .padding(.horizontal, compact ? 5 : 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
