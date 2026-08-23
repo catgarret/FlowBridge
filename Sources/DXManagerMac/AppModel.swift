@@ -29,6 +29,7 @@ final class AppModel: ObservableObject {
     @Published var messageBody = ""
     @Published var phoneSearch = ""
     @Published var contacts: [PhoneContact] = []
+    @Published var contactPhotoURLs: [String: URL] = [:]
     @Published var recentCalls: [PhoneCall] = []
     @Published var recentMessages: [PhoneMessage] = []
     @Published var wirelessEndpoint = ""
@@ -367,11 +368,50 @@ final class AppModel: ObservableObject {
             let contacts = try adb.contacts(serial: serial)
             let calls = try adb.recentCalls(serial: serial)
             let messages = try adb.recentMessages(serial: serial)
-            return { model in model.contacts = contacts; model.recentCalls = calls; model.recentMessages = messages; if !silent { model.status = "주소록과 최근 전화·문자를 불러왔습니다." } }
+            return { model in
+                model.contacts = contacts; model.recentCalls = calls; model.recentMessages = messages
+                model.refreshContactPhotoCache(for: contacts, serial: serial)
+                if !silent { model.status = "주소록과 최근 전화·문자를 불러왔습니다." }
+            }
         }
     }
 
+    func contactPhotoURL(for number: String) -> URL? { contactPhotoURLs[normalizedPhoneNumber(number)] }
+
+    private func refreshContactPhotoCache(for contacts: [PhoneContact], serial: String) {
+        guard let adbPath = ToolLocator.adb(appSettings.adbPath) else { return }
+        let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("FlowBridge/ContactPhotos", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        var cached = contactPhotoURLs
+        var missing: [(String, String, URL)] = []
+        for contact in contacts where !contact.photoURI.isEmpty {
+            let key = normalizedPhoneNumber(contact.number)
+            guard !key.isEmpty else { continue }
+            let digest = SHA256.hash(data: Data("\(serial)|\(key)".utf8)).map { String(format: "%02x", $0) }.joined()
+            let url = directory.appendingPathComponent("\(digest).jpg")
+            if FileManager.default.fileExists(atPath: url.path) { cached[key] = url }
+            else { missing.append((key, contact.photoURI, url)) }
+        }
+        contactPhotoURLs = cached
+        guard !missing.isEmpty else { return }
+        Task.detached { [weak self] in
+            let adb = ADBService(executable: adbPath)
+            for (key, uri, url) in missing {
+                do {
+                    try adb.pullContactPhoto(serial: serial, photoURI: uri, localURL: url)
+                    let fileSize = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+                    guard (fileSize ?? 0) > 0 else { try? FileManager.default.removeItem(at: url); continue }
+                    await MainActor.run { self?.contactPhotoURLs[key] = url }
+                } catch { try? FileManager.default.removeItem(at: url) }
+            }
+        }
+    }
+
+    private func normalizedPhoneNumber(_ number: String) -> String { String(number.filter(\.isNumber).suffix(10)) }
+
     func applyDeviceSettings() {
+        contactPhotoURLs = [:]
         if let saved = appSettings.deviceDisplays[selectedSerial] { settings = saved }
         if let key = selectedDeviceKey, let native = appSettings.deviceNativeDisplays[key] {
             nativeDisplayWidth = native.width; nativeDisplayHeight = native.height

@@ -4,6 +4,9 @@
 
 ## Unreleased - experimental macOS port
 
+- Integrated screen launch controls into the connected-device card, clarified automatic brightness restoration with contextual help, added cached Galaxy contact photos with explicit row selection, and aligned display-quality controls.
+- 연결된 기기 카드에 화면 실행 기능을 통합하고 밝기 자동 복원 도움말을 정리했으며, Galaxy 연락처 사진 캐시·명확한 행 선택 표시·화면 품질 설정 정렬을 추가했습니다.
+
 - Remove duplicate phone refresh controls, center the Calls/Messages switch, clamp
   message previews, move app search into a dedicated assignment sheet, standardize
   DEX/mirroring names, and show secure-screen guidance only on detected sessions.

@@ -209,7 +209,7 @@ public struct ADBService: Sendable {
     }
 
     public func contacts(serial: String) throws -> [PhoneContact] {
-        Self.parseContacts(try shell(serial: serial, ["content", "query", "--uri", "content://com.android.contacts/data/phones", "--projection", "display_name:data1"]))
+        Self.parseContacts(try shell(serial: serial, ["content", "query", "--uri", "content://com.android.contacts/data/phones", "--projection", "display_name:data1:photo_thumb_uri"]))
     }
 
     public func recentCalls(serial: String) throws -> [PhoneCall] {
@@ -224,10 +224,24 @@ public struct ADBService: Sendable {
         var seen = Set<String>()
         return output.split(whereSeparator: \.isNewline).compactMap { raw in
             let line = String(raw); guard let nameStart = line.range(of: "display_name="), let numberMark = line.range(of: ", data1=") else { return nil }
-            let name = String(line[nameStart.upperBound..<numberMark.lowerBound]); let number = String(line[numberMark.upperBound...])
+            let photoMark = line.range(of: ", photo_thumb_uri=", range: numberMark.upperBound..<line.endIndex)
+            let name = String(line[nameStart.upperBound..<numberMark.lowerBound])
+            let number = String(line[numberMark.upperBound..<(photoMark?.lowerBound ?? line.endIndex)])
+            let photoURI = photoMark.map { String(line[$0.upperBound...]) }.flatMap { $0 == "NULL" ? nil : $0 } ?? ""
             guard !name.isEmpty, !number.isEmpty, seen.insert("\(name)|\(number)").inserted else { return nil }
-            return PhoneContact(name: name, number: number)
+            return PhoneContact(name: name, number: number, photoURI: photoURI)
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    public func pullContactPhoto(serial: String, photoURI: String, localURL: URL) throws {
+        let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:/._-")
+        guard photoURI.hasPrefix("content://com.android.contacts/"), photoURI.unicodeScalars.allSatisfy(allowed.contains) else {
+            throw DXError.commandFailed("연락처 사진 주소가 올바르지 않습니다.")
+        }
+        let remote = "/data/local/tmp/flowbridge-contact-\(UUID().uuidString).jpg"
+        defer { _ = try? shell(serial: serial, ["rm", "-f", remote]) }
+        _ = try shell(serial: serial, ["sh", "-c", "content read --uri \(photoURI) > \(remote)"])
+        try pull(serial: serial, remotePath: remote, localURL: localURL)
     }
 
     public static func parseCalls(_ output: String) -> [PhoneCall] {

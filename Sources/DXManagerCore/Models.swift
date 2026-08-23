@@ -45,8 +45,9 @@ public struct PhoneScreenState: Equatable, Sendable {
 }
 
 public struct PhoneContact: Identifiable, Hashable, Sendable {
-    public let name: String; public let number: String; public var id: String { "\(name)|\(number)" }
-    public init(name: String, number: String) { self.name = name; self.number = number }
+    public let name: String; public let number: String; public let photoURI: String
+    public var id: String { "\(name)|\(number)" }
+    public init(name: String, number: String, photoURI: String = "") { self.name = name; self.number = number; self.photoURI = photoURI }
 }
 public struct PhoneCall: Identifiable, Hashable, Sendable {
     public let number: String; public let type: Int; public let date: Date; public let duration: Int

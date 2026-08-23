@@ -25,7 +25,7 @@ runtime installation.
 - Start a Samsung DeX virtual display or mirror the ordinary phone screen
 - Launch Android apps in independent windows by friendly app name
 - Open the Galaxy dialer, answer or end calls, and hand message drafts to the phone
-- Browse live Galaxy contacts, recent calls, and SMS without persisting them on the Mac
+- Browse live Galaxy contacts, recent calls, and SMS; only contact photos are cached locally for faster display
 - Search installed apps, launch immediately, and assign Command-1/2/3 favorites
 - Drop files anywhere in the app or press Command-V outside text editing to transfer Finder items
 - Assign editable device aliases that remain stable when the transport or IP address changes
@@ -87,7 +87,8 @@ SwiftUI 기반 macOS 앱입니다. Apple Silicon과 Intel용 ADB·scrcpy 실행 
 - USB·LAN·mDNS 및 접근 가능한 Tailscale ADB 연결 검색·기억·자동 재연결
 - Samsung DeX 가상 화면 실행과 일반 휴대폰 화면 미러링
 - 패키지명 대신 일반 앱 이름을 선택해 독립 창으로 실행
-- Mac에서 Galaxy 전화 화면 열기, 전화 받기·끊기, 문자 초안 전달
+- Mac에서 Galaxy 주소록·최근 통화·문자를 확인하고 연락처 사진은 빠른 표시를 위해 로컬 캐시
+- Galaxy 전화 화면 열기, 전화 받기·끊기, 문자 초안 전달
 - 전화·문자·애플리케이션 새 알림을 macOS 알림 센터로 전달
 - Mac에서 Galaxy로 파일·폴더 전송
 - `⌘C/⌘V` 파일 복사·붙여넣기, 양방향 드래그 앤 드롭과 Galaxy Download 폴더 탐색

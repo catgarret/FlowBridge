@@ -74,6 +74,8 @@ let screenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", 
 check(screenState.isAwake && screenState.isLocked, "screen and keyguard state parsing")
 let parsedContacts = ADBService.parseContacts("Row: 0 display_name=홍길동, data1=010-1234-5678\n")
 check(parsedContacts.first == PhoneContact(name: "홍길동", number: "010-1234-5678"), "contact parsing")
+let photoContacts = ADBService.parseContacts("Row: 0 display_name=홍길동, data1=010-1234-5678, photo_thumb_uri=content://com.android.contacts/contacts/42/photo")
+check(photoContacts.first?.photoURI == "content://com.android.contacts/contacts/42/photo", "contact photo URI parsing")
 let parsedCalls = ADBService.parseCalls("Row: 0 number=01012345678, type=1, date=1700000000000\n")
 check(parsedCalls.first?.type == 1, "call history parsing")
 let durationCall = ADBService.parseCalls("Row: 0 number=01012345678, type=2, date=1700000000000, duration=125\n")

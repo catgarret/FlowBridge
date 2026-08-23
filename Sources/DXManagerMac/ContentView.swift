@@ -179,6 +179,8 @@ private struct HomeView: View {
                             }.padding(.top, 10)
                         }
                         DisclosureGroup("다른 기기 추가 또는 연결 방식 변경") { ConnectionSetupView().padding(.top, 10) }
+                        Divider().padding(.vertical, 2)
+                        ScreenLaunchControls()
                     } else {
                         VStack(spacing: 8) { Image(systemName: "iphone.slash").font(.system(size: 34)).foregroundStyle(.secondary); Text("연결된 Galaxy가 없습니다").font(.title3.weight(.semibold)); Text("USB 케이블로 연결하거나 Galaxy의 무선 디버깅을 사용해 기기를 추가하세요.").font(.caption).foregroundStyle(.secondary) }.frame(maxWidth: .infinity).padding(.vertical, 14)
                         ConnectionSetupView()
@@ -192,23 +194,33 @@ private struct HomeView: View {
                     }
                 }
             }
-            Card("화면 열기", icon: "macwindow.on.rectangle") {
-                if model.sessionPhase == .launching {
-                    HStack(spacing: 12) { ProgressView(); VStack(alignment: .leading) { Text("화면 연결 준비 중").fontWeight(.semibold); Text("Galaxy를 깨우고 영상 창이 실제로 표시되는지 확인하고 있습니다.").font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("취소", role: .destructive, action: model.stop) }
-                        .padding(16).background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
-                } else if model.sessionPhase == .running {
-                    HStack { Label("화면 실행 중", systemImage: "checkmark.circle.fill").foregroundStyle(.green); Spacer(); Button("화면 종료 및 정리", role: .destructive, action: model.stop) }
-                } else {
-                    HStack(spacing: 14) {
-                        LaunchTile(title: "DEX 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
-                        LaunchTile(title: "휴대폰 미러링", subtitle: "기본 화면 그대로", icon: "iphone", tint: .purple, action: model.startPhoneMirror)
-                    }
+        }
+    }
+}
+
+private struct ScreenLaunchControls: View {
+    @EnvironmentObject private var model: AppModel
+    private let brightnessHelp = "화면 보호와 온도 제어를 위해 DEX/휴대폰 미러링 실행 시 밝기가 자동으로 최저로 낮아지며 종료 시 원래 밝기로 복원됩니다."
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("화면 열기", systemImage: "macwindow.on.rectangle").font(.headline)
+            if model.sessionPhase == .launching {
+                HStack(spacing: 12) { ProgressView(); VStack(alignment: .leading) { Text("화면 연결 준비 중").fontWeight(.semibold); Text("영상 창이 표시되는지 확인하고 있습니다.").font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("취소", role: .destructive, action: model.stop) }
+                    .padding(14).background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+            } else if model.sessionPhase == .running {
+                HStack { Label("화면 실행 중", systemImage: "checkmark.circle.fill").foregroundStyle(.green); Spacer(); Button("화면 종료 및 정리", role: .destructive, action: model.stop) }
+            } else {
+                HStack(spacing: 14) {
+                    LaunchTile(title: "DEX 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
+                    LaunchTile(title: "휴대폰 미러링", subtitle: "기본 화면 그대로", icon: "iphone", tint: .purple, action: model.startPhoneMirror)
                 }
-                Toggle("화면을 열면 Galaxy 밝기를 최저로 낮추기", isOn: $model.turnPhoneScreenOffOnStart)
-                    .toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.save() }
-                if model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
-                Text("DEX 모드 오버레이는 실행 중에만 유지되고 종료하면 자동으로 제거됩니다.").font(.caption).foregroundStyle(.secondary)
             }
+            HStack(spacing: 6) {
+                Toggle("실행 시 밝기 최저 조절", isOn: $model.turnPhoneScreenOffOnStart).toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.save() }
+                Image(systemName: "questionmark.circle").foregroundStyle(.secondary).help(brightnessHelp).accessibilityLabel(brightnessHelp)
+                Spacer()
+            }
+            if model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
         }
     }
 }
@@ -284,6 +296,7 @@ private struct PhoneView: View {
     @State private var tab = 0
     @State private var callSource = 0
     @State private var selectedNumber = ""
+    @State private var selectedRowID = ""
     @State private var showDialPad = false
     var body: some View {
         VStack(spacing: 0) {
@@ -304,7 +317,7 @@ private struct PhoneView: View {
                 if selectedNumber.isEmpty { emptyDetail } else if tab == 0 { callDetail } else { messageDetail }
             }.frame(minHeight: 520)
             Divider()
-            Text("Galaxy의 주소록·최근 통화·SMS를 연결 중에만 읽으며 Mac에 별도로 저장하지 않습니다. 통화 음성은 Galaxy 또는 연결된 Bluetooth 기기에서 처리됩니다.").font(.caption).foregroundStyle(.secondary).padding(10)
+            Text("Galaxy의 주소록·최근 통화·SMS는 연결 중에만 읽습니다. 연락처 사진만 빠른 표시를 위해 Mac에 캐시하며, 통화 음성은 Galaxy 또는 연결된 Bluetooth 기기에서 처리됩니다.").font(.caption).foregroundStyle(.secondary).padding(10)
         }
             .onAppear { if model.contacts.isEmpty { model.refreshPhoneData() } }
     }
@@ -312,14 +325,14 @@ private struct PhoneView: View {
     private var callList: some View {
         let filtered = model.recentCalls.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || contactName($0.number).localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered.prefix(100)) { call in
-            HStack(spacing: 10) { ContactAvatar(name: contactName(call.number)); VStack(alignment: .leading, spacing: 3) { Text(contactName(call.number)).fontWeight(.medium); HStack(spacing: 4) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down"); Text(call.number) }.font(.caption).foregroundStyle(call.type == 3 ? .red : .secondary) }; Spacer(); Text(call.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }.tag(call.number).contentShape(Rectangle()).onTapGesture { select(call.number) }
+            HStack(spacing: 10) { ContactAvatar(name: contactName(call.number), photoURL: contactPhoto(call.number)); VStack(alignment: .leading, spacing: 3) { Text(contactName(call.number)).fontWeight(.medium); HStack(spacing: 4) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down"); Text(call.number) }.font(.caption).foregroundStyle(call.type == 3 ? .red : .secondary) }; Spacer(); Text(call.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }.contentShape(Rectangle()).onTapGesture { select(call.number, rowID: call.id) }.listRowBackground(selectedRowID == call.id ? Color.accentColor.opacity(0.14) : Color.clear)
         }.listStyle(.inset)
     }
 
     private var contactList: some View {
         let filtered = model.contacts.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || $0.name.localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered.prefix(200)) { contact in
-            HStack(spacing: 10) { ContactAvatar(name: contact.name); VStack(alignment: .leading, spacing: 3) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.tag(contact.number).contentShape(Rectangle()).onTapGesture { select(contact.number) }
+            HStack(spacing: 10) { ContactAvatar(name: contact.name, photoURL: model.contactPhotoURL(for: contact.number)); VStack(alignment: .leading, spacing: 3) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.contentShape(Rectangle()).onTapGesture { select(contact.number, rowID: contact.id) }.listRowBackground(selectedRowID == contact.id ? Color.accentColor.opacity(0.14) : Color.clear)
         }.listStyle(.inset)
     }
 
@@ -327,7 +340,7 @@ private struct PhoneView: View {
         let latest = Dictionary(grouping: model.recentMessages, by: \.address).compactMap { $0.value.max(by: { $0.date < $1.date }) }.sorted { $0.date > $1.date }
         let filtered = latest.filter { model.phoneSearch.isEmpty || $0.address.contains(model.phoneSearch) || $0.body.localizedCaseInsensitiveContains(model.phoneSearch) || contactName($0.address).localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered) { message in
-            HStack(spacing: 10) { ContactAvatar(name: contactName(message.address)); VStack(alignment: .leading, spacing: 3) { HStack { Text(contactName(message.address)).fontWeight(.medium).lineLimit(1); Spacer(); Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }; Text(message.body.replacingOccurrences(of: "\n", with: " ")).lineLimit(1).truncationMode(.tail).font(.caption).foregroundStyle(.secondary) } }.frame(height: 52).tag(message.address).contentShape(Rectangle()).onTapGesture { select(message.address) }
+            HStack(spacing: 10) { ContactAvatar(name: contactName(message.address), photoURL: contactPhoto(message.address)); VStack(alignment: .leading, spacing: 3) { HStack { Text(contactName(message.address)).fontWeight(.medium).lineLimit(1); Spacer(); Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }; Text(message.body.replacingOccurrences(of: "\n", with: " ")).lineLimit(1).truncationMode(.tail).font(.caption).foregroundStyle(.secondary) } }.frame(height: 52).contentShape(Rectangle()).onTapGesture { select(message.address, rowID: message.address) }.listRowBackground(selectedRowID == message.address ? Color.accentColor.opacity(0.14) : Color.clear)
         }.listStyle(.inset)
     }
 
@@ -339,7 +352,7 @@ private struct PhoneView: View {
         if showDialPad { return AnyView(dialPad) }
         let calls = model.recentCalls.filter { $0.number == selectedNumber }.sorted { $0.date > $1.date }
         return AnyView(VStack(spacing: 0) {
-            VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화 걸기", systemImage: "phone.fill") }.buttonStyle(.borderedProminent) } }.padding(24)
+            VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화 걸기", systemImage: "phone.fill") }.buttonStyle(.borderedProminent) } }.padding(24)
             Divider()
             HStack { Text("통화 기록").font(.headline); Spacer(); Text("\(calls.count)건").foregroundStyle(.secondary) }.padding(14)
             List(calls) { call in HStack(spacing: 12) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down").foregroundStyle(call.type == 3 ? .red : .secondary); VStack(alignment: .leading, spacing: 3) { Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화"); Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary) } }.listStyle(.inset)
@@ -349,7 +362,7 @@ private struct PhoneView: View {
     private var dialPad: some View {
         VStack(spacing: 18) {
             HStack { Button { showDialPad = false } label: { Label("통화 기록", systemImage: "chevron.left") }; Spacer() }
-            ContactAvatar(name: contactName(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary)
+            ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary)
             TextField("전화번호", text: $model.phoneNumber).textFieldStyle(.roundedBorder).frame(maxWidth: 300)
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(64)), count: 3), spacing: 10) { ForEach(["1","2","3","4","5","6","7","8","9","*","0","#"], id: \.self) { digit in Button(digit) { model.phoneNumber += digit }.buttonStyle(.bordered).controlSize(.large) } }
             HStack { Button(action: model.openDialer) { Label("Galaxy에서 전화", systemImage: "phone.fill") }.buttonStyle(.borderedProminent); Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button(role: .destructive) { model.sendKeyEvent(6, label: "통화 종료") } label: { Label("끊기", systemImage: "phone.down.fill") } }
@@ -360,7 +373,7 @@ private struct PhoneView: View {
     private var messageDetail: some View {
         let conversation = model.recentMessages.filter { $0.address == selectedNumber }.sorted { $0.date < $1.date }
         return VStack(spacing: 0) {
-            HStack(spacing: 10) { ContactAvatar(name: contactName(selectedNumber)); VStack(alignment: .leading) { Text(contactName(selectedNumber)).fontWeight(.semibold); Text(selectedNumber).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.openDialer) { Image(systemName: "phone") }.help("전화 화면 열기") }.padding(14)
+            HStack(spacing: 10) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber)); VStack(alignment: .leading) { Text(contactName(selectedNumber)).fontWeight(.semibold); Text(selectedNumber).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.openDialer) { Image(systemName: "phone") }.help("전화 화면 열기") }.padding(14)
             Divider()
             ScrollViewReader { proxy in ScrollView { LazyVStack(spacing: 10) { ForEach(conversation) { message in HStack { if message.isOutgoing { Spacer(minLength: 80) }; VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 4) { Text(message.body).textSelection(.enabled); Text(message.date, style: .time).font(.caption2).foregroundStyle(.secondary) }.padding(10).background(message.isOutgoing ? Color.accentColor.opacity(0.16) : Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 12)); if !message.isOutgoing { Spacer(minLength: 80) } }.id(message.id) } }.padding(16) }.onAppear { if let last = conversation.last { proxy.scrollTo(last.id, anchor: .bottom) } } }
             Divider()
@@ -368,15 +381,25 @@ private struct PhoneView: View {
         }.frame(maxWidth: .infinity)
     }
 
-    private func select(_ number: String) { selectedNumber = number; showDialPad = false; model.selectPhoneNumber(number) }
+    private func select(_ number: String, rowID: String) { selectedNumber = number; selectedRowID = rowID; showDialPad = false; model.selectPhoneNumber(number) }
     private func contactName(_ number: String) -> String { model.contacts.first(where: { normalized($0.number) == normalized(number) })?.name ?? number }
+    private func contactPhoto(_ number: String) -> URL? { model.contactPhotoURL(for: number) }
     private func normalized(_ number: String) -> String { number.filter(\.isNumber).suffix(10).description }
     private func durationText(_ seconds: Int) -> String { seconds == 0 ? "연결 안 됨" : seconds >= 60 ? "\(seconds / 60)분 \(seconds % 60)초" : "\(seconds)초" }
 }
 
 private struct ContactAvatar: View {
-    let name: String; var large = false
-    var body: some View { ZStack { Circle().fill(Color.accentColor.opacity(0.16)); Text(String(name.prefix(1))).font(large ? .title : .headline).fontWeight(.semibold).foregroundStyle(Color.accentColor) }.frame(width: large ? 72 : 38, height: large ? 72 : 38) }
+    let name: String; var photoURL: URL? = nil; var large = false
+    private var tint: Color { [.indigo, .teal, .orange, .pink, .purple][Int(UInt(bitPattern: name.hashValue) % 5)] }
+    var body: some View {
+        Group {
+            if let photoURL, let image = NSImage(contentsOf: photoURL) {
+                Image(nsImage: image).resizable().scaledToFill()
+            } else {
+                ZStack { Circle().fill(tint.opacity(0.14)); Text(String(name.prefix(1))).font(large ? .title : .headline).fontWeight(.semibold).foregroundStyle(tint) }
+            }
+        }.frame(width: large ? 72 : 38, height: large ? 72 : 38).clipShape(Circle())
+    }
 }
 
 private struct TransferView: View {
@@ -481,15 +504,19 @@ private struct SettingsView: View {
         VStack(alignment: .leading, spacing: 18) {
             Card("화면 품질", icon: "display") {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("해상도 프리셋").fontWeight(.medium)
-                    HStack(spacing: 8) {
-                        PresetButton(title: "720p", selected: model.settings.width == 1280 && model.settings.height == 720) { model.applyDisplayPreset(width: 1280, height: 720) }
-                        PresetButton(title: "1080p", selected: model.settings.width == 1920 && model.settings.height == 1080) { model.applyDisplayPreset(width: 1920, height: 1080) }
-                        PresetButton(title: model.nativeDisplayPresetTitle, selected: model.isNativeDisplayPresetSelected, action: model.applyNativeDisplayPreset)
-                    }
-                    HStack {
-                        Text("프레임").fontWeight(.medium).frame(width: 72, alignment: .leading)
-                        Picker("프레임", selection: $model.settings.fps) { Text("30 FPS").tag(30); Text("60 FPS").tag(60); Text("120 FPS").tag(120) }.pickerStyle(.segmented).labelsHidden().frame(maxWidth: 360)
+                    Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 14) {
+                        GridRow {
+                            Text("해상도").fontWeight(.medium).frame(width: 72, alignment: .leading)
+                            HStack(spacing: 8) {
+                                PresetButton(title: "720p", selected: model.settings.width == 1280 && model.settings.height == 720) { model.applyDisplayPreset(width: 1280, height: 720) }
+                                PresetButton(title: "1080p", selected: model.settings.width == 1920 && model.settings.height == 1080) { model.applyDisplayPreset(width: 1920, height: 1080) }
+                                PresetButton(title: model.nativeDisplayPresetTitle, selected: model.isNativeDisplayPresetSelected, action: model.applyNativeDisplayPreset)
+                            }.frame(width: 360, alignment: .leading)
+                        }
+                        GridRow {
+                            Text("프레임").fontWeight(.medium).frame(width: 72, alignment: .leading)
+                            Picker("프레임", selection: $model.settings.fps) { Text("30 FPS").tag(30); Text("60 FPS").tag(60); Text("120 FPS").tag(120) }.pickerStyle(.segmented).labelsHidden().frame(width: 360)
+                        }
                     }
                     Text("60 FPS가 기본 권장값입니다. 120 FPS는 기기·연결·Mac 성능에 따라 실제 프레임이 낮아질 수 있습니다.").font(.caption).foregroundStyle(.secondary)
                     DisclosureGroup("전문가 수동 설정") {
