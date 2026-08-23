@@ -286,49 +286,86 @@ private struct DeviceLaunchButtons: View {
 private struct AppsView: View {
     @EnvironmentObject private var model: AppModel
     @State private var showAppPicker = false
+    @State private var editingSlot: Int?
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack { Spacer(); Picker("실행 모드", selection: $model.appLaunchMode) { Text("DEX 모드").tag(AppLaunchMode.desktopWindow); Text("휴대폰 미러링 모드").tag(AppLaunchMode.phoneScreen) }.pickerStyle(.segmented).labelsHidden().frame(width: 420).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }; Spacer() }
+            HStack(spacing: 18) {
+                Text("앱 실행 방식").fontWeight(.semibold)
+                Spacer()
+                Picker("앱 실행 방식", selection: $model.appLaunchMode) { Text("DEX 모드").tag(AppLaunchMode.desktopWindow); Text("휴대폰 미러링 모드").tag(AppLaunchMode.phoneScreen) }.pickerStyle(.segmented).labelsHidden().frame(width: 420).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
+            }
             Card("앱 바로 실행 지정", icon: "bolt.square") {
                 VStack(spacing: 0) {
                     ForEach(0..<3, id: \.self) { slot in
                         let name = model.installedApps.first(where: { $0.package == model.packageNames[slot] })?.name ?? (model.packageNames[slot] == "com.android.settings" ? "설정" : "지정 안 됨")
-                        HStack(spacing: 14) {
-                            AppIconView(package: model.packageNames[slot], url: model.appIconURLs[model.packageNames[slot]], fallback: "\(slot + 1)").onAppear { if isConnected { model.requestAppIcon(package: model.packageNames[slot]) } }
-                            VStack(alignment: .leading, spacing: 2) { Text(name).font(.headline).lineLimit(1); Text("⌘\(slot + 1)").font(.caption).foregroundStyle(.secondary) }
-                            Spacer(); Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent).disabled(model.packageNames[slot].isEmpty || !isConnected).keyboardShortcut(KeyEquivalent(Character(String(slot + 1))), modifiers: .command)
-                        }.padding(.vertical, 13)
+                        HStack(spacing: 12) {
+                            Button { openPicker(for: slot) } label: {
+                                HStack(spacing: 14) {
+                                    AppIconView(package: model.packageNames[slot], url: model.appIconURLs[model.packageNames[slot]], fallback: model.packageNames[slot].isEmpty ? "" : "\(slot + 1)").onAppear { if isConnected && !model.packageNames[slot].isEmpty { model.requestAppIcon(package: model.packageNames[slot]) } }
+                                    VStack(alignment: .leading, spacing: 3) { Text(name).font(.headline).lineLimit(1); Text(model.packageNames[slot].isEmpty ? "클릭해서 앱 선택" : "⌘\(slot + 1) · 클릭해서 변경").font(.caption).foregroundStyle(.secondary) }
+                                    Spacer(); Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                                }.contentShape(Rectangle())
+                            }.buttonStyle(.plain)
+                            if !model.packageNames[slot].isEmpty {
+                                Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent).disabled(!isConnected).keyboardShortcut(KeyEquivalent(Character(String(slot + 1))), modifiers: .command)
+                            }
+                        }.padding(.vertical, 12)
                         if slot < 2 { Divider() }
                     }
                 }
             }
-            .overlay(alignment: .topTrailing) { Button { showAppPicker = true } label: { Label("앱 검색", systemImage: "magnifyingglass") }.buttonStyle(.bordered).padding(.top, 14).padding(.trailing, 18) }
+            .overlay(alignment: .topTrailing) { Button { openPicker(for: nil) } label: { Label("앱 검색", systemImage: "magnifyingglass") }.buttonStyle(.bordered).padding(.top, 14).padding(.trailing, 18) }
         }
-        .sheet(isPresented: $showAppPicker) { AppPickerSheet().environmentObject(model) }
+        .sheet(isPresented: $showAppPicker) { AppPickerSheet(targetSlot: editingSlot).environmentObject(model) }
     }
+
+    private func openPicker(for slot: Int?) { editingSlot = slot; model.appSearch = ""; showAppPicker = true }
 }
 
 private struct AppPickerSheet: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.dismiss) private var dismiss
+    let targetSlot: Int?
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(spacing: 0) {
-            HStack { Text("앱 검색").font(.title2.weight(.semibold)); Spacer(); Button("완료") { dismiss() } }.padding(20)
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 3) { Text(targetSlot.map { "바로 실행 \($0 + 1) 앱 선택" } ?? "앱 검색").font(.title2.weight(.semibold)); if targetSlot != nil { Text("앱을 선택하면 해당 자리에 바로 지정됩니다.").font(.caption).foregroundStyle(.secondary) } }
+                Spacer(); Button("완료") { dismiss() }
+            }.padding(.horizontal, 22).padding(.vertical, 18)
             Divider()
-            TextField("앱 이름 검색", text: $model.appSearch).textFieldStyle(.roundedBorder).padding(16)
+            HStack(spacing: 10) { Image(systemName: "magnifyingglass").foregroundStyle(.secondary); TextField("앱 이름 검색", text: $model.appSearch).textFieldStyle(.plain) }.padding(.horizontal, 13).frame(height: 38).background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 9)).padding(.horizontal, 22).padding(.vertical, 14)
             let matches = model.installedApps.filter { model.appSearch.isEmpty || $0.name.localizedCaseInsensitiveContains(model.appSearch) || $0.package.localizedCaseInsensitiveContains(model.appSearch) }
             let grouped = Dictionary(grouping: Array(matches.prefix(300))) { indexKey($0.name) }.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
             ScrollViewReader { proxy in
                 ZStack(alignment: .trailing) {
-                    List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in HStack { AppIconView(package: app.package, url: model.appIconURLs[app.package], fallback: String(app.name.prefix(1))).onAppear { if isConnected { model.requestAppIcon(package: app.package) } }; VStack(alignment: .leading, spacing: 2) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.secondary) }; Spacer(); HStack(spacing: 5) { ForEach(0..<3) { slot in Button("\(slot + 1)") { model.toggleFavorite(package: app.package, slot: slot) }.buttonStyle(.borderedProminent).tint(model.packageNames[slot] == app.package ? Color.accentColor : Color.secondary.opacity(0.35)).help("⌘\(slot + 1) 바로 실행 지정") } }; Button("실행") { model.startApp(package: app.package) }.disabled(!isConnected) } } }.id(letter) } }
-                    if model.appSearch.isEmpty { VStack(spacing: 1) { ForEach(grouped.map(\.key), id: \.self) { letter in Button(letter) { withAnimation { proxy.scrollTo(letter, anchor: .top) } }.buttonStyle(.plain).font(.caption2.weight(.semibold)).foregroundStyle(.blue) } }.padding(.trailing, 6) }
+                    List { ForEach(grouped, id: \.key) { letter, apps in Section(letter) { ForEach(apps) { app in appRow(app) } }.id(letter) } }.listStyle(.inset).scrollContentBackground(.hidden).padding(.trailing, model.appSearch.isEmpty ? 30 : 0)
+                    if model.appSearch.isEmpty { VStack(spacing: 0) { ForEach(grouped.map(\.key), id: \.self) { letter in Button(letter) { withAnimation { proxy.scrollTo(letter, anchor: .top) } }.buttonStyle(.plain).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).frame(width: 22, height: 16) } }.padding(.vertical, 6).background(.regularMaterial, in: Capsule()).padding(.trailing, 18) }
                 }
             }
-            HStack { Spacer(); Text("\(matches.count)개 앱").foregroundStyle(.secondary) }.padding(16)
-        }.frame(width: 620, height: 600)
+            Divider(); HStack { Text(targetSlot == nil ? "1·2·3으로 바로 실행 지정" : "바로 실행 \((targetSlot ?? 0) + 1)에 지정").font(.caption).foregroundStyle(.secondary); Spacer(); Text("\(matches.count)개 앱").font(.caption).foregroundStyle(.secondary) }.padding(.horizontal, 22).padding(.vertical, 13)
+        }.frame(width: 680, height: 640)
     }
+
+    @ViewBuilder private func appRow(_ app: InstalledApp) -> some View {
+        HStack(spacing: 14) {
+            Button { select(app) } label: {
+                HStack(spacing: 14) { AppIconView(package: app.package, url: model.appIconURLs[app.package], fallback: String(app.name.prefix(1))).onAppear { if isConnected { model.requestAppIcon(package: app.package) } }; VStack(alignment: .leading, spacing: 3) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }; Spacer(); if targetSlot != nil { Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) } }.contentShape(Rectangle())
+            }.buttonStyle(.plain)
+            if targetSlot == nil {
+                HStack(spacing: 6) { ForEach(0..<3) { slot in assignmentButton(app: app, slot: slot) } }
+                Button("실행") { model.startApp(package: app.package) }.disabled(!isConnected)
+            }
+        }.padding(.vertical, 7)
+    }
+
+    @ViewBuilder private func assignmentButton(app: InstalledApp, slot: Int) -> some View {
+        let selected = model.packageNames[slot] == app.package
+        Button { model.toggleFavorite(package: app.package, slot: slot) } label: { Text("\(slot + 1)").fontWeight(.semibold).frame(width: 28, height: 24).background(selected ? Color.accentColor : Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: 6)).foregroundStyle(selected ? Color.white : Color.primary) }.buttonStyle(.plain).help("⌘\(slot + 1) 바로 실행 지정")
+    }
+
+    private func select(_ app: InstalledApp) { guard let targetSlot else { return }; model.assignFavorite(package: app.package, slot: targetSlot); dismiss() }
 
     private func indexKey(_ name: String) -> String {
         guard let scalar = name.unicodeScalars.first else { return "#" }
@@ -377,12 +414,7 @@ private struct PhoneView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                Picker("", selection: $tab) { Label("통화", systemImage: "phone.fill").tag(0); Label("메시지", systemImage: "message.fill").tag(1) }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(width: 320)
-                Spacer()
-            }.padding(.bottom, 16)
-            Divider()
+            PageTabBar(selection: $tab, items: [("통화", "phone.fill"), ("메시지", "message.fill")])
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
                     if tab == 0 { HStack(spacing: 10) { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).labelsHidden(); Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.bordered).help("다이얼 열기") }.padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 10) }
@@ -510,14 +542,7 @@ private struct TransferView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                Spacer()
-                Picker("전송 방향", selection: $direction) {
-                    Label("Galaxy로 보내기", systemImage: "arrow.up.circle.fill").tag(0)
-                    Label("Mac으로 가져오기", systemImage: "arrow.down.circle.fill").tag(1)
-                }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(width: 440)
-                Spacer()
-            }
+            PageTabBar(selection: $direction, items: [("Galaxy로 보내기", "arrow.up.circle.fill"), ("Mac으로 가져오기", "arrow.down.circle.fill")])
             if direction == 0 {
                 Card("Galaxy로 보내기", icon: "arrow.up.circle") {
                 VStack(spacing: 14) {
@@ -536,13 +561,9 @@ private struct TransferView: View {
                 }
             } else {
                 Card("Mac으로 가져오기", icon: "arrow.down.circle") {
-                    HStack {
-                        Text("Galaxy Download").fontWeight(.medium)
-                        Spacer()
-                    }
                     if model.remoteFiles.isEmpty {
                         VStack(spacing: 10) {
-                            Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.secondary)
+                            Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.blue)
                             Text("불러온 파일 없음").fontWeight(.medium)
                             Text(isConnected ? "상단 새로고침을 눌러 Galaxy의 Download 폴더를 확인하세요." : "Galaxy를 연결하면 파일 목록을 불러올 수 있습니다.").font(.caption).foregroundStyle(.secondary)
                         }.frame(maxWidth: .infinity, minHeight: 180)
@@ -599,7 +620,7 @@ private struct NotificationsView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack { Spacer(); Picker("알림 화면", selection: $tab) { Text("Galaxy 알림").tag(0); Text("알림 설정").tag(1) }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(width: 360); Spacer() }
+            PageTabBar(selection: $tab, items: [("Galaxy 알림", "bell.fill"), ("알림 설정", "slider.horizontal.3")])
             if tab == 1 { Card("알림 설정", icon: "bell.badge") {
                 VStack(spacing: 0) {
                     NotificationRow(title: "전화", subtitle: "Galaxy 수신 전화 알림", icon: "phone", isOn: $model.phoneNotificationsEnabled)
@@ -713,6 +734,23 @@ private struct DiagnosticsView: View {
                 Text("번들 공식 v2.0.0 APK의 SHA-256을 설치 전후에 검증합니다.").font(.caption).foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+private struct PageTabBar: View {
+    @Binding var selection: Int
+    let items: [(String, String)]
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                Button { withAnimation(.easeInOut(duration: 0.16)) { selection = index } } label: {
+                    VStack(spacing: 9) {
+                        HStack(spacing: 8) { Image(systemName: item.1); Text(localized(item.0)).fontWeight(.semibold) }
+                        Capsule().fill(selection == index ? Color.accentColor : Color.clear).frame(height: 3).padding(.horizontal, 16)
+                    }.foregroundStyle(selection == index ? Color.primary : Color.secondary).frame(maxWidth: .infinity).padding(.top, 13).padding(.bottom, 8).background(selection == index ? Color.accentColor.opacity(0.1) : Color.clear, in: RoundedRectangle(cornerRadius: 10)).contentShape(RoundedRectangle(cornerRadius: 10))
+                }.buttonStyle(.plain)
+            }
+        }.padding(5).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.08))).frame(maxWidth: 560).frame(maxWidth: .infinity).padding(.bottom, 4)
     }
 }
 

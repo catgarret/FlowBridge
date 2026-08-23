@@ -263,6 +263,9 @@
 "미러링" = "Mirror";
 "기기 별칭 지정 또는 수정" = "Set or edit device name";
 "앱 검색" = "Search Apps";
+"앱 실행 방식" = "App launch mode";
+"클릭해서 앱 선택" = "Click to choose an app";
+"클릭해서 변경" = "Click to change";
 "알림 항목 선택" = "Choose Notification Types";
 "Galaxy 알림" = "Galaxy Notifications";
 "Galaxy 알림창에 남아 있는 항목" = "Notifications currently visible on Galaxy";
