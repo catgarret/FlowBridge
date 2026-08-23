@@ -27,6 +27,7 @@ final class AppModel: ObservableObject {
     @Published var appSearch = ""
     @Published var phoneNumber = ""
     @Published var messageBody = ""
+    @Published var isSendingMessage = false
     @Published var phoneSearch = ""
     @Published var contacts: [PhoneContact] = []
     @Published var contactPhotoURLs: [String: URL] = [:]
@@ -377,14 +378,29 @@ final class AppModel: ObservableObject {
 
     func composeMessage() {
         let serial = selectedSerial, number = phoneNumber, body = messageBody
-        perform { [settings = appSettings] in
-            guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
-            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
-            try ADBService(executable: adbPath).sendMessage(serial: serial, number: number, body: body)
-            return { model in
-                model.messageBody = ""
-                model.status = "메시지를 전송했습니다."
-                model.refreshPhoneData(silent: true)
+        guard !isSendingMessage else { return }
+        isSendingMessage = true
+        status = "Galaxy에서 메시지 전송 버튼을 확인하는 중입니다."
+        Task.detached { [weak self, settings = appSettings] in
+            do {
+                guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
+                guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+                try ADBService(executable: adbPath).sendMessage(serial: serial, number: number, body: body)
+                await MainActor.run {
+                    guard let self else { return }
+                    self.isSendingMessage = false
+                    self.messageBody = ""
+                    self.status = "메시지를 전송했습니다."
+                    self.appendLog(self.status)
+                    self.refreshPhoneData(silent: true)
+                }
+            } catch {
+                await MainActor.run {
+                    guard let self else { return }
+                    self.isSendingMessage = false
+                    self.status = error.localizedDescription
+                    self.appendLog("ERROR: \(error.localizedDescription)")
+                }
             }
         }
     }

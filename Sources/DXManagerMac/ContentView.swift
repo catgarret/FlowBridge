@@ -534,8 +534,26 @@ private struct PhoneView: View {
 
     private var messageDetail: some View {
         let conversation = model.recentMessages.filter { $0.address == selectedNumber }.sorted { $0.date < $1.date }
+        let savedContact = model.contacts.first { normalized($0.number) == normalized(selectedNumber) }
         return VStack(spacing: 0) {
-            HStack(spacing: 10) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber)); VStack(alignment: .leading) { Text(contactName(selectedNumber)).fontWeight(.semibold); Text(selectedNumber).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button(action: model.openDialer) { Image(systemName: "phone") }.disabled(!isConnected).help("전화 화면 열기") }.padding(14)
+            HStack(spacing: 10) {
+                Button {
+                    guard let savedContact else { return }
+                    callSource = 1
+                    tab = 0
+                    select(selectedNumber, rowID: savedContact.id)
+                } label: {
+                    HStack(spacing: 10) {
+                        ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber))
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 5) { Text(contactName(selectedNumber)).fontWeight(.semibold); if savedContact != nil { Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.tertiary) } }
+                            Text(selectedNumber).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }.contentShape(Rectangle())
+                }.buttonStyle(.plain).disabled(savedContact == nil).help(savedContact == nil ? "저장되지 않은 번호" : "연락처 보기")
+                Spacer()
+                Button(action: model.openDialer) { Image(systemName: "phone") }.disabled(!isConnected).help("전화 화면 열기")
+            }.padding(14)
             Divider()
             ScrollViewReader { proxy in
                 ScrollView { LazyVStack(spacing: 12) { ForEach(conversation) { message in HStack { if message.isOutgoing { Spacer(minLength: 96) }; VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 5) { Text(message.body).textSelection(.enabled); Text(message.date, style: .time).font(.caption2).opacity(0.7) }.foregroundStyle(message.isOutgoing ? Color.white : Color.primary).padding(.horizontal, 13).padding(.vertical, 10).background(message.isOutgoing ? Color.green : Color.secondary.opacity(0.14), in: RoundedRectangle(cornerRadius: 16)); if !message.isOutgoing { Spacer(minLength: 96) } }.id(message.id) } }.padding(18) }
@@ -552,15 +570,17 @@ private struct PhoneView: View {
                     .padding(.vertical, 10)
                     .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 18))
                     .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.primary.opacity(0.10)))
-                    .disabled(!isConnected)
+                    .disabled(!isConnected || model.isSendingMessage)
                 Button(action: model.composeMessage) {
-                    Image(systemName: "arrow.up").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
-                        .frame(width: 36, height: 36).background(Color.accentColor, in: Circle())
+                    Group {
+                        if model.isSendingMessage { ProgressView().controlSize(.small).tint(.white) }
+                        else { Image(systemName: "arrow.up").font(.system(size: 14, weight: .bold)).foregroundStyle(.white) }
+                    }.frame(width: 36, height: 36).background(Color.accentColor, in: Circle())
                 }
                 .buttonStyle(.plain)
-                .disabled(!isConnected || model.messageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .opacity(!isConnected || model.messageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
-                .help("메시지 전송")
+                .disabled(!isConnected || model.isSendingMessage || model.messageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .opacity(!isConnected || (!model.isSendingMessage && model.messageBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) ? 0.45 : 1)
+                .help(model.isSendingMessage ? "메시지 전송 중" : "메시지 전송")
             }.padding(.horizontal, 14).padding(.vertical, 11)
         }.frame(maxWidth: .infinity)
     }

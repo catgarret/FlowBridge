@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Added an explicit SMS sending state with a progress indicator and duplicate-send lock, and made saved contact headers in message conversations open their contact details.
+- SMS 전송 버튼 탐색 중 로딩 표시와 중복 전송 방지를 추가하고, 문자 대화의 저장된 프로필·이름을 누르면 연락처 상세로 이동하도록 했습니다.
 - Added persistent per-app Mac notification controls in both Notification Settings and each live Galaxy notification row.
 - 알림 설정과 Galaxy 현재 알림 행 양쪽에서 앱별 Mac 알림을 켜고 끌 수 있으며 선택은 연결이 끊겨도 유지됩니다.
 - Replaced package identifiers in Mac notification titles with friendly app names, corrected the test alert title, and attached cached Galaxy app icons where macOS supports notification attachments.
