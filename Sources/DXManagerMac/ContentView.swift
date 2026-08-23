@@ -699,7 +699,12 @@ private struct SettingsView: View {
                             }.frame(width: 420, alignment: .trailing)
                     }
                     Divider()
-                    SettingsRow("프레임") { HStack(spacing: 6) { PresetButton(title: "30 FPS", selected: model.settings.fps == 30) { model.applyFramePreset(30) }; PresetButton(title: "60 FPS", selected: model.settings.fps == 60) { model.applyFramePreset(60) }; PresetButton(title: "120 FPS", selected: model.settings.fps == 120) { model.applyFramePreset(120) } }.frame(width: 420, alignment: .trailing) }
+                    SettingsRow("프레임") {
+                        VStack(alignment: .trailing, spacing: 7) {
+                            HStack(spacing: 6) { PresetButton(title: "30 FPS", selected: model.settings.fps == 30) { model.applyFramePreset(30) }; PresetButton(title: "60 FPS", selected: model.settings.fps == 60) { model.applyFramePreset(60) }; PresetButton(title: "120 FPS", selected: model.settings.fps == 120) { model.applyFramePreset(120) } }
+                            Text("60 FPS 권장 · 120 FPS는 환경에 따라 낮아질 수 있음").font(.caption).foregroundStyle(.secondary)
+                        }.frame(width: 420, alignment: .trailing)
+                    }
                     Divider()
                     Button { withAnimation(.easeInOut(duration: 0.18)) { showsExpertSettings.toggle() } } label: { HStack { Text("전문가 수동 설정").fontWeight(.medium); Spacer(); Image(systemName: "chevron.right").rotationEffect(.degrees(showsExpertSettings ? 90 : 0)).foregroundStyle(.secondary) }.padding(.vertical, 13).contentShape(Rectangle()) }.buttonStyle(.plain)
                     if showsExpertSettings {
@@ -710,7 +715,6 @@ private struct SettingsView: View {
                         }.padding(.vertical, 10)
                     }
                 }
-                Text("60 FPS 권장 · 120 FPS는 환경에 따라 낮아질 수 있음").font(.caption).foregroundStyle(.secondary)
             }
             SettingsGroup("연결과 Mac 동작", icon: "gearshape") {
                 VStack(alignment: .leading, spacing: 0) {

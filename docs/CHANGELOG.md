@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Moved the FPS guidance directly beneath the frame-rate presets instead of below the expert manual settings disclosure.
+- FPS 안내를 전문가 수동 설정 아래에서 제거하고 프레임 프리셋 바로 아래로 옮겼습니다.
 - Rebuilt app-presence and control-bar-position settings as compact contiguous segments with fixed widths and consistent trailing alignment.
 - 앱 표시 위치와 화면 제어 바 위치를 고정 폭의 촘촘한 세그먼트로 다시 구성해 두 행 모두 오른쪽 끝에 일관되게 정렬했습니다.
 - Replaced the draggable floating session remote with a full-width status bar docked inside the top or bottom of each DEX and mirror window, scoped its window ordering to the video window, and separated the volume label from its slider.
