@@ -67,6 +67,28 @@ public struct ADBService: Sendable {
         _ = try shell(serial: serial, ["input", "keyevent", String(code)])
     }
 
+    public func phoneScreenState(serial: String) throws -> PhoneScreenState {
+        let power = try shell(serial: serial, ["dumpsys", "power"])
+        let policy = try shell(serial: serial, ["dumpsys", "window", "policy"])
+        return Self.parsePhoneScreenState(power: power, policy: policy)
+    }
+
+    public static func parsePhoneScreenState(power: String, policy: String) -> PhoneScreenState {
+        let awake = power.contains("mWakefulness=Awake") || policy.contains("screenState=SCREEN_STATE_ON")
+        let locked = policy.contains("showing=true") || policy.contains("isKeyguardShowing=true")
+        return PhoneScreenState(isAwake: awake, isLocked: locked)
+    }
+
+    public func screenBrightness(serial: String) throws -> Int {
+        Int(try shell(serial: serial, ["settings", "get", "system", "screen_brightness"])
+            .trimmingCharacters(in: .whitespacesAndNewlines)) ?? 128
+    }
+
+    public func setScreenBrightness(serial: String, value: Int) throws {
+        _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness_mode", "0"])
+        _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness", String(max(0, min(255, value)))])
+    }
+
     public func installedPackages(serial: String) throws -> [String] {
         let output = try shell(serial: serial, ["pm", "list", "packages", "-3"])
         return output.split(whereSeparator: \ .isNewline)
@@ -128,6 +150,42 @@ public struct ADBService: Sendable {
 
     public func notifications(serial: String) throws -> [PhoneNotification] {
         NotificationParser.parse(try shell(serial: serial, ["dumpsys", "notification", "--noredact"]))
+    }
+
+    public func contacts(serial: String) throws -> [PhoneContact] {
+        Self.parseContacts(try shell(serial: serial, ["content", "query", "--uri", "content://com.android.contacts/data/phones", "--projection", "display_name:data1"]))
+    }
+
+    public func recentCalls(serial: String) throws -> [PhoneCall] {
+        Array(Self.parseCalls(try shell(serial: serial, ["content", "query", "--uri", "content://call_log/calls", "--projection", "number:type:date"])).prefix(100))
+    }
+
+    public func recentMessages(serial: String) throws -> [PhoneMessage] {
+        Array(Self.parseMessages(try shell(serial: serial, ["content", "query", "--uri", "content://sms", "--projection", "address:body:date"])).prefix(100))
+    }
+
+    public static func parseContacts(_ output: String) -> [PhoneContact] {
+        var seen = Set<String>()
+        return output.split(whereSeparator: \.isNewline).compactMap { raw in
+            let line = String(raw); guard let nameStart = line.range(of: "display_name="), let numberMark = line.range(of: ", data1=") else { return nil }
+            let name = String(line[nameStart.upperBound..<numberMark.lowerBound]); let number = String(line[numberMark.upperBound...])
+            guard !name.isEmpty, !number.isEmpty, seen.insert("\(name)|\(number)").inserted else { return nil }
+            return PhoneContact(name: name, number: number)
+        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    public static func parseCalls(_ output: String) -> [PhoneCall] {
+        output.split(whereSeparator: \.isNewline).compactMap { raw in
+            let line = String(raw); guard let n = line.range(of: "number="), let t = line.range(of: ", type="), let d = line.range(of: ", date=") else { return nil }
+            return PhoneCall(number: String(line[n.upperBound..<t.lowerBound]), type: Int(line[t.upperBound..<d.lowerBound]) ?? 0, date: Date(timeIntervalSince1970: (Double(line[d.upperBound...]) ?? 0) / 1000))
+        }.sorted { $0.date > $1.date }
+    }
+
+    public static func parseMessages(_ output: String) -> [PhoneMessage] {
+        output.split(whereSeparator: \.isNewline).compactMap { raw in
+            let line = String(raw); guard let a = line.range(of: "address="), let b = line.range(of: ", body="), let d = line.range(of: ", date=", options: .backwards) else { return nil }
+            return PhoneMessage(address: String(line[a.upperBound..<b.lowerBound]), body: String(line[b.upperBound..<d.lowerBound]), date: Date(timeIntervalSince1970: (Double(line[d.upperBound...]) ?? 0) / 1000))
+        }.sorted { $0.date > $1.date }
     }
 
     public func pull(serial: String, remotePath: String, localURL: URL) throws {

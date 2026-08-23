@@ -38,6 +38,25 @@ public struct RemoteFile: Identifiable, Hashable, Sendable {
     public init(name: String, path: String, isDirectory: Bool = false) { self.name = name; self.path = path; self.isDirectory = isDirectory }
 }
 
+public struct PhoneScreenState: Equatable, Sendable {
+    public let isAwake: Bool
+    public let isLocked: Bool
+    public init(isAwake: Bool, isLocked: Bool) { self.isAwake = isAwake; self.isLocked = isLocked }
+}
+
+public struct PhoneContact: Identifiable, Hashable, Sendable {
+    public let name: String; public let number: String; public var id: String { "\(name)|\(number)" }
+    public init(name: String, number: String) { self.name = name; self.number = number }
+}
+public struct PhoneCall: Identifiable, Hashable, Sendable {
+    public let number: String; public let type: Int; public let date: Date; public var id: String { "\(number)|\(date.timeIntervalSince1970)|\(type)" }
+    public init(number: String, type: Int, date: Date) { self.number = number; self.type = type; self.date = date }
+}
+public struct PhoneMessage: Identifiable, Hashable, Sendable {
+    public let address: String; public let body: String; public let date: Date; public var id: String { "\(address)|\(date.timeIntervalSince1970)|\(body.hashValue)" }
+    public init(address: String, body: String, date: Date) { self.address = address; self.body = body; self.date = date }
+}
+
 public struct DisplaySettings: Codable, Equatable, Sendable {
     public var width = 1920
     public var height = 1080
@@ -62,6 +81,7 @@ public struct AppSettings: Codable, Sendable {
     public var adbPath = ""
     public var deviceDisplays: [String: DisplaySettings] = [:]
     public var appProfiles: [String: DisplaySettings] = [:]
+    public var favoritePackages = ["com.android.settings", "", ""]
     public var autoHideMinutes = 10
     public var lastWirelessEndpoint = ""
     public var automaticReconnect = true
@@ -71,7 +91,7 @@ public struct AppSettings: Codable, Sendable {
     public var turnPhoneScreenOffOnStart = false
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
+    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -80,6 +100,9 @@ public struct AppSettings: Codable, Sendable {
         adbPath = try values.decodeIfPresent(String.self, forKey: .adbPath) ?? ""
         deviceDisplays = try values.decodeIfPresent([String: DisplaySettings].self, forKey: .deviceDisplays) ?? [:]
         appProfiles = try values.decodeIfPresent([String: DisplaySettings].self, forKey: .appProfiles) ?? [:]
+        favoritePackages = try values.decodeIfPresent([String].self, forKey: .favoritePackages) ?? ["com.android.settings", "", ""]
+        while favoritePackages.count < 3 { favoritePackages.append("") }
+        favoritePackages = Array(favoritePackages.prefix(3))
         autoHideMinutes = try values.decodeIfPresent(Int.self, forKey: .autoHideMinutes) ?? 10
         lastWirelessEndpoint = try values.decodeIfPresent(String.self, forKey: .lastWirelessEndpoint) ?? ""
         automaticReconnect = try values.decodeIfPresent(Bool.self, forKey: .automaticReconnect) ?? true

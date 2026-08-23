@@ -4,6 +4,12 @@
 
 ## Unreleased - experimental macOS port
 
+- Add verified screen-launch states, single active main display, lock guidance,
+  volume controls, reversible phone dimming, balanced connection cards, searchable
+  app quick launch with Command-1/2/3 favorites, and live contacts/calls/SMS browsing.
+- 실제 영상 창을 확인하는 실행 상태, 주 화면 단일 실행, 잠금 안내, 볼륨 제어,
+  종료 시 복원되는 밝기 최소화, 균형 잡힌 연결 카드, 검색 가능한 앱 바로 실행과
+  Command-1/2/3 즐겨찾기, 실시간 주소록·통화기록·SMS 탐색을 추가했습니다.
 - Add Finder-style Command-C/Command-V file exchange, Mac-to-Galaxy drop targets,
   Galaxy Download browsing, phone-to-Mac file promises for drag-out, and explicit
   save actions for files and folders.

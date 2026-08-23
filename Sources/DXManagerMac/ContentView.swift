@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 private func localized(_ key: String) -> String { NSLocalizedString(key, comment: "") }
 
 private enum AppSection: String, CaseIterable, Identifiable {
-    case home = "홈", phone = "전화·문자", apps = "앱 창", transfer = "파일 전송", notifications = "알림", settings = "설정", diagnostics = "진단", about = "정보"
+    case home = "홈", phone = "전화·문자", apps = "앱 바로 실행", transfer = "파일 전송", notifications = "알림", settings = "설정", diagnostics = "진단", about = "정보"
     var id: Self { self }
     var icon: String {
         switch self {
@@ -88,7 +88,7 @@ struct ContentView: View {
         switch section ?? .home {
         case .home: return "Galaxy 연결과 화면 실행을 한곳에서 관리합니다."
         case .phone: return "Mac에서 번호를 입력해 Galaxy 전화와 문자를 시작합니다."
-        case .apps: return "자주 사용하는 Android 앱을 각각 독립 창으로 실행합니다."
+        case .apps: return "앱 이름으로 검색하거나 즐겨찾기 단축키로 바로 실행합니다."
         case .transfer: return "파일과 폴더를 Galaxy의 Download 폴더로 보냅니다."
         case .notifications: return "전화·문자·앱 알림을 Mac 알림 센터로 전달합니다."
         case .settings: return "화면 품질, 자동 연결과 Mac 동작을 설정합니다."
@@ -141,60 +141,52 @@ private struct HomeView: View {
                         if model.devices.isEmpty { Text("연결된 기기 없음").tag("") }
                         ForEach(model.devices) { Text("\($0.displayName)  ·  \($0.serial)").tag($0.serial) }
                     }.onChange(of: model.selectedSerial) { _ in model.applyDeviceSettings() }
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("USB가 연결되어 있나요?").fontWeight(.medium)
-                            Text("한 번 승인한 USB 연결을 자동으로 무선 연결로 바꿉니다.").font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button(action: model.prepareWirelessFromUSB) { Label("USB에서 무선으로 전환", systemImage: "wifi") }
-                            .buttonStyle(.borderedProminent)
-                    }.padding(12).background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 9))
-
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("USB 없이 처음 연결하시나요?").fontWeight(.medium)
-                            Text("휴대폰의 무선 디버깅 페어링 화면을 연 다음 검색하세요.").font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer(); Button("페어링 화면 자동 검색", action: model.discoverWirelessSetup)
+                    ConnectionOption(icon: "cable.connector", title: "USB 연결을 무선으로 전환", subtitle: "한 번 승인한 USB 연결을 저장하고 다음부터 자동 연결합니다.") {
+                        Button("전환", action: model.prepareWirelessFromUSB).buttonStyle(.borderedProminent)
+                    }
+                    ConnectionOption(icon: "wifi", title: "USB 없이 처음 연결", subtitle: "Galaxy의 무선 디버깅 페어링 화면을 연 뒤 자동 검색합니다.") {
+                        Button("자동 검색", action: model.discoverWirelessSetup)
                     }
                     if !model.pairingEndpoint.isEmpty {
                         HStack {
                             Label(model.pairingEndpoint, systemImage: "dot.radiowaves.left.and.right")
-                            Spacer()
-                            SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 130)
+                            Spacer(); SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 130)
                             Button("페어링 완료", action: model.pairWireless).buttonStyle(.borderedProminent)
-                        }.padding(10).background(Color.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 9))
+                        }.padding(12).background(Color.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                     }
                     DisclosureGroup("고급·수동 연결") {
                         VStack(spacing: 10) {
-                            HStack {
-                                TextField(localized("무선 ADB 주소  예: 172.30.1.3:44065"), text: $model.wirelessEndpoint)
-                                Button("직접 연결", action: model.connectWireless)
-                            }
-                            HStack {
-                                TextField(localized("페어링 IP:포트"), text: $model.pairingEndpoint)
-                                SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 120)
-                                Button("직접 페어링", action: model.pairWireless)
-                            }
+                            HStack { TextField(localized("무선 ADB 주소  예: 172.30.1.3:44065"), text: $model.wirelessEndpoint); Button("직접 연결", action: model.connectWireless) }
+                            HStack { TextField(localized("페어링 IP:포트"), text: $model.pairingEndpoint); SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 120); Button("직접 페어링", action: model.pairWireless) }
                         }.padding(.top, 10)
                     }.font(.subheadline)
                 }
             }
             Card("화면 열기", icon: "macwindow.on.rectangle") {
-                HStack(spacing: 14) {
-                    LaunchTile(title: "데스크톱 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
-                    LaunchTile(title: "휴대폰 미러링", subtitle: "기본 화면 그대로", icon: "iphone", tint: .purple, action: model.startPhoneMirror)
+                if model.sessionPhase == .launching {
+                    HStack(spacing: 12) { ProgressView(); VStack(alignment: .leading) { Text("화면 연결 준비 중").fontWeight(.semibold); Text("Galaxy를 깨우고 영상 창이 실제로 표시되는지 확인하고 있습니다.").font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("취소", role: .destructive, action: model.stop) }
+                        .padding(16).background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                } else if model.sessionPhase == .running {
+                    HStack { Label("화면 실행 중", systemImage: "checkmark.circle.fill").foregroundStyle(.green); Spacer(); Button("화면 종료 및 정리", role: .destructive, action: model.stop) }
+                } else {
+                    HStack(spacing: 14) {
+                        LaunchTile(title: "데스크톱 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
+                        LaunchTile(title: "휴대폰 미러링", subtitle: "기본 화면 그대로", icon: "iphone", tint: .purple, action: model.startPhoneMirror)
+                    }
                 }
-                Toggle("화면을 열면 휴대폰 화면 자동으로 끄기", isOn: $model.turnPhoneScreenOffOnStart)
+                Toggle("화면을 열면 Galaxy 밝기를 최저로 낮추기", isOn: $model.turnPhoneScreenOffOnStart)
                     .toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.save() }
+                Text("화면을 완전히 끄면 일부 Galaxy에서 영상 전송도 중단될 수 있어 밝기만 낮춥니다. 종료하면 이전 밝기로 복원합니다.").font(.caption).foregroundStyle(.secondary)
                 HStack {
-                    Button(role: .destructive, action: model.stop) { Label("모든 화면 중지 및 정리", systemImage: "stop.fill") }
+                    Button(action: model.volumeDown) { Label("볼륨 낮춤", systemImage: "speaker.minus") }
+                    Button(action: model.volumeUp) { Label("볼륨 높임", systemImage: "speaker.plus") }
                     Spacer()
                     Button { model.sendKeyEvent(224, label: "화면 켜기") } label: { Label("화면 켜기", systemImage: "sun.max") }
                     Button { model.sendKeyEvent(223, label: "화면 끄기") } label: { Label("화면 끄기", systemImage: "moon") }
                     Button { model.sendKeyEvent(26, label: "전원") } label: { Label("전원", systemImage: "power") }
                 }.padding(.top, 4)
+                if model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
+                Text("데스크톱 모드 실행 중 Galaxy에 보이는 오버레이는 가상 화면을 만드는 Android 시스템 창입니다. 실행 중에는 유지되고 종료 시 자동 제거됩니다.").font(.caption).foregroundStyle(.secondary)
             }
             if model.hasActiveSession {
                 Card("보호된 화면 안내", icon: "lock.shield") {
@@ -227,19 +219,20 @@ private struct HomeView: View {
 private struct AppsView: View {
     @EnvironmentObject private var model: AppModel
     var body: some View {
-        Card("독립 앱 창", icon: "macwindow.badge.plus") {
+        VStack(alignment: .leading, spacing: 18) {
+        Card("즐겨찾기", icon: "star") {
             VStack(spacing: 0) {
                 ForEach(0..<3, id: \.self) { slot in
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
-                            Text("앱 \(slot + 1)").font(.headline).frame(width: 52, alignment: .leading)
-                            Picker("실행할 앱", selection: $model.packageNames[slot]) {
-                                if !model.installedApps.contains(where: { $0.package == model.packageNames[slot] }) {
-                                    Text(model.packageNames[slot] == "com.android.settings" ? "설정" : "앱을 선택해 주세요").tag(model.packageNames[slot])
-                                }
-                                ForEach(model.installedApps) { app in Text(app.name).tag(app.package) }
-                            }.labelsHidden().frame(maxWidth: .infinity)
-                            Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent)
+                            Text("⌘\(slot + 1)").font(.headline).frame(width: 52, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(model.installedApps.first(where: { $0.package == model.packageNames[slot] })?.name ?? (model.packageNames[slot] == "com.android.settings" ? "설정" : "지정되지 않음")).fontWeight(.medium)
+                                Text(model.packageNames[slot].isEmpty ? "아래 검색 결과에서 지정하세요." : model.packageNames[slot]).font(.caption2).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("실행") { model.startApp(slot: slot) }.buttonStyle(.borderedProminent).keyboardShortcut(KeyEquivalent(Character(String(slot + 1))), modifiers: .command)
+                                .disabled(model.packageNames[slot].isEmpty)
                         }
                         HStack {
                             Button("현재 화면 설정 저장") { model.saveAppProfile(slot: slot) }
@@ -249,20 +242,56 @@ private struct AppsView: View {
                     if slot < 2 { Divider() }
                 }
             }
-            HStack {
-                Button(action: model.loadPackages) { Label("Galaxy 앱 목록 갱신", systemImage: "arrow.clockwise") }
-                Spacer(); Text("각 앱은 별도 scrcpy 가상 화면으로 열립니다.").font(.caption).foregroundStyle(.secondary)
-            }.padding(.top, 8)
+            Text("⌘1 · ⌘2 · ⌘3으로 지정한 앱을 즉시 실행합니다.").font(.caption).foregroundStyle(.secondary)
+        }
+        Card("앱 검색 및 바로 실행", icon: "magnifyingglass") {
+            TextField("앱 이름 검색", text: $model.appSearch).textFieldStyle(.roundedBorder)
+            let matches = model.installedApps.filter { model.appSearch.isEmpty || $0.name.localizedCaseInsensitiveContains(model.appSearch) || $0.package.localizedCaseInsensitiveContains(model.appSearch) }
+            if matches.isEmpty { Text("일치하는 앱이 없습니다.").foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 100) }
+            else {
+                LazyVStack(spacing: 0) {
+                    ForEach(matches.prefix(30)) { app in
+                        HStack { VStack(alignment: .leading) { Text(app.name).fontWeight(.medium); Text(app.package).font(.caption2).foregroundStyle(.tertiary) }; Spacer(); Menu("즐겨찾기") { ForEach(0..<3) { slot in Button("\(slot + 1)에 지정") { model.assignFavorite(package: app.package, slot: slot) } } }; Button("열기") { model.startApp(package: app.package) }.buttonStyle(.borderedProminent) }
+                            .padding(.vertical, 9)
+                        Divider()
+                    }
+                }
+            }
+            HStack { Button(action: model.loadPackages) { Label("앱 목록 갱신", systemImage: "arrow.clockwise") }; Spacer(); Text("검색 결과는 최대 30개까지 표시합니다.").font(.caption).foregroundStyle(.secondary) }
+        }
         }
     }
 }
 
+private struct ConnectionOption<Accessory: View>: View {
+    let icon: String; let title: String; let subtitle: String; @ViewBuilder let accessory: Accessory
+    init(icon: String, title: String, subtitle: String, @ViewBuilder accessory: () -> Accessory) { self.icon = icon; self.title = title; self.subtitle = subtitle; self.accessory = accessory() }
+    var body: some View { HStack(spacing: 14) { Image(systemName: icon).font(.title3).foregroundStyle(.blue).frame(width: 28); VStack(alignment: .leading, spacing: 3) { Text(title).fontWeight(.medium); Text(subtitle).font(.caption).foregroundStyle(.secondary) }; Spacer(); accessory }.padding(14).background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 10)).overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.07))) }
+}
+
 private struct PhoneView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var tab = 0
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
+            Card("전화·문자", icon: "phone.connection") {
+                HStack { Picker("보기", selection: $tab) { Text("주소록").tag(0); Text("최근 통화").tag(1); Text("메시지").tag(2) }.pickerStyle(.segmented); Button("동기화", action: model.refreshPhoneData).buttonStyle(.borderedProminent) }
+                TextField("이름 또는 번호 검색", text: $model.phoneSearch).textFieldStyle(.roundedBorder)
+                Group {
+                    if tab == 0 {
+                        let rows = model.contacts.filter { model.phoneSearch.isEmpty || $0.name.localizedCaseInsensitiveContains(model.phoneSearch) || $0.number.contains(model.phoneSearch) }
+                        List(rows.prefix(100)) { item in HStack { VStack(alignment: .leading) { Text(item.name).fontWeight(.medium); Text(item.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("선택") { model.selectPhoneNumber(item.number) } } }
+                    } else if tab == 1 {
+                        let rows = model.recentCalls.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) }
+                        List(rows.prefix(100)) { item in HStack { Image(systemName: item.type == 1 ? "phone.arrow.down.left" : item.type == 2 ? "phone.arrow.up.right" : "phone.down"); VStack(alignment: .leading) { Text(item.number); Text(item.date, style: .relative).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("선택") { model.selectPhoneNumber(item.number) } } }
+                    } else {
+                        let rows = model.recentMessages.filter { model.phoneSearch.isEmpty || $0.address.contains(model.phoneSearch) || $0.body.localizedCaseInsensitiveContains(model.phoneSearch) }
+                        List(rows.prefix(100)) { item in HStack { VStack(alignment: .leading) { Text(item.address).fontWeight(.medium); Text(item.body).lineLimit(2).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("답장") { model.selectPhoneNumber(item.address) } } }
+                    }
+                }.frame(minHeight: 240)
+                Text("Galaxy의 로컬 주소록·최근 통화·SMS를 ADB 연결 중에만 읽으며 Flow Bridge가 별도 저장하지 않습니다.").font(.caption).foregroundStyle(.secondary)
+            }
             Card("전화 걸기", icon: "phone") {
-                Text("Mac에서 번호를 입력하면 Galaxy 전화 화면에 바로 전달됩니다.").foregroundStyle(.secondary)
                 HStack {
                     TextField(localized("전화번호"), text: $model.phoneNumber).font(.title3).textFieldStyle(.roundedBorder)
                     Button(action: model.openDialer) { Label("전화 화면 열기", systemImage: "phone.arrow.up.right") }
@@ -286,15 +315,6 @@ private struct PhoneView: View {
                     Button(action: model.composeMessage) { Label("Galaxy에서 문자 확인", systemImage: "paperplane") }
                         .buttonStyle(.borderedProminent)
                 }
-            }
-            Card("수신 확인", icon: "bell") {
-                Text("전화와 문자 알림을 켜면 Galaxy에 새로 도착한 항목을 Mac 알림 센터에서 확인할 수 있습니다.").foregroundStyle(.secondary)
-                HStack {
-                    Toggle("전화 알림", isOn: $model.phoneNotificationsEnabled)
-                    Toggle("문자 알림", isOn: $model.messageNotificationsEnabled)
-                }.toggleStyle(.switch)
-                    .onChange(of: model.phoneNotificationsEnabled) { _ in model.notificationSettingsChanged() }
-                    .onChange(of: model.messageNotificationsEnabled) { _ in model.notificationSettingsChanged() }
             }
         }
     }

@@ -86,6 +86,15 @@ public final class DXSessionController: @unchecked Sendable {
         }
     }
 
+    public func stopMainDisplays(serial: String) {
+        lock.lock()
+        let targets = processes.filter { ($0.key.hasPrefix("dex:") || $0.key.hasPrefix("phone:")) && $0.value.serial == serial }
+        targets.forEach { processes.removeValue(forKey: $0.key) }
+        lock.unlock()
+        targets.values.forEach { $0.process.terminate() }
+        _ = try? adb.shell(serial: serial, ["settings", "delete", "global", "overlay_display_devices"])
+    }
+
     private func baseArguments(_ serial: String, _ settings: DisplaySettings) -> [String] {
         ["-s", serial, "--video-bit-rate", "\(settings.bitrate)M", "--max-fps", String(settings.fps), "--shortcut-mod=lsuper"]
     }

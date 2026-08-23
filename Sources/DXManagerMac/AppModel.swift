@@ -12,6 +12,8 @@ final class MacNotificationDelegate: NSObject, UNUserNotificationCenterDelegate 
     }
 }
 
+enum SessionPhase { case idle, launching, running, failed }
+
 @MainActor
 final class AppModel: ObservableObject {
     @Published var devices: [Device] = []
@@ -19,8 +21,13 @@ final class AppModel: ObservableObject {
     @Published var settings = DisplaySettings()
     @Published var packageNames = ["com.android.settings", "", ""]
     @Published var installedApps: [InstalledApp] = []
+    @Published var appSearch = ""
     @Published var phoneNumber = ""
     @Published var messageBody = ""
+    @Published var phoneSearch = ""
+    @Published var contacts: [PhoneContact] = []
+    @Published var recentCalls: [PhoneCall] = []
+    @Published var recentMessages: [PhoneMessage] = []
     @Published var wirelessEndpoint = ""
     @Published var pairingEndpoint = ""
     @Published var pairingCode = ""
@@ -41,6 +48,8 @@ final class AppModel: ObservableObject {
     @Published var appNotificationsEnabled = false
     @Published var turnPhoneScreenOffOnStart = false
     @Published var hasActiveSession = false
+    @Published var sessionPhase: SessionPhase = .idle
+    @Published var phoneNeedsUnlock = false
     @Published var updateStatus = "업데이트를 확인하지 않았습니다."
     @Published var latestVersion = ""
     @Published var isUpdateAvailable = false
@@ -57,6 +66,8 @@ final class AppModel: ObservableObject {
     private var notificationPollInProgress = false
     private var notificationBaselineSerial = ""
     private var seenNotificationFingerprints: Set<String> = []
+    private var brightnessBeforeSession: Int?
+    private var sessionAttempt = UUID()
 
     init() {
         load()
@@ -68,6 +79,7 @@ final class AppModel: ObservableObject {
         messageNotificationsEnabled = appSettings.messageNotificationsEnabled
         appNotificationsEnabled = appSettings.appNotificationsEnabled
         turnPhoneScreenOffOnStart = appSettings.turnPhoneScreenOffOnStart
+        packageNames = appSettings.favoritePackages
         UNUserNotificationCenter.current().delegate = notificationDelegate
         refresh()
         if automaticReconnect, !wirelessEndpoint.isEmpty { connectWireless() }
@@ -238,8 +250,11 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func startDeX() { start { try $0.startDeX(serial: $1, settings: $2) } }
-    func startPhoneMirror() { start { try $0.startPhoneMirror(serial: $1, settings: $2) } }
+    func startDeX() { start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startDeX(serial: $1, settings: $2) } }
+    func startPhoneMirror() { start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, settings: $2) } }
+
+    func volumeDown() { sendKeyEvent(25, label: "볼륨 낮추기") }
+    func volumeUp() { sendKeyEvent(24, label: "볼륨 높이기") }
     func loadPackages() {
         let serial = selectedSerial
         perform { [settings = appSettings] in
@@ -267,6 +282,21 @@ final class AppModel: ObservableObject {
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
             try ADBService(executable: adbPath).composeMessage(serial: serial, number: number, body: body)
             return { model in model.status = "Galaxy 메시지 작성 화면을 열었습니다." }
+        }
+    }
+
+    func selectPhoneNumber(_ number: String) { phoneNumber = number }
+
+    func refreshPhoneData() {
+        let serial = selectedSerial
+        perform { [settings = appSettings] in
+            guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let adb = ADBService(executable: adbPath)
+            let contacts = try adb.contacts(serial: serial)
+            let calls = try adb.recentCalls(serial: serial)
+            let messages = try adb.recentMessages(serial: serial)
+            return { model in model.contacts = contacts; model.recentCalls = calls; model.recentMessages = messages; model.status = "주소록과 최근 전화·문자를 불러왔습니다." }
         }
     }
 
@@ -313,6 +343,17 @@ final class AppModel: ObservableObject {
         guard packageNames.indices.contains(slot) else { return }
         let package = packageNames[slot]
         start { try $0.startApp(serial: $1, package: package, settings: $2, slot: slot + 1) }
+    }
+
+    func startApp(package: String) {
+        start { try $0.startApp(serial: $1, package: package, settings: $2, slot: 0) }
+    }
+
+    func assignFavorite(package: String, slot: Int) {
+        guard packageNames.indices.contains(slot) else { return }
+        packageNames[slot] = package
+        save()
+        status = "즐겨찾기 \(slot + 1)에 저장했습니다."
     }
 
     func chooseAndTransfer() {
@@ -496,8 +537,12 @@ final class AppModel: ObservableObject {
 
     func stop() {
         let serial = selectedSerial
+        sessionAttempt = UUID()
         controller?.stop(serial: serial)
+        restoreBrightnessIfNeeded(serial: serial)
         hasActiveSession = false
+        sessionPhase = .idle
+        phoneNeedsUnlock = false
         status = serial.isEmpty ? "선택된 기기가 없습니다." : "세션과 데스크톱 가상 디스플레이를 정리했습니다."
     }
 
@@ -564,9 +609,20 @@ final class AppModel: ObservableObject {
     private func syncMiniBars() {
         guard let controller else { miniBars.closeAll(); return }
         let sessions = controller.sessions()
+        if sessionPhase == .running && !sessions.contains(where: { $0.id.hasPrefix("dex:") || $0.id.hasPrefix("phone:") }) {
+            restoreBrightnessIfNeeded(serial: selectedSerial)
+            sessionPhase = .idle
+            hasActiveSession = false
+            phoneNeedsUnlock = false
+            status = "화면 창이 종료되어 세션을 정리했습니다."
+        }
         keyboardCorrection.setTargets(Set(sessions.map(\.processID)))
         miniBars.sync(sessions: sessions, capture: { [weak self] windowID, title in
             self?.captureScrcpyWindow(windowID: windowID, title: title)
+        }, volumeDown: { [weak self] in
+            self?.volumeDown()
+        }, volumeUp: { [weak self] in
+            self?.volumeUp()
         }, power: { [weak self] in
             self?.sendKeyEvent(26, label: "전원")
         }, stop: { [weak self] in
@@ -582,26 +638,84 @@ final class AppModel: ObservableObject {
         appSettings.messageNotificationsEnabled = messageNotificationsEnabled
         appSettings.appNotificationsEnabled = appNotificationsEnabled
         appSettings.turnPhoneScreenOffOnStart = turnPhoneScreenOffOnStart
+        appSettings.favoritePackages = packageNames
         if !selectedSerial.isEmpty { appSettings.deviceDisplays[selectedSerial] = settings }
         guard let data = try? JSONEncoder().encode(appSettings) else { return }
         try? data.write(to: Self.settingsURL, options: .atomic)
         status = "설정을 저장했습니다."
     }
 
-    private func start(_ action: @escaping @Sendable (DXSessionController, String, DisplaySettings) throws -> Void) {
+    private func start(exclusiveMainDisplay: Bool = false, trackMainSession: Bool = false, _ action: @escaping @Sendable (DXSessionController, String, DisplaySettings) throws -> Void) {
+        if trackMainSession && sessionPhase == .launching { return }
         let serial = selectedSerial
         let display = settings
         let activeController = controller
-        let turnScreenOff = turnPhoneScreenOffOnStart
+        let dimPhone = turnPhoneScreenOffOnStart
+        let attempt = UUID()
+        if trackMainSession {
+            sessionAttempt = attempt
+            sessionPhase = .launching
+            hasActiveSession = false
+            phoneNeedsUnlock = false
+            status = "휴대폰을 깨우고 화면 연결을 준비하는 중입니다."
+        }
         perform { [settings = appSettings] in
             guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
             guard let scrcpyPath = ToolLocator.scrcpy(settings.scrcpyPath) else { throw DXError.toolMissing("scrcpy") }
+            let adb = ADBService(executable: adbPath)
             let controller = activeController ?? DXSessionController(adb: ADBService(executable: adbPath), scrcpy: scrcpyPath)
+            try? adb.keyEvent(serial: serial, code: 224)
+            Thread.sleep(forTimeInterval: 0.4)
+            let screenState = try adb.phoneScreenState(serial: serial)
+            if exclusiveMainDisplay { controller.stopMainDisplays(serial: serial) }
+            let existingPIDs = Set(controller.sessions().filter { $0.serial == serial }.map { Int($0.processID) })
             try action(controller, serial, display)
-            if turnScreenOff { try? ADBService(executable: adbPath).keyEvent(serial: serial, code: 223) }
-            return { model in model.controller = controller; model.hasActiveSession = true; model.status = turnScreenOff ? "세션을 시작하고 휴대폰 화면을 껐습니다." : "세션을 시작했습니다." }
+            guard Self.waitForVisibleWindow(controller: controller, serial: serial, excluding: existingPIDs) else {
+                controller.stopMainDisplays(serial: serial)
+                throw DXError.commandFailed("영상 창을 열지 못했습니다. Galaxy 잠금을 해제한 뒤 다시 시도해 주세요.")
+            }
+            let previousBrightness = dimPhone && trackMainSession ? (try? adb.screenBrightness(serial: serial)) : nil
+            if dimPhone && trackMainSession { try? adb.setScreenBrightness(serial: serial, value: 0) }
+            return { model in
+                if trackMainSession && model.sessionAttempt != attempt {
+                    controller.stopMainDisplays(serial: serial)
+                    if let previousBrightness { Task.detached { try? adb.setScreenBrightness(serial: serial, value: previousBrightness) } }
+                    return
+                }
+                model.controller = controller
+                if trackMainSession {
+                    model.brightnessBeforeSession = previousBrightness
+                    model.hasActiveSession = true
+                    model.sessionPhase = .running
+                    model.phoneNeedsUnlock = screenState.isLocked
+                }
+                model.status = screenState.isLocked ? "화면은 열렸습니다. 보호된 내용은 Galaxy 잠금을 해제해야 표시됩니다." : (dimPhone ? "화면을 열고 Galaxy 밝기를 최저로 낮췄습니다." : "화면이 준비되었습니다.")
+            }
         }
+    }
+
+    nonisolated private static func waitForVisibleWindow(controller: DXSessionController, serial: String, excluding existingPIDs: Set<Int>) -> Bool {
+        for _ in 0..<40 {
+            let pids = Set(controller.sessions().filter { $0.serial == serial }.map { Int($0.processID) }).subtracting(existingPIDs)
+            if !pids.isEmpty,
+               let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]],
+               windows.contains(where: { window in
+                   guard let pid = window[kCGWindowOwnerPID as String] as? Int, pids.contains(pid),
+                         let bounds = window[kCGWindowBounds as String] as? [String: Any],
+                         let width = bounds["Width"] as? Double, let height = bounds["Height"] as? Double else { return false }
+                   return width > 100 && height > 100
+               }) { return true }
+            Thread.sleep(forTimeInterval: 0.25)
+        }
+        return false
+    }
+
+    private func restoreBrightnessIfNeeded(serial: String) {
+        guard let value = brightnessBeforeSession, !serial.isEmpty,
+              let adbPath = ToolLocator.adb(appSettings.adbPath) else { return }
+        brightnessBeforeSession = nil
+        Task.detached { try? ADBService(executable: adbPath).setScreenBrightness(serial: serial, value: value) }
     }
 
     private func perform(showBusy: Bool = true, _ work: @escaping @Sendable () throws -> (@MainActor (AppModel) -> Void)) {
@@ -611,7 +725,7 @@ final class AppModel: ObservableObject {
                 let update = try work()
                 await MainActor.run { update(self); self.appendLog(self.status); if showBusy { self.isBusy = false } }
             } catch {
-                await MainActor.run { self.status = error.localizedDescription; self.appendLog("ERROR: \(error.localizedDescription)"); if showBusy { self.isBusy = false }; self.isTransferring = false }
+                await MainActor.run { self.status = error.localizedDescription; if self.sessionPhase == .launching { self.sessionPhase = .failed }; self.appendLog("ERROR: \(error.localizedDescription)"); if showBusy { self.isBusy = false }; self.isTransferring = false }
             }
         }
     }
