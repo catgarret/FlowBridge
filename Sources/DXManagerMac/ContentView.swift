@@ -25,6 +25,7 @@ struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @State private var section: AppSection? = .home
     @State private var isGlobalDropTarget = false
+    @State private var lastRefreshDates: [AppSection: Date] = [:]
 
     var body: some View {
         NavigationSplitView {
@@ -55,7 +56,7 @@ struct ContentView: View {
                             case .diagnostics: DiagnosticsView()
                             case .about: AboutView()
                             }
-                        }.frame(maxWidth: 1120, alignment: .leading).frame(maxWidth: .infinity, alignment: .top).padding(28)
+                        }.frame(maxWidth: .infinity, alignment: .topLeading).padding(.horizontal, 28).padding(.top, 28).padding(.bottom, 20)
                     }
                 }
                 statusBar
@@ -92,13 +93,11 @@ struct ContentView: View {
                 Text(localized(pageDescription)).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
-            Button(action: refreshCurrentSection) { Label("새로고침", systemImage: "arrow.clockwise") }
-                .disabled(model.isBusy || refreshNeedsDevice && !hasConnectedDevice)
-                .help(refreshNeedsDevice && !hasConnectedDevice ? "Galaxy를 연결하면 새 정보를 불러올 수 있습니다." : "현재 화면 새로고침")
         }
     }
 
     private func refreshCurrentSection() {
+        lastRefreshDates[section ?? .home] = Date()
         switch section ?? .home {
         case .home, .settings: model.refresh()
         case .phone: model.refreshPhoneData()
@@ -127,7 +126,24 @@ struct ContentView: View {
             Text(LocalizedStringKey(model.status)).font(.caption).foregroundStyle(.secondary).textSelection(.enabled).lineLimit(1)
             Spacer()
             if model.isTransferring { Text(model.transferStatus).font(.caption); Button("취소", action: model.cancelTransfer).controlSize(.small) }
+            TimelineView(.periodic(from: .now, by: 30)) { context in
+                Button(action: refreshCurrentSection) {
+                    HStack(spacing: 6) { Image(systemName: "arrow.clockwise"); Text(refreshLabel(at: context.date)) }
+                        .font(.caption).foregroundStyle(.secondary).padding(.horizontal, 8).frame(height: 28).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(model.isBusy || refreshNeedsDevice && !hasConnectedDevice)
+                .help(refreshNeedsDevice && !hasConnectedDevice ? "Galaxy를 연결하면 새 정보를 불러올 수 있습니다." : "현재 화면 새로고침")
+            }
         }.padding(.horizontal, 16).frame(height: 38).background(.bar).overlay(alignment: .top) { Divider() }
+    }
+
+    private func refreshLabel(at now: Date) -> String {
+        guard let date = lastRefreshDates[section ?? .home] else { return localized("새로고침") }
+        if now.timeIntervalSince(date) < 45 { return localized("방금 업데이트") }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return "\(formatter.localizedString(for: date, relativeTo: now)) \(localized("업데이트"))"
     }
 
     private var pageDescription: String {
@@ -293,7 +309,10 @@ private struct AppsView: View {
             HStack(spacing: 18) {
                 Text("앱 실행 방식").fontWeight(.semibold)
                 Spacer()
-                LaunchModeSwitcher(selection: $model.appLaunchMode).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
+                Picker("앱 실행 방식", selection: $model.appLaunchMode) {
+                    Text("DEX 모드").tag(AppLaunchMode.desktopWindow)
+                    Text("휴대폰 미러링 모드").tag(AppLaunchMode.phoneScreen)
+                }.pickerStyle(.segmented).labelsHidden().frame(width: 420).onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
             }.frame(maxWidth: .infinity, alignment: .trailing)
             Card("앱 바로 실행 지정", icon: "bolt.square") {
                 VStack(spacing: 0) {
@@ -345,7 +364,7 @@ private struct AppPickerSheet: View {
                 }
             }
             Divider(); HStack { Text(targetSlot == nil ? "1·2·3으로 바로 실행 지정" : "바로 실행 \((targetSlot ?? 0) + 1)에 지정").font(.caption).foregroundStyle(.secondary); Spacer(); Text("\(matches.count)개 앱").font(.caption).foregroundStyle(.secondary) }.padding(.horizontal, 22).padding(.vertical, 13)
-        }.frame(width: 680, height: 640)
+        }.frame(width: 720, height: 580)
     }
 
     @ViewBuilder private func appRow(_ app: InstalledApp) -> some View {
@@ -393,12 +412,14 @@ private struct ConnectionSetupView: View {
             Divider()
             ConnectionOption(icon: "wifi", title: "무선으로 기기 추가", subtitle: "Galaxy의 무선 디버깅 페어링 화면에서 기기를 검색합니다.") { Button("기기 검색", action: model.discoverWirelessSetup) }
             Divider()
-            DisclosureGroup("IP 주소로 직접 연결") {
-                VStack(spacing: 10) {
-                    HStack { TextField(localized("무선 ADB 주소  예: 172.30.1.3:44065"), text: $model.wirelessEndpoint); Button("직접 연결", action: model.connectWireless) }
-                    HStack { TextField(localized("페어링 IP:포트"), text: $model.pairingEndpoint); SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 120); Button("직접 페어링", action: model.pairWireless) }
-                }.padding(.top, 10)
-            }.font(.subheadline)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 14) {
+                    Image(systemName: "network").font(.title3).foregroundStyle(.blue).frame(width: 30)
+                    VStack(alignment: .leading, spacing: 4) { Text("IP 주소로 직접 연결").fontWeight(.semibold); Text("자동 검색이 어려울 때 무선 ADB 주소나 페어링 정보를 입력합니다.").font(.caption).foregroundStyle(.secondary) }
+                }
+                HStack { TextField(localized("무선 ADB 주소  예: 172.30.1.3:44065"), text: $model.wirelessEndpoint); Button("직접 연결", action: model.connectWireless) }
+                HStack { TextField(localized("페어링 IP:포트"), text: $model.pairingEndpoint); SecureField(localized("6자리 코드"), text: $model.pairingCode).frame(width: 120); Button("직접 페어링", action: model.pairWireless) }
+            }.padding(.vertical, 14).padding(.horizontal, 4)
         }
     }
 }
@@ -419,16 +440,16 @@ private struct PhoneView: View {
             Divider()
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
-                    HStack(spacing: 10) {
-                        if tab == 0 {
+                    if tab == 0 {
+                        HStack(spacing: 10) {
                             Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).labelsHidden()
                             Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.bordered).help("다이얼 열기")
-                        } else { Spacer() }
-                    }.frame(height: 34).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 10)
+                        }.frame(height: 34).padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 10)
+                    }
                     HStack(spacing: 9) {
                         Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                         TextField("이름, 번호 또는 내용 검색", text: $model.phoneSearch).textFieldStyle(.plain)
-                    }.padding(.horizontal, 11).frame(height: 36).background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08))).padding(.horizontal, 16).padding(.bottom, 12)
+                    }.padding(.horizontal, 11).frame(height: 36).background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08))).padding(.horizontal, 16).padding(.top, tab == 0 ? 0 : 12).padding(.bottom, 12)
                     Divider()
                     if tab == 0 { callSource == 0 ? AnyView(callList) : AnyView(contactList) } else { messageThreadList }
                 }.frame(width: 360)
@@ -448,10 +469,15 @@ private struct PhoneView: View {
     }
 
     private var contactList: some View {
-        let filtered = model.contacts.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || $0.name.localizedCaseInsensitiveContains(model.phoneSearch) }
-        return List(filtered.prefix(200)) { contact in
-            HStack(spacing: 12) { ContactAvatar(name: contact.name, photoURL: model.contactPhotoURL(for: contact.number)); VStack(alignment: .leading, spacing: 5) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(contact.number, rowID: contact.id) }.listRowBackground(selectedRowID == contact.id ? Color.accentColor.opacity(0.14) : Color.clear)
-        }.listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
+        let filtered = model.contacts.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || $0.name.localizedCaseInsensitiveContains(model.phoneSearch) }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        let grouped = Dictionary(grouping: Array(filtered.prefix(200))) { contactIndexKey($0.name) }.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
+        return ScrollViewReader { proxy in
+            ZStack(alignment: .trailing) {
+                List { ForEach(grouped, id: \.key) { letter, contacts in Section(letter) { ForEach(contacts) { contact in HStack(spacing: 12) { ContactAvatar(name: contact.name, photoURL: model.contactPhotoURL(for: contact.number)); VStack(alignment: .leading, spacing: 5) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(contact.number, rowID: contact.id) }.listRowBackground(selectedRowID == contact.id ? Color.accentColor.opacity(0.14) : Color.clear) } }.id(letter) } }
+                    .listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor)).padding(.trailing, model.phoneSearch.isEmpty ? 22 : 0)
+                if model.phoneSearch.isEmpty { VStack(spacing: 0) { ForEach(grouped.map(\.key), id: \.self) { letter in Button(letter) { withAnimation { proxy.scrollTo(letter, anchor: .top) } }.buttonStyle(.plain).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).frame(width: 18, height: 15) } }.padding(.vertical, 5).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8)).padding(.trailing, 4) }
+            }
+        }
     }
 
     private var messageThreadList: some View {
@@ -518,6 +544,13 @@ private struct PhoneView: View {
     private func normalized(_ number: String) -> String { number.filter(\.isNumber).suffix(10).description }
     private func durationText(_ seconds: Int) -> String { seconds == 0 ? "연결 안 됨" : seconds >= 60 ? "\(seconds / 60)분 \(seconds % 60)초" : "\(seconds)초" }
     private func exactDate(_ date: Date) -> String { date.formatted(date: .complete, time: .standard) }
+    private func contactIndexKey(_ name: String) -> String {
+        guard let scalar = name.unicodeScalars.first else { return "#" }
+        let value = Int(scalar.value)
+        if (0xAC00...0xD7A3).contains(value) { return ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"][(value - 0xAC00) / 588] }
+        let letter = String(scalar).uppercased()
+        return letter.range(of: "^[A-Z]$", options: .regularExpression) == nil ? "#" : letter
+    }
 }
 
 private struct ContactAvatar: View {
@@ -552,7 +585,7 @@ private struct TransferView: View {
     private var isConnected: Bool { model.devices.contains { $0.serial == model.selectedSerial } }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            CompactTabSwitcher(selection: $direction, items: [("Galaxy로 보내기", "arrow.up.circle.fill"), ("Mac으로 가져오기", "arrow.down.circle.fill")], width: 460)
+            CompactTabSwitcher(selection: $direction, items: [("Galaxy로 보내기", "arrow.up.circle.fill"), ("Mac으로 가져오기", "arrow.down.circle.fill")])
             if direction == 0 {
                 Card("Galaxy로 보내기", icon: "arrow.up.circle") {
                 VStack(spacing: 14) {
@@ -575,7 +608,7 @@ private struct TransferView: View {
                         VStack(spacing: 10) {
                             Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.blue)
                             Text("불러온 파일 없음").fontWeight(.medium)
-                            Text(isConnected ? "상단 새로고침을 눌러 Galaxy의 Download 폴더를 확인하세요." : "Galaxy를 연결하면 파일 목록을 불러올 수 있습니다.").font(.caption).foregroundStyle(.secondary)
+                            Text(isConnected ? "하단 새로고침을 눌러 Galaxy의 Download 폴더를 확인하세요." : "Galaxy를 연결하면 파일 목록을 불러올 수 있습니다.").font(.caption).foregroundStyle(.secondary)
                         }.frame(maxWidth: .infinity, minHeight: 180)
                     } else {
                         List(model.remoteFiles, selection: $selectedRemote) { file in
@@ -664,8 +697,8 @@ private struct DisconnectedOverlay: View {
 private struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Card("화면 품질", icon: "display") {
+        VStack(alignment: .leading, spacing: 26) {
+            SettingsGroup("화면 품질", icon: "display") {
                 VStack(alignment: .leading, spacing: 14) {
                     Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 14) {
                         GridRow {
@@ -692,7 +725,7 @@ private struct SettingsView: View {
                 }
                 HStack { Spacer(); Button("설정 저장", action: model.save).buttonStyle(.borderedProminent) }
             }
-            Card("연결과 Mac 동작", icon: "gearshape") {
+            SettingsGroup("연결과 Mac 동작", icon: "gearshape") {
                 VStack(alignment: .leading, spacing: 0) {
                     SettingsRow("마지막 무선 주소로 자동 재연결") { Toggle("", isOn: $model.automaticReconnect).labelsHidden() }
                     Divider()
@@ -750,7 +783,6 @@ private struct DiagnosticsView: View {
 private struct CompactTabSwitcher: View {
     @Binding var selection: Int
     let items: [(String, String)]
-    var width: CGFloat = 360
     var body: some View {
         HStack(spacing: 4) {
             ForEach(Array(items.enumerated()), id: \.offset) { index, item in
@@ -767,32 +799,9 @@ private struct CompactTabSwitcher: View {
             }
         }
         .padding(4)
-        .frame(width: width)
+        .frame(maxWidth: .infinity)
         .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 11))
         .overlay(RoundedRectangle(cornerRadius: 11).stroke(Color.primary.opacity(0.08)))
-    }
-}
-
-private struct LaunchModeSwitcher: View {
-    @Binding var selection: AppLaunchMode
-    var body: some View {
-        HStack(spacing: 4) {
-            option("DEX 모드", value: .desktopWindow)
-            option("휴대폰 미러링 모드", value: .phoneScreen)
-        }
-        .padding(4)
-        .frame(width: 440)
-        .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 11))
-        .overlay(RoundedRectangle(cornerRadius: 11).stroke(Color.primary.opacity(0.08)))
-    }
-
-    private func option(_ title: String, value: AppLaunchMode) -> some View {
-        Button { withAnimation(.easeInOut(duration: 0.15)) { selection = value } } label: {
-            Text(localized(title)).fontWeight(.semibold).frame(maxWidth: .infinity, minHeight: 36)
-                .foregroundStyle(selection == value ? Color.white : Color.secondary)
-                .background(selection == value ? Color.accentColor : Color.clear, in: RoundedRectangle(cornerRadius: 8))
-                .contentShape(RoundedRectangle(cornerRadius: 8))
-        }.buttonStyle(.plain)
     }
 }
 
@@ -841,6 +850,23 @@ private struct SettingsRow<Control: View>: View {
     let title: String; @ViewBuilder let control: Control
     init(_ title: String, @ViewBuilder control: () -> Control) { self.title = title; self.control = control() }
     var body: some View { HStack(spacing: 20) { Text(title).fontWeight(.medium); Spacer(minLength: 28); control }.padding(.vertical, 13) }
+}
+
+private struct SettingsGroup<Content: View>: View {
+    let title: String
+    let icon: String
+    @ViewBuilder let content: Content
+    init(_ title: String, icon: String, @ViewBuilder content: () -> Content) { self.title = title; self.icon = icon; self.content = content() }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(localized(title), systemImage: icon).font(.title3.weight(.semibold)).padding(.leading, 4)
+            VStack(alignment: .leading, spacing: 14) { content }
+                .padding(.horizontal, 18).padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.08)))
+        }
+    }
 }
 
 private struct LaunchTile: View {

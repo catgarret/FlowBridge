@@ -4,6 +4,14 @@
 
 ## Unreleased - experimental macOS port
 
+- Removed the detail view's fixed width cap, rebalanced the app picker header/list/footer, flattened Home connection setup to one disclosure level, added Messages search clearance, and locale-sorted contacts by name.
+- 상세 화면의 고정 폭 제한을 제거하고 앱 검색 창의 헤더·목록·푸터 균형을 조정했습니다. 홈 연결 설정은 한 단계로 평탄화하고 문자 검색창 여백과 연락처 이름 기준 로컬 정렬을 추가했습니다.
+- Flattened Settings into named sections with single grouped row surfaces, consistent separators, left labels, and right-aligned controls while preserving every existing option.
+- 설정 화면을 섹션 제목·단일 행 그룹·일관된 구분선·좌측 라벨·우측 컨트롤 구조로 단순화하고 기존 설정 기능은 모두 유지했습니다.
+- Standardized the Calls/Messages, File Transfer, and Notifications switchers as full-width equal halves; restored the compact app launch-mode picker; and removed the empty Messages toolbar reservation.
+- 통화·메시지, 파일 전송, 알림 전환을 전체 폭 50:50 공통 컴포넌트로 통일했습니다. 앱 실행 방식은 작은 우측 정렬 선택기로 복원하고 문자 화면의 빈 도구 영역을 제거했습니다.
+- Moved per-page refresh into the status bar as a full-row icon and relative last-updated action, and removed the oversized header button.
+- 화면별 새로고침을 상단 버튼에서 하단 상태 표시줄의 아이콘·상대 업데이트 시간 버튼으로 옮겼습니다.
 - Removed redundant Quick Launch chevrons and stabilized the phone sidebar toolbar/search geometry across Calls and Messages with cleaner search padding.
 - 앱 바로 실행의 불필요한 화살표를 제거하고 전화·문자 전환 시 좌측 도구·검색 영역 위치가 움직이지 않도록 고정했으며 검색창 여백을 정리했습니다.
 - Replaced the oversized File Transfer and Notifications page bars with the same compact centered switcher used by Calls and Messages.

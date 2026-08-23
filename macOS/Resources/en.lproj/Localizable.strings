@@ -18,6 +18,8 @@
 "기기 정보와 화면 복구 도구 상태를 확인합니다." = "Inspect device information and the display recovery tool.";
 "버전, 업데이트, 오픈소스 라이선스와 프로젝트 링크를 확인합니다." = "View the version, updates, open-source licenses, and project links.";
 "새로고침" = "Refresh";
+"방금 업데이트" = "Updated just now";
+"업데이트" = "updated";
 "로그 저장" = "Save Log";
 "데스크톱 화면" = "Desktop Screen";
 "휴대폰 화면" = "Phone Screen";
