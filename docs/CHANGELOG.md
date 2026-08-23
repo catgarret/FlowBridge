@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Fixed delayed phone-data loads bypassing the latest-item scroll, added a stable bottom anchor for conversations, and always show year, month, day, and time in call and message details.
+- 비동기 전화·문자 데이터 로드 뒤 최신 항목 이동이 누락되던 문제를 고치고 대화 하단 기준점을 추가했으며, 통화·문자 상세에 연·월·일·시각을 항상 표시합니다.
 - Added an explicit SMS sending state with a progress indicator and duplicate-send lock, and made saved contact headers in message conversations open their contact details.
 - SMS 전송 버튼 탐색 중 로딩 표시와 중복 전송 방지를 추가하고, 문자 대화의 저장된 프로필·이름을 누르면 연락처 상세로 이동하도록 했습니다.
 - Added persistent per-app Mac notification controls in both Notification Settings and each live Galaxy notification row.

@@ -493,7 +493,7 @@ private struct PhoneView: View {
                             .foregroundStyle(call.type == 3 ? .red : .secondary)
                         VStack(alignment: .leading, spacing: 6) {
                             Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화")
-                            Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary)
+                            Text(detailDate(call.date)).font(.caption).foregroundStyle(.secondary).help(exactDate(call.date))
                         }
                         Spacer()
                         Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary)
@@ -506,9 +506,10 @@ private struct PhoneView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
-                .onAppear { scrollToLatestCall(proxy, calls: calls) }
-                .onChange(of: selectedNumber) { _ in scrollToLatestCall(proxy, calls: calls) }
-                .onChange(of: calls.first?.id) { _ in scrollToLatestCall(proxy, calls: calls) }
+                .task(id: "\(selectedNumber)|\(calls.first?.id ?? "")|\(calls.count)") {
+                    try? await Task.sleep(nanoseconds: 80_000_000)
+                    if let latest = calls.first { proxy.scrollTo(latest.id, anchor: .top) }
+                }
             }
         }.frame(maxWidth: .infinity))
     }
@@ -556,10 +557,28 @@ private struct PhoneView: View {
             }.padding(14)
             Divider()
             ScrollViewReader { proxy in
-                ScrollView { LazyVStack(spacing: 12) { ForEach(conversation) { message in HStack { if message.isOutgoing { Spacer(minLength: 96) }; VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 5) { Text(message.body).textSelection(.enabled); Text(message.date, style: .time).font(.caption2).opacity(0.7) }.foregroundStyle(message.isOutgoing ? Color.white : Color.primary).padding(.horizontal, 13).padding(.vertical, 10).background(message.isOutgoing ? Color.green : Color.secondary.opacity(0.14), in: RoundedRectangle(cornerRadius: 16)); if !message.isOutgoing { Spacer(minLength: 96) } }.id(message.id) } }.padding(18) }
-                    .onAppear { scrollToLatestMessage(proxy, conversation: conversation) }
-                    .onChange(of: selectedNumber) { _ in scrollToLatestMessage(proxy, conversation: conversation) }
-                    .onChange(of: conversation.last?.id) { _ in scrollToLatestMessage(proxy, conversation: conversation) }
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(conversation) { message in
+                            HStack {
+                                if message.isOutgoing { Spacer(minLength: 96) }
+                                VStack(alignment: message.isOutgoing ? .trailing : .leading, spacing: 5) {
+                                    Text(message.body).textSelection(.enabled)
+                                    Text(detailDate(message.date)).font(.caption2).opacity(0.7).help(exactDate(message.date))
+                                }
+                                .foregroundStyle(message.isOutgoing ? Color.white : Color.primary)
+                                .padding(.horizontal, 13).padding(.vertical, 10)
+                                .background(message.isOutgoing ? Color.green : Color.secondary.opacity(0.14), in: RoundedRectangle(cornerRadius: 16))
+                                if !message.isOutgoing { Spacer(minLength: 96) }
+                            }.id(message.id)
+                        }
+                        Color.clear.frame(height: 1).id("message-conversation-bottom")
+                    }.padding(18)
+                }
+                .task(id: "\(selectedNumber)|\(conversation.last?.id ?? "")|\(conversation.count)") {
+                    try? await Task.sleep(nanoseconds: 80_000_000)
+                    proxy.scrollTo("message-conversation-bottom", anchor: .bottom)
+                }
             }
             Divider()
             HStack(alignment: .bottom, spacing: 10) {
@@ -596,14 +615,7 @@ private struct PhoneView: View {
     private func normalized(_ number: String) -> String { number.filter(\.isNumber).suffix(10).description }
     private func durationText(_ seconds: Int) -> String { seconds == 0 ? "연결 안 됨" : seconds >= 60 ? "\(seconds / 60)분 \(seconds % 60)초" : "\(seconds)초" }
     private func exactDate(_ date: Date) -> String { date.formatted(date: .complete, time: .standard) }
-    private func scrollToLatestCall(_ proxy: ScrollViewProxy, calls: [PhoneCall]) {
-        guard let latest = calls.first else { return }
-        DispatchQueue.main.async { proxy.scrollTo(latest.id, anchor: .top) }
-    }
-    private func scrollToLatestMessage(_ proxy: ScrollViewProxy, conversation: [PhoneMessage]) {
-        guard let latest = conversation.last else { return }
-        DispatchQueue.main.async { proxy.scrollTo(latest.id, anchor: .bottom) }
-    }
+    private func detailDate(_ date: Date) -> String { date.formatted(.dateTime.year().month(.abbreviated).day().hour().minute()) }
     private func contactIndexKey(_ name: String) -> String {
         guard let scalar = name.unicodeScalars.first else { return "#" }
         let value = Int(scalar.value)
