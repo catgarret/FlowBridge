@@ -4,6 +4,10 @@
 
 ## Unreleased - experimental macOS port
 
+- Accept Finder file and folder drops across the entire app and route file-only
+  Command-V pastes to the transfer page without intercepting active text editing.
+- 앱 전체에서 Finder 파일·폴더 드롭을 받고, 텍스트 입력 중에는 가로채지 않으면서
+  파일이 복사된 Command-V만 파일 전송 화면으로 보내도록 개선했습니다.
 - Add verified screen-launch states, single active main display, lock guidance,
   volume controls, reversible phone dimming, balanced connection cards, searchable
   app quick launch with Command-1/2/3 favorites, and live contacts/calls/SMS browsing.

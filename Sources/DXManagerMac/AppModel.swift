@@ -384,10 +384,12 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func pasteFilesFromClipboard() {
+    @discardableResult
+    func pasteFilesFromClipboard() -> Bool {
         let urls = NSPasteboard.general.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
-        guard !urls.isEmpty else { status = "Mac 클립보드에 복사된 파일이 없습니다."; return }
+        guard !urls.isEmpty else { status = "Mac 클립보드에 복사된 파일이 없습니다."; return false }
         transfer(urls: urls)
+        return true
     }
 
     func loadRemoteFiles() {

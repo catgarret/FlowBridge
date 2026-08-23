@@ -24,6 +24,7 @@ private enum AppSection: String, CaseIterable, Identifiable {
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @State private var section: AppSection? = .home
+    @State private var isGlobalDropTarget = false
 
     var body: some View {
         NavigationSplitView {
@@ -61,6 +62,25 @@ struct ContentView: View {
             }.background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(minWidth: 980, minHeight: 680)
+        .overlay {
+            if isGlobalDropTarget {
+                RoundedRectangle(cornerRadius: 16).strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 3, dash: [8]))
+                    .background(Color.accentColor.opacity(0.08)).padding(8).allowsHitTesting(false)
+            }
+        }
+        .onDrop(of: [UTType.fileURL], isTargeted: $isGlobalDropTarget, perform: acceptGlobalDrop)
+        .onPasteCommand(of: [UTType.fileURL]) { _ in
+            if model.pasteFilesFromClipboard() { section = .transfer }
+        }
+    }
+
+    private func acceptGlobalDrop(_ providers: [NSItemProvider]) -> Bool {
+        loadFileURLs(from: providers) { urls in
+            guard !urls.isEmpty else { return }
+            section = .transfer
+            model.transfer(urls: urls)
+        }
+        return !providers.isEmpty
     }
 
     private var pageHeader: some View {
@@ -332,7 +352,7 @@ private struct TransferView: View {
                     Text("Finder 파일을 여기에 놓거나, Finder에서 ⌘C한 뒤 아래 버튼을 누르세요.").foregroundStyle(.secondary)
                     HStack {
                         Button(action: model.chooseAndTransfer) { Label("파일·폴더 선택", systemImage: "plus") }.buttonStyle(.borderedProminent)
-                        Button(action: model.pasteFilesFromClipboard) { Label("Mac 클립보드 붙여넣기", systemImage: "doc.on.clipboard") }.keyboardShortcut("v", modifiers: .command)
+                        Button { _ = model.pasteFilesFromClipboard() } label: { Label("Mac 클립보드 붙여넣기", systemImage: "doc.on.clipboard") }
                     }
                     if model.isTransferring { ProgressView().frame(maxWidth: 420); Text(model.transferStatus).font(.caption); Button("전송 취소", action: model.cancelTransfer) }
                 }.frame(maxWidth: .infinity).padding(.vertical, 22)
@@ -367,23 +387,27 @@ private struct TransferView: View {
     }
 
     private func acceptDrop(_ providers: [NSItemProvider]) -> Bool {
-        let group = DispatchGroup()
-        let collector = URLCollector()
-        for provider in providers {
-            group.enter()
-            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-                defer { group.leave() }
-                let url: URL?
-                if let data = item as? Data { url = URL(dataRepresentation: data, relativeTo: nil) }
-                else if let value = item as? URL { url = value }
-                else if let value = item as? NSURL { url = value as URL }
-                else { url = nil }
-                if let url { collector.append(url) }
-            }
-        }
-        group.notify(queue: .main) { model.transfer(urls: collector.values) }
+        loadFileURLs(from: providers) { model.transfer(urls: $0) }
         return !providers.isEmpty
     }
+}
+
+private func loadFileURLs(from providers: [NSItemProvider], completion: @escaping ([URL]) -> Void) {
+    let group = DispatchGroup()
+    let collector = URLCollector()
+    for provider in providers {
+        group.enter()
+        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+            defer { group.leave() }
+            let url: URL?
+            if let data = item as? Data { url = URL(dataRepresentation: data, relativeTo: nil) }
+            else if let value = item as? URL { url = value }
+            else if let value = item as? NSURL { url = value as URL }
+            else { url = nil }
+            if let url { collector.append(url) }
+        }
+    }
+    group.notify(queue: .main) { completion(collector.values) }
 }
 
 private final class URLCollector: @unchecked Sendable {
