@@ -207,6 +207,7 @@ private struct HomeView: View {
                             if model.devices.count > 1 {
                                 Picker("기기 전환", selection: $model.selectedSerial) { ForEach(model.devices) { Text(model.deviceLabel($0)).tag($0.serial) } }.frame(maxWidth: 260).onChange(of: model.selectedSerial) { _ in model.applyDeviceSettings() }
                             }
+                            DeviceLaunchButtons()
                         }.padding(16).background(Color.green.opacity(0.07), in: RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.green.opacity(0.18)))
                         DisclosureGroup("다른 기기 추가 또는 연결 방식 변경") { ConnectionSetupView().padding(.top, 10) }
                         Divider().padding(.vertical, 2)
@@ -234,17 +235,10 @@ private struct ScreenLaunchControls: View {
     private let brightnessHelp = "화면 보호와 온도 제어를 위해 DEX/휴대폰 미러링 실행 시 밝기가 자동으로 최저로 낮아지며 종료 시 원래 밝기로 복원됩니다."
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("화면 열기", systemImage: "macwindow.on.rectangle").font(.headline)
             if model.sessionPhase == .launching {
-                HStack(spacing: 12) { ProgressView(); VStack(alignment: .leading) { Text("화면 연결 준비 중").fontWeight(.semibold); Text("영상 창이 표시되는지 확인하고 있습니다.").font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("취소", role: .destructive, action: model.stop) }
-                    .padding(14).background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                HStack(spacing: 8) { ProgressView(); Text("화면 연결 준비 중").font(.subheadline).foregroundStyle(.secondary) }
             } else if model.sessionPhase == .running {
-                HStack { Label("화면 실행 중", systemImage: "checkmark.circle.fill").foregroundStyle(.green); Spacer(); Button("화면 종료 및 정리", role: .destructive, action: model.stop) }
-            } else {
-                HStack(spacing: 14) {
-                    LaunchTile(title: "DEX 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
-                    LaunchTile(title: "휴대폰 미러링", subtitle: "기본 화면 그대로", icon: "iphone", tint: .purple, action: model.startPhoneMirror)
-                }
+                Label("화면 실행 중", systemImage: "checkmark.circle.fill").font(.subheadline).foregroundStyle(.green)
             }
             HStack(spacing: 6) {
                 Text("실행 시 밝기 최저 조절")
@@ -252,6 +246,24 @@ private struct ScreenLaunchControls: View {
                 Spacer(); Toggle("", isOn: $model.turnPhoneScreenOffOnStart).labelsHidden().toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.brightnessSettingChanged() }
             }
             if model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
+        }
+    }
+}
+
+private struct DeviceLaunchButtons: View {
+    @EnvironmentObject private var model: AppModel
+    var body: some View {
+        Group {
+            if model.sessionPhase == .launching {
+                Button("취소", role: .destructive, action: model.stop)
+            } else if model.sessionPhase == .running {
+                Button("화면 종료", role: .destructive, action: model.stop)
+            } else {
+                VStack(spacing: 8) {
+                    Button(action: model.startDeX) { Label("DEX 모드", systemImage: "display") }.buttonStyle(.borderedProminent)
+                    Button(action: model.startPhoneMirror) { Label("휴대폰 미러링", systemImage: "iphone") }
+                }.controlSize(.regular).fixedSize()
+            }
         }
     }
 }
@@ -370,14 +382,14 @@ private struct PhoneView: View {
         let filtered = model.recentCalls.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || contactName($0.number).localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered.prefix(100)) { call in
             HStack(spacing: 12) { ContactAvatar(name: contactName(call.number), photoURL: contactPhoto(call.number)); VStack(alignment: .leading, spacing: 5) { Text(contactName(call.number)).fontWeight(.medium); HStack(spacing: 4) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down"); Text(call.number) }.font(.caption).foregroundStyle(call.type == 3 ? .red : .secondary) }; Spacer(); Text(call.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(call.number, rowID: call.id) }.listRowBackground(selectedRowID == call.id ? Color.accentColor.opacity(0.14) : Color.clear)
-        }.listStyle(.plain)
+        }.listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var contactList: some View {
         let filtered = model.contacts.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || $0.name.localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered.prefix(200)) { contact in
             HStack(spacing: 12) { ContactAvatar(name: contact.name, photoURL: model.contactPhotoURL(for: contact.number)); VStack(alignment: .leading, spacing: 5) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(contact.number, rowID: contact.id) }.listRowBackground(selectedRowID == contact.id ? Color.accentColor.opacity(0.14) : Color.clear)
-        }.listStyle(.plain)
+        }.listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var messageThreadList: some View {
@@ -385,7 +397,7 @@ private struct PhoneView: View {
         let filtered = latest.filter { model.phoneSearch.isEmpty || $0.address.contains(model.phoneSearch) || $0.body.localizedCaseInsensitiveContains(model.phoneSearch) || contactName($0.address).localizedCaseInsensitiveContains(model.phoneSearch) }
         return List(filtered) { message in
             HStack(spacing: 12) { ContactAvatar(name: contactName(message.address), photoURL: contactPhoto(message.address)); VStack(alignment: .leading, spacing: 5) { HStack { Text(contactName(message.address)).fontWeight(.medium).lineLimit(1); Spacer(); Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }; Text(message.body.replacingOccurrences(of: "\n", with: " ")).lineLimit(1).truncationMode(.tail).font(.caption).foregroundStyle(.secondary) } }.padding(.vertical, 7).contentShape(Rectangle()).onTapGesture { select(message.address, rowID: message.address) }.listRowBackground(selectedRowID == message.address ? Color.accentColor.opacity(0.14) : Color.clear)
-        }.listStyle(.plain)
+        }.listStyle(.plain).scrollContentBackground(.hidden).background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var emptyDetail: some View {
