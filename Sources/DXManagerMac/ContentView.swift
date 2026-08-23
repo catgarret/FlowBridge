@@ -1,10 +1,11 @@
 import SwiftUI
 import DXManagerCore
+import UniformTypeIdentifiers
 
 private func localized(_ key: String) -> String { NSLocalizedString(key, comment: "") }
 
 private enum AppSection: String, CaseIterable, Identifiable {
-    case home = "홈", phone = "전화·문자", apps = "앱 창", transfer = "파일 전송", notifications = "알림", settings = "설정", diagnostics = "진단"
+    case home = "홈", phone = "전화·문자", apps = "앱 창", transfer = "파일 전송", notifications = "알림", settings = "설정", diagnostics = "진단", about = "정보"
     var id: Self { self }
     var icon: String {
         switch self {
@@ -15,6 +16,7 @@ private enum AppSection: String, CaseIterable, Identifiable {
         case .notifications: return "bell"
         case .settings: return "slider.horizontal.3"
         case .diagnostics: return "stethoscope"
+        case .about: return "info.circle"
         }
     }
 }
@@ -51,6 +53,7 @@ struct ContentView: View {
                         case .notifications: NotificationsView()
                         case .settings: SettingsView()
                         case .diagnostics: DiagnosticsView()
+                        case .about: AboutView()
                         }
                     }.frame(maxWidth: 920, alignment: .leading).padding(28)
                 }
@@ -90,6 +93,40 @@ struct ContentView: View {
         case .notifications: return "전화·문자·앱 알림을 Mac 알림 센터로 전달합니다."
         case .settings: return "화면 품질, 자동 연결과 Mac 동작을 설정합니다."
         case .diagnostics: return "기기 정보와 화면 복구 도구 상태를 확인합니다."
+        case .about: return "버전, 업데이트, 오픈소스 라이선스와 프로젝트 링크를 확인합니다."
+        }
+    }
+}
+
+private struct AboutView: View {
+    @EnvironmentObject private var model: AppModel
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Card("Flow Bridge", icon: "app.badge") {
+                HStack {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("버전 0.1.0").font(.title3.weight(.semibold))
+                        Text(model.updateStatus).foregroundStyle(model.isUpdateAvailable ? .blue : .secondary)
+                    }
+                    Spacer(); Button("업데이트 확인", action: model.checkForUpdates)
+                    Link("GitHub 릴리스 열기", destination: URL(string: "https://github.com/catgarret/FlowBridge/releases")!)
+                }
+            }
+            Card("오픈소스와 라이선스", icon: "doc.text") {
+                Text("Flow Bridge의 macOS 코드는 MIT License로 배포됩니다. maze-mei의 MIT 라이선스 프로젝트 DX Manager를 일부 기반으로 하며, 원저작권 표시와 라이선스 전문을 보존합니다.")
+                Text("scrcpy, Android Debug Bridge, SDL, FFmpeg와 동봉 구성요소에는 각각의 오픈소스 라이선스가 적용됩니다.")
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Link("Flow Bridge 소스", destination: URL(string: "https://github.com/catgarret/FlowBridge")!)
+                    Link("원본 DX Manager", destination: URL(string: "https://github.com/maze-mei/DX-Manager")!)
+                    Link("scrcpy", destination: URL(string: "https://github.com/Genymobile/scrcpy")!)
+                    Link("전체 라이선스 보기", destination: URL(string: "https://github.com/catgarret/FlowBridge#attribution-licenses-and-trademarks--출처라이선스상표")!)
+                }
+            }
+            Card("독립 프로젝트 고지", icon: "checkmark.shield") {
+                Text("Flow Bridge는 독립적으로 개발된 오픈소스 프로젝트이며 Samsung Electronics, Apple, Google, Genymobile 또는 Microsoft와 제휴·후원·보증 관계가 없습니다.")
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }
@@ -149,6 +186,8 @@ private struct HomeView: View {
                     LaunchTile(title: "데스크톱 모드", subtitle: "넓은 화면으로 작업", icon: "display", tint: .blue, action: model.startDeX)
                     LaunchTile(title: "휴대폰 미러링", subtitle: "기본 화면 그대로", icon: "iphone", tint: .purple, action: model.startPhoneMirror)
                 }
+                Toggle("화면을 열면 휴대폰 화면 자동으로 끄기", isOn: $model.turnPhoneScreenOffOnStart)
+                    .toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.save() }
                 HStack {
                     Button(role: .destructive, action: model.stop) { Label("모든 화면 중지 및 정리", systemImage: "stop.fill") }
                     Spacer()
@@ -156,6 +195,15 @@ private struct HomeView: View {
                     Button { model.sendKeyEvent(223, label: "화면 끄기") } label: { Label("화면 끄기", systemImage: "moon") }
                     Button { model.sendKeyEvent(26, label: "전원") } label: { Label("전원", systemImage: "power") }
                 }.padding(.top, 4)
+            }
+            if model.hasActiveSession {
+                Card("보호된 화면 안내", icon: "lock.shield") {
+                    Text("비밀번호·결제·DRM 화면은 Android 보안 정책으로 Mac에서 검게 표시될 수 있습니다. 우회하지 않으며 Galaxy에서 직접 입력하거나 진행해야 합니다.")
+                    HStack {
+                        Text("일반 입력 화면이라면 Flow Bridge 창에 키보드로 입력한 뒤 Enter를 눌러도 됩니다.").font(.caption).foregroundStyle(.secondary)
+                        Spacer(); Button("휴대폰 화면 켜기") { model.sendKeyEvent(224, label: "화면 켜기") }
+                    }
+                }
             }
             Card("빠른 작업", icon: "bolt") {
                 HStack {
@@ -254,16 +302,75 @@ private struct PhoneView: View {
 
 private struct TransferView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var selectedRemote: RemoteFile?
+    @State private var isDropTarget = false
     var body: some View {
-        Card("Mac에서 Galaxy로", icon: "arrow.up.circle") {
-            VStack(spacing: 16) {
-                Image(systemName: "doc.on.doc").font(.system(size: 42)).foregroundStyle(.blue)
-                Text("파일 또는 폴더를 선택하면 Galaxy의 Download 폴더로 전송합니다.").multilineTextAlignment(.center).foregroundStyle(.secondary)
-                Button(action: model.chooseAndTransfer) { Label("파일·폴더 선택", systemImage: "plus") }.buttonStyle(.borderedProminent).controlSize(.large)
-                if model.isTransferring { ProgressView().frame(maxWidth: 420); Text(model.transferStatus).font(.caption); Button("전송 취소", action: model.cancelTransfer) }
-            }.frame(maxWidth: .infinity).padding(.vertical, 36)
+        VStack(alignment: .leading, spacing: 18) {
+            Card("Mac에서 Galaxy로", icon: "arrow.up.circle") {
+                VStack(spacing: 14) {
+                    Image(systemName: isDropTarget ? "arrow.down.doc.fill" : "doc.on.doc").font(.system(size: 38)).foregroundStyle(.blue)
+                    Text("Finder 파일을 여기에 놓거나, Finder에서 ⌘C한 뒤 아래 버튼을 누르세요.").foregroundStyle(.secondary)
+                    HStack {
+                        Button(action: model.chooseAndTransfer) { Label("파일·폴더 선택", systemImage: "plus") }.buttonStyle(.borderedProminent)
+                        Button(action: model.pasteFilesFromClipboard) { Label("Mac 클립보드 붙여넣기", systemImage: "doc.on.clipboard") }.keyboardShortcut("v", modifiers: .command)
+                    }
+                    if model.isTransferring { ProgressView().frame(maxWidth: 420); Text(model.transferStatus).font(.caption); Button("전송 취소", action: model.cancelTransfer) }
+                }.frame(maxWidth: .infinity).padding(.vertical, 22)
+                    .background(isDropTarget ? Color.blue.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
+                    .onDrop(of: [UTType.fileURL], isTargeted: $isDropTarget, perform: acceptDrop)
+            }
+            Card("Galaxy에서 Mac으로", icon: "arrow.down.circle") {
+                HStack {
+                    Text("Galaxy Download").fontWeight(.medium)
+                    Spacer(); Button("파일 목록 갱신", action: model.loadRemoteFiles)
+                }
+                if model.remoteFiles.isEmpty {
+                    VStack(spacing: 10) {
+                        Image(systemName: "folder").font(.system(size: 34)).foregroundStyle(.secondary)
+                        Text("불러온 파일 없음").fontWeight(.medium)
+                        Text("파일 목록 갱신을 눌러 Galaxy의 Download 폴더를 확인하세요.").font(.caption).foregroundStyle(.secondary)
+                    }.frame(maxWidth: .infinity, minHeight: 180)
+                } else {
+                    List(model.remoteFiles, selection: $selectedRemote) { file in
+                        Label(file.name, systemImage: file.isDirectory ? "folder" : "doc").tag(file).onDrag { model.remoteFileProvider(file) }
+                    }.frame(minHeight: 240)
+                }
+                HStack {
+                    Text("선택한 파일을 Finder로 드래그하거나 ⌘C 후 Finder에서 ⌘V 하세요.").font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Mac 클립보드에 복사") { if let selectedRemote { model.copyRemoteFile(selectedRemote) } }
+                        .keyboardShortcut("c", modifiers: .command).disabled(selectedRemote == nil)
+                    Button("다른 이름으로 저장") { if let selectedRemote { model.downloadRemoteFile(selectedRemote) } }.disabled(selectedRemote == nil)
+                }
+            }
         }
     }
+
+    private func acceptDrop(_ providers: [NSItemProvider]) -> Bool {
+        let group = DispatchGroup()
+        let collector = URLCollector()
+        for provider in providers {
+            group.enter()
+            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+                defer { group.leave() }
+                let url: URL?
+                if let data = item as? Data { url = URL(dataRepresentation: data, relativeTo: nil) }
+                else if let value = item as? URL { url = value }
+                else if let value = item as? NSURL { url = value as URL }
+                else { url = nil }
+                if let url { collector.append(url) }
+            }
+        }
+        group.notify(queue: .main) { model.transfer(urls: collector.values) }
+        return !providers.isEmpty
+    }
+}
+
+private final class URLCollector: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [URL] = []
+    func append(_ url: URL) { lock.lock(); storage.append(url); lock.unlock() }
+    var values: [URL] { lock.lock(); defer { lock.unlock() }; return storage }
 }
 
 private struct NotificationsView: View {

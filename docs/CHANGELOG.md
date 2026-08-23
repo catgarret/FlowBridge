@@ -4,6 +4,14 @@
 
 ## Unreleased - experimental macOS port
 
+- Add Finder-style Command-C/Command-V file exchange, Mac-to-Galaxy drop targets,
+  Galaxy Download browsing, phone-to-Mac file promises for drag-out, and explicit
+  save actions for files and folders.
+- Add a persisted option to turn off the physical phone screen when mirroring
+  starts, protected-screen guidance without bypassing Android FLAG_SECURE, an
+  in-app license/about page, and GitHub Releases update checks.
+- Replace the rounded-background icon source with the project owner's square
+  Frame 70 vector so macOS applies its own icon mask without white clipped corners.
 - Add one-click USB-to-wireless setup, mDNS pairing and connect endpoint discovery,
   code-only Android 11+ pairing, automatic endpoint saving, and a manual fallback
   reserved for isolated networks and Tailscale addresses.
@@ -71,6 +79,12 @@
 - USB 연결을 한 번에 무선으로 전환하고 mDNS로 페어링·연결 주소를 자동 검색해
   6자리 코드만으로 연결하며 주소 저장·자동 재연결까지 처리하도록 개선했습니다.
   격리 네트워크와 Tailscale 주소용 수동 입력은 고급 항목으로 이동했습니다.
+- Finder 방식 `⌘C/⌘V` 파일 송수신, Mac→Galaxy 드롭 영역, Galaxy Download 탐색,
+  Galaxy→Mac 드래그 파일 프라미스와 파일·폴더 저장 기능을 추가했습니다.
+- 미러링 시작 시 실제 휴대폰 화면을 끄는 저장 옵션, Android 보안 화면을 우회하지
+  않는 안내, 앱 내 라이선스·정보 화면과 GitHub Releases 업데이트 확인을 추가했습니다.
+- macOS 자체 아이콘 마스크가 적용되도록 둥근 배경을 제거한 최종 Frame 70 벡터로
+  교체해 아이콘 모서리의 흰색 잘림을 수정했습니다.
 
 ## 2026-08 - v2.0.0
 

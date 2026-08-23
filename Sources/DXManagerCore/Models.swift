@@ -30,6 +30,14 @@ public struct ADBMDNSService: Hashable, Sendable {
     public init(name: String, type: String, endpoint: String) { self.name = name; self.type = type; self.endpoint = endpoint }
 }
 
+public struct RemoteFile: Identifiable, Hashable, Sendable {
+    public let name: String
+    public let path: String
+    public let isDirectory: Bool
+    public var id: String { path }
+    public init(name: String, path: String, isDirectory: Bool = false) { self.name = name; self.path = path; self.isDirectory = isDirectory }
+}
+
 public struct DisplaySettings: Codable, Equatable, Sendable {
     public var width = 1920
     public var height = 1080
@@ -60,9 +68,10 @@ public struct AppSettings: Codable, Sendable {
     public var phoneNotificationsEnabled = false
     public var messageNotificationsEnabled = false
     public var appNotificationsEnabled = false
+    public var turnPhoneScreenOffOnStart = false
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled }
+    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -77,6 +86,7 @@ public struct AppSettings: Codable, Sendable {
         phoneNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .phoneNotificationsEnabled) ?? false
         messageNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .messageNotificationsEnabled) ?? false
         appNotificationsEnabled = try values.decodeIfPresent(Bool.self, forKey: .appNotificationsEnabled) ?? false
+        turnPhoneScreenOffOnStart = try values.decodeIfPresent(Bool.self, forKey: .turnPhoneScreenOffOnStart) ?? false
     }
 }
 

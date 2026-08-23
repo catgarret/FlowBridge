@@ -134,6 +134,24 @@ public struct ADBService: Sendable {
         _ = try runner.run(executable, ["-s", serial, "pull", remotePath, localURL.path])
     }
 
+    public func downloadFiles(serial: String) throws -> [RemoteFile] {
+        let output = try shell(serial: serial, ["ls", "-1p", "/sdcard/Download"])
+        return Self.parseDownloadEntries(output)
+    }
+
+    public static func parseDownloadEntries(_ output: String) -> [RemoteFile] {
+        output.split(whereSeparator: \ .isNewline).compactMap { raw in
+            var name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return nil }
+            let isDirectory = name.hasSuffix("/")
+            if isDirectory { name.removeLast() }
+            return RemoteFile(name: name, path: "/sdcard/Download/\(name)", isDirectory: isDirectory)
+        }.sorted {
+            if $0.isDirectory != $1.isDirectory { return $0.isDirectory }
+            return $0.name.localizedStandardCompare($1.name) == .orderedAscending
+        }
+    }
+
     public static func parseDevices(_ output: String) -> [Device] {
         output.split(whereSeparator: \ .isNewline).dropFirst().compactMap { raw in
             let fields = raw.split(whereSeparator: \ .isWhitespace).map(String.init)

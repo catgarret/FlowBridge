@@ -33,6 +33,11 @@ check(mdns.count == 2, "mDNS service parsing and deduplication")
 check(mdns.first?.isPairing == true, "mDNS pairing classification")
 check(mdns.last?.endpoint == "192.168.0.4:38911", "mDNS connect endpoint")
 
+let downloadEntries = ADBService.parseDownloadEntries("Folder/\nphoto.jpg\nnotes.txt\n")
+check(downloadEntries.count == 3, "Download entry parsing")
+check(downloadEntries.first?.isDirectory == true, "Download folders sort first")
+check(downloadEntries.first?.name == "Folder", "Download folder suffix trimming")
+
 let launcherDump = """
 3 activities found:
   Activity #0:

@@ -27,6 +27,8 @@ runtime installation.
 - Open the Galaxy dialer, answer or end calls, and hand message drafts to the phone
 - Forward new call, message, and application notifications to Notification Center
 - Transfer files and folders to the phone
+- Copy and paste files with Command-C/Command-V, drag files and folders in both
+  directions, and browse the Galaxy Download folder
 - Save per-device display settings and per-app profiles
 - Install and verify the official DX Companion recovery APK
 - Korean and English interface, selected from the macOS language preference
@@ -82,6 +84,7 @@ SwiftUI 기반 macOS 앱입니다. Apple Silicon과 Intel용 ADB·scrcpy 실행 
 - Mac에서 Galaxy 전화 화면 열기, 전화 받기·끊기, 문자 초안 전달
 - 전화·문자·애플리케이션 새 알림을 macOS 알림 센터로 전달
 - Mac에서 Galaxy로 파일·폴더 전송
+- `⌘C/⌘V` 파일 복사·붙여넣기, 양방향 드래그 앤 드롭과 Galaxy Download 폴더 탐색
 - 기기별 화면 설정과 앱별 프로필 저장
 - 공식 DX Companion 복구 APK 설치 및 무결성 검증
 - macOS 언어 설정을 따르는 한국어·영어 인터페이스

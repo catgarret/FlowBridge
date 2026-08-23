@@ -3,6 +3,7 @@ import AppKit
 import CryptoKit
 import ServiceManagement
 import UserNotifications
+import UniformTypeIdentifiers
 import DXManagerCore
 
 final class MacNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
@@ -27,6 +28,7 @@ final class AppModel: ObservableObject {
     @Published var diagnostics = ""
     @Published var transferStatus = ""
     @Published var isTransferring = false
+    @Published var remoteFiles: [RemoteFile] = []
     @Published var status = "ADB 기기를 검색하는 중입니다."
     @Published var isBusy = false
     @Published var autoHideMinutes = 10
@@ -37,6 +39,11 @@ final class AppModel: ObservableObject {
     @Published var phoneNotificationsEnabled = false
     @Published var messageNotificationsEnabled = false
     @Published var appNotificationsEnabled = false
+    @Published var turnPhoneScreenOffOnStart = false
+    @Published var hasActiveSession = false
+    @Published var updateStatus = "업데이트를 확인하지 않았습니다."
+    @Published var latestVersion = ""
+    @Published var isUpdateAvailable = false
 
     private var appSettings = AppSettings()
     private var controller: DXSessionController?
@@ -60,9 +67,11 @@ final class AppModel: ObservableObject {
         phoneNotificationsEnabled = appSettings.phoneNotificationsEnabled
         messageNotificationsEnabled = appSettings.messageNotificationsEnabled
         appNotificationsEnabled = appSettings.appNotificationsEnabled
+        turnPhoneScreenOffOnStart = appSettings.turnPhoneScreenOffOnStart
         UNUserNotificationCenter.current().delegate = notificationDelegate
         refresh()
         if automaticReconnect, !wirelessEndpoint.isEmpty { connectWireless() }
+        checkForUpdates()
         activityMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .mouseMoved, .leftMouseDown, .rightMouseDown, .scrollWheel]) { [weak self] event in
             self?.lastActivity = Date()
             return event
@@ -312,7 +321,11 @@ final class AppModel: ObservableObject {
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         guard panel.runModal() == .OK else { return }
-        let urls = panel.urls
+        transfer(urls: panel.urls)
+    }
+
+    func transfer(urls: [URL]) {
+        guard !urls.isEmpty else { return }
         let serial = selectedSerial
         isTransferring = true
         transferStatus = "전송 준비 중"
@@ -328,6 +341,84 @@ final class AppModel: ObservableObject {
             }
             return { model in model.isTransferring = false; model.status = "파일 전송 작업을 마쳤습니다." }
         }
+    }
+
+    func pasteFilesFromClipboard() {
+        let urls = NSPasteboard.general.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+        guard !urls.isEmpty else { status = "Mac 클립보드에 복사된 파일이 없습니다."; return }
+        transfer(urls: urls)
+    }
+
+    func loadRemoteFiles() {
+        let serial = selectedSerial
+        perform { [settings = appSettings] in
+            guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let files = try ADBService(executable: adbPath).downloadFiles(serial: serial)
+            return { model in model.remoteFiles = files; model.status = "Galaxy Download 파일 \(files.count)개를 불러왔습니다." }
+        }
+    }
+
+    func copyRemoteFile(_ file: RemoteFile) {
+        let serial = selectedSerial
+        perform { [settings = appSettings] in
+            guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            let folder = Self.clipboardDirectory
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let local = folder.appendingPathComponent(file.name)
+            try ADBService(executable: adbPath).pull(serial: serial, remotePath: file.path, localURL: local)
+            return { model in
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.writeObjects([local as NSURL])
+                model.status = "\(file.name)을 Mac 클립보드에 복사했습니다. Finder에서 ⌘V로 붙여넣으세요."
+            }
+        }
+    }
+
+    func downloadRemoteFile(_ file: RemoteFile) {
+        let destination: URL
+        if file.isDirectory {
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = false; panel.canChooseDirectories = true; panel.canCreateDirectories = true
+            panel.prompt = "이 위치로 폴더 저장"
+            guard panel.runModal() == .OK, let folder = panel.url else { return }
+            destination = folder.appendingPathComponent(file.name, isDirectory: true)
+        } else {
+            let panel = NSSavePanel()
+            panel.nameFieldStringValue = file.name
+            guard panel.runModal() == .OK, let url = panel.url else { return }
+            destination = url
+        }
+        let serial = selectedSerial
+        perform { [settings = appSettings] in
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            try ADBService(executable: adbPath).pull(serial: serial, remotePath: file.path, localURL: destination)
+            return { model in model.status = "Galaxy 파일을 Mac에 저장했습니다." }
+        }
+    }
+
+    func remoteFileProvider(_ file: RemoteFile) -> NSItemProvider {
+        let provider = NSItemProvider()
+        let serial = selectedSerial, settings = appSettings
+        provider.suggestedName = file.name
+        let type = file.isDirectory ? UTType.folder.identifier : UTType.data.identifier
+        provider.registerFileRepresentation(forTypeIdentifier: type, fileOptions: [], visibility: .all) { completion in
+            let progress = Progress(totalUnitCount: 1)
+            Task.detached {
+                do {
+                    guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+                    let folder = FileManager.default.temporaryDirectory.appendingPathComponent("FlowBridge-Drag-\(UUID().uuidString)", isDirectory: true)
+                    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                    let local = folder.appendingPathComponent(file.name)
+                    try ADBService(executable: adbPath).pull(serial: serial, remotePath: file.path, localURL: local)
+                    progress.completedUnitCount = 1
+                    completion(local, false, nil)
+                } catch { completion(nil, false, error) }
+            }
+            return progress
+        }
+        return provider
     }
 
     func cancelTransfer() { transferQueue.cancel(); status = "전송 취소를 요청했습니다." }
@@ -406,6 +497,7 @@ final class AppModel: ObservableObject {
     func stop() {
         let serial = selectedSerial
         controller?.stop(serial: serial)
+        hasActiveSession = false
         status = serial.isEmpty ? "선택된 기기가 없습니다." : "세션과 데스크톱 가상 디스플레이를 정리했습니다."
     }
 
@@ -446,6 +538,29 @@ final class AppModel: ObservableObject {
         } catch { status = "로그인 자동 실행 변경 실패: \(error.localizedDescription)" }
     }
 
+    func checkForUpdates() {
+        updateStatus = "업데이트를 확인하는 중입니다."
+        Task {
+            do {
+                var request = URLRequest(url: URL(string: "https://api.github.com/repos/catgarret/FlowBridge/releases/latest")!)
+                request.setValue("FlowBridge-macOS", forHTTPHeaderField: "User-Agent")
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let http = response as? HTTPURLResponse else { throw DXError.commandFailed("GitHub 응답을 확인하지 못했습니다.") }
+                if http.statusCode == 404 {
+                    updateStatus = "아직 공개된 GitHub 릴리스가 없습니다."
+                    return
+                }
+                guard (200..<300).contains(http.statusCode) else { throw DXError.commandFailed("GitHub 업데이트 확인 실패 (HTTP \(http.statusCode))") }
+                let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
+                let latest = release.tagName.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+                latestVersion = latest
+                let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
+                isUpdateAvailable = latest.compare(current, options: .numeric) == .orderedDescending
+                updateStatus = isUpdateAvailable ? "새 버전 \(latest)을 사용할 수 있습니다." : "최신 버전 \(current)을 사용 중입니다."
+            } catch { updateStatus = "업데이트 확인 실패: \(error.localizedDescription)" }
+        }
+    }
+
     private func syncMiniBars() {
         guard let controller else { miniBars.closeAll(); return }
         let sessions = controller.sessions()
@@ -466,6 +581,7 @@ final class AppModel: ObservableObject {
         appSettings.phoneNotificationsEnabled = phoneNotificationsEnabled
         appSettings.messageNotificationsEnabled = messageNotificationsEnabled
         appSettings.appNotificationsEnabled = appNotificationsEnabled
+        appSettings.turnPhoneScreenOffOnStart = turnPhoneScreenOffOnStart
         if !selectedSerial.isEmpty { appSettings.deviceDisplays[selectedSerial] = settings }
         guard let data = try? JSONEncoder().encode(appSettings) else { return }
         try? data.write(to: Self.settingsURL, options: .atomic)
@@ -476,13 +592,15 @@ final class AppModel: ObservableObject {
         let serial = selectedSerial
         let display = settings
         let activeController = controller
+        let turnScreenOff = turnPhoneScreenOffOnStart
         perform { [settings = appSettings] in
             guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
             guard let scrcpyPath = ToolLocator.scrcpy(settings.scrcpyPath) else { throw DXError.toolMissing("scrcpy") }
             let controller = activeController ?? DXSessionController(adb: ADBService(executable: adbPath), scrcpy: scrcpyPath)
             try action(controller, serial, display)
-            return { model in model.controller = controller; model.status = "세션을 시작했습니다." }
+            if turnScreenOff { try? ADBService(executable: adbPath).keyEvent(serial: serial, code: 223) }
+            return { model in model.controller = controller; model.hasActiveSession = true; model.status = turnScreenOff ? "세션을 시작하고 휴대폰 화면을 껐습니다." : "세션을 시작했습니다." }
         }
     }
 
@@ -577,4 +695,13 @@ final class AppModel: ObservableObject {
         }
         return current
     }
+
+    nonisolated private static var clipboardDirectory: URL {
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("FlowBridge/Clipboard", isDirectory: true)
+    }
+}
+
+private struct GitHubRelease: Decodable {
+    let tagName: String
+    private enum CodingKeys: String, CodingKey { case tagName = "tag_name" }
 }
