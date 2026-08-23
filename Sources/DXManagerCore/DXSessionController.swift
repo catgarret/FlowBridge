@@ -23,7 +23,7 @@ public final class DXSessionController: @unchecked Sendable {
         self.scrcpy = scrcpy
     }
 
-    public func startDeX(serial: String, settings: DisplaySettings) throws {
+    public func startDeX(serial: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
         guard settings.isValid else { throw DXError.invalidSettings }
         // A previous unclean shutdown can leave Android's single global overlay
         // setting behind. Clear it first so the before/after ID comparison stays
@@ -44,7 +44,7 @@ public final class DXSessionController: @unchecked Sendable {
             throw DXError.displayNotFound
         }
         let title = "Flow Bridge - Desktop - \(serial)"
-        try launch(key: "dex:\(serial)", serial: serial, title: title, arguments: baseArguments(serial, settings) + ["--display-id", String(displayID), "--window-title", title])
+        try launch(key: "dex:\(serial)", serial: serial, title: title, arguments: baseArguments(serial, settings) + (placement?.scrcpyArguments ?? []) + ["--display-id", String(displayID), "--window-title", title])
     }
 
     public func startApp(serial: String, package: String, settings: DisplaySettings, slot: Int = 1) throws {
@@ -57,11 +57,16 @@ public final class DXSessionController: @unchecked Sendable {
         try launch(key: "app:\(serial):\(slot)", serial: serial, title: title, arguments: baseArguments(serial, settings) + ["--new-display=\(settings.width)x\(settings.height)/\(settings.dpi)", "--start-app=\(cleanPackage)", "--window-title", title])
     }
 
-    public func startPhoneMirror(serial: String, settings: DisplaySettings) throws {
+    public func startPhoneMirror(serial: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
         guard settings.isValid else { throw DXError.invalidSettings }
         let title = "Flow Bridge - Phone Mirror - \(serial)"
         try launch(key: "phone:\(serial)", serial: serial, title: title,
-                   arguments: baseArguments(serial, settings) + ["--window-title", title])
+                   arguments: baseArguments(serial, settings) + (placement?.scrcpyArguments ?? []) + ["--window-title", title])
+    }
+
+    public func startAppOnPhone(serial: String, package: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
+        try adb.launchApp(serial: serial, package: package)
+        try startPhoneMirror(serial: serial, settings: settings, placement: placement)
     }
 
     public func stop(serial: String) {

@@ -145,6 +145,23 @@ public struct ADBService: Sendable {
         _ = try shell(serial: serial, arguments)
     }
 
+    public func launchApp(serial: String, package: String) throws {
+        _ = try shell(serial: serial, ["monkey", "-p", package, "-c", "android.intent.category.LAUNCHER", "1"])
+    }
+
+    public func setMediaVolume(serial: String, level: Int) throws {
+        _ = try shell(serial: serial, ["media", "volume", "--stream", "3", "--set", String(max(0, min(15, level)))])
+    }
+
+    public func mediaVolume(serial: String) throws -> Int {
+        Self.parseMediaVolume(try shell(serial: serial, ["media", "volume", "--stream", "3", "--get"])) ?? 8
+    }
+
+    public static func parseMediaVolume(_ output: String) -> Int? {
+        guard let match = output.range(of: #"volume is\s+(\d+)"#, options: .regularExpression) else { return nil }
+        return Int(output[match].split(whereSeparator: { !$0.isNumber }).last ?? "")
+    }
+
     public func push(serial: String, localURL: URL, remoteDirectory: String) throws -> String {
         try runner.run(executable, ["-s", serial, "push", localURL.path, remoteDirectory]).stdout
     }
@@ -174,7 +191,7 @@ public struct ADBService: Sendable {
     }
 
     public func recentCalls(serial: String) throws -> [PhoneCall] {
-        Array(Self.parseCalls(try shell(serial: serial, ["content", "query", "--uri", "content://call_log/calls", "--projection", "number:type:date"])).prefix(100))
+        Array(Self.parseCalls(try shell(serial: serial, ["content", "query", "--uri", "content://call_log/calls", "--projection", "number:type:date:duration"])).prefix(100))
     }
 
     public func recentMessages(serial: String) throws -> [PhoneMessage] {
@@ -194,7 +211,9 @@ public struct ADBService: Sendable {
     public static func parseCalls(_ output: String) -> [PhoneCall] {
         output.split(whereSeparator: \.isNewline).compactMap { raw in
             let line = String(raw); guard let n = line.range(of: "number="), let t = line.range(of: ", type="), let d = line.range(of: ", date=") else { return nil }
-            return PhoneCall(number: String(line[n.upperBound..<t.lowerBound]), type: Int(line[t.upperBound..<d.lowerBound]) ?? 0, date: Date(timeIntervalSince1970: (Double(line[d.upperBound...]) ?? 0) / 1000))
+            let durationMark = line.range(of: ", duration=", range: d.upperBound..<line.endIndex)
+            let dateEnd = durationMark?.lowerBound ?? line.endIndex
+            return PhoneCall(number: String(line[n.upperBound..<t.lowerBound]), type: Int(line[t.upperBound..<d.lowerBound]) ?? 0, date: Date(timeIntervalSince1970: (Double(line[d.upperBound..<dateEnd]) ?? 0) / 1000), duration: durationMark.flatMap { Int(line[$0.upperBound...]) } ?? 0)
         }.sorted { $0.date > $1.date }
     }
 

@@ -4,6 +4,16 @@
 
 ## Unreleased - experimental macOS port
 
+- Add app quick-launch targets for desktop virtual windows or the mirrored phone,
+  restore per-device desktop/mirror window geometry, replace floating controls with
+  a titleless horizontal volume slider bar, simplify Home, and expand call details.
+- 앱 바로 실행 위치를 데스크톱 독립 창·휴대폰 화면에서 선택하고, 기기별 데스크톱·
+  미러링 창 위치와 크기를 복원하며, 플로팅 제어를 제목 없는 가로형 볼륨 슬라이더로
+  개편하고 홈을 정리했으며 통화 상세 정보 화면을 추가했습니다.
+- Add selectable Dock and menu-bar presence modes plus an independent launch-window
+  preference, including a true menu-bar-only background mode for login startup.
+- Dock·메뉴 막대 표시 위치와 시작 시 메인 창 열기를 각각 선택할 수 있게 하고,
+  로그인 자동 실행에 적합한 메뉴 막대 전용 백그라운드 모드를 추가했습니다.
 - Keep the device-maximum quality preset visibly selected and show the detected
   native resolution until another preset or manual value is chosen.
 - 기기 최대 화질 프리셋에 조회된 실제 해상도를 표시하고 다른 값으로 변경할 때까지

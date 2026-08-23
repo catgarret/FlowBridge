@@ -66,6 +66,8 @@ check(!migrated.phoneNotificationsEnabled, "legacy notification settings migrati
 check(migrated.favoritePackages.count == 3, "legacy favorites migration")
 check(migrated.deviceAliases.isEmpty, "legacy device aliases migration")
 check(migrated.deviceNativeDisplays.isEmpty, "legacy native display migration")
+check(migrated.presenceMode == .dockAndMenuBar && migrated.openMainWindowAtLaunch, "legacy app presence migration")
+check(migrated.appLaunchMode == .desktopWindow && migrated.windowPlacements.isEmpty, "legacy launch mode and placement migration")
 
 let screenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", policy: "showing=true screenState=SCREEN_STATE_ON")
 check(screenState.isAwake && screenState.isLocked, "screen and keyguard state parsing")
@@ -73,6 +75,9 @@ let parsedContacts = ADBService.parseContacts("Row: 0 display_name=홍길동, da
 check(parsedContacts.first == PhoneContact(name: "홍길동", number: "010-1234-5678"), "contact parsing")
 let parsedCalls = ADBService.parseCalls("Row: 0 number=01012345678, type=1, date=1700000000000\n")
 check(parsedCalls.first?.type == 1, "call history parsing")
+let durationCall = ADBService.parseCalls("Row: 0 number=01012345678, type=2, date=1700000000000, duration=125\n")
+check(durationCall.first?.duration == 125, "call duration parsing")
+check(ADBService.parseMediaVolume("volume is 11 in range [0..15]") == 11, "media volume parsing")
 let parsedMessages = ADBService.parseMessages("Row: 0 address=01012345678, body=안녕, 반가워요, date=1700000000000\n")
 check(parsedMessages.first?.body == "안녕, 반가워요", "message history parsing with comma")
 let outgoingMessage = ADBService.parseMessages("Row: 0 address=01012345678, body=보냄, date=1700000000000, type=2\n")

@@ -29,6 +29,8 @@ runtime installation.
 - Search installed apps, launch immediately, and assign Command-1/2/3 favorites
 - Drop files anywhere in the app or press Command-V outside text editing to transfer Finder items
 - Assign editable device aliases that remain stable when the transport or IP address changes
+- Choose Dock, menu-bar-only, or Dock-only presence and whether the main window opens at launch
+- Restore per-device Desktop Mode and phone-mirroring window geometry with compact floating controls
 - Forward new call, message, and application notifications to Notification Center
 - Transfer files and folders to the phone
 - Copy and paste files with Command-C/Command-V, drag files and folders in both

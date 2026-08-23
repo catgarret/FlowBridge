@@ -45,6 +45,10 @@ final class AppModel: ObservableObject {
     @Published var keyboardCorrectionEnabled = false
     @Published var shiftEnterMode = false
     @Published var launchAtLogin = false
+    @Published var presenceMode: AppPresenceMode = .dockAndMenuBar
+    @Published var openMainWindowAtLaunch = true
+    @Published var appLaunchMode: AppLaunchMode = .desktopWindow
+    @Published var mediaVolume = 8
     @Published var automaticReconnect = true
     @Published var phoneNotificationsEnabled = false
     @Published var messageNotificationsEnabled = false
@@ -69,13 +73,18 @@ final class AppModel: ObservableObject {
     private var notificationPollInProgress = false
     private var notificationBaselineSerial = ""
     private var seenNotificationFingerprints: Set<String> = []
+    private var lastPhoneDataRefresh = Date.distantPast
     private var brightnessBeforeSession: Int?
     private var sessionAttempt = UUID()
+    private var didConfigureLaunchPresentation = false
 
     init() {
         load()
         autoHideMinutes = appSettings.autoHideMinutes
         launchAtLogin = SMAppService.mainApp.status == .enabled
+        presenceMode = appSettings.presenceMode
+        openMainWindowAtLaunch = appSettings.openMainWindowAtLaunch
+        appLaunchMode = appSettings.appLaunchMode
         wirelessEndpoint = appSettings.lastWirelessEndpoint
         automaticReconnect = appSettings.automaticReconnect
         phoneNotificationsEnabled = appSettings.phoneNotificationsEnabled
@@ -98,6 +107,7 @@ final class AppModel: ObservableObject {
                 self.syncMiniBars()
                 self.applyAutoHide()
                 self.pollPhoneNotifications()
+                if Date().timeIntervalSince(self.lastPhoneDataRefresh) >= 30, !self.isBusy, !self.selectedSerial.isEmpty { self.refreshPhoneData(silent: true) }
             }
         }
     }
@@ -260,11 +270,26 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func startDeX() { start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startDeX(serial: $1, settings: $2) } }
-    func startPhoneMirror() { start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, settings: $2) } }
+    func startDeX() {
+        let placement = savedPlacement(kind: "desktop")
+        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startDeX(serial: $1, settings: $2, placement: placement) }
+    }
+    func startPhoneMirror() {
+        let placement = savedPlacement(kind: "phone")
+        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, settings: $2, placement: placement) }
+    }
 
     func volumeDown() { sendKeyEvent(25, label: "볼륨 낮추기") }
     func volumeUp() { sendKeyEvent(24, label: "볼륨 높이기") }
+    func setMediaVolume(_ level: Int) {
+        let serial = selectedSerial, value = level
+        mediaVolume = value
+        perform(showBusy: false) { [settings = appSettings] in
+            guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
+            try ADBService(executable: adbPath).setMediaVolume(serial: serial, level: value)
+            return { _ in }
+        }
+    }
 
     func applyDisplayPreset(width: Int, height: Int) {
         settings.width = width; settings.height = height
@@ -325,16 +350,19 @@ final class AppModel: ObservableObject {
 
     func selectPhoneNumber(_ number: String) { phoneNumber = number }
 
-    func refreshPhoneData() {
+    func refreshPhoneData() { refreshPhoneData(silent: false) }
+
+    private func refreshPhoneData(silent: Bool) {
         let serial = selectedSerial
-        perform { [settings = appSettings] in
+        lastPhoneDataRefresh = Date()
+        perform(showBusy: !silent) { [settings = appSettings] in
             guard !serial.isEmpty else { throw DXError.commandFailed("기기를 선택해 주세요.") }
             guard let adbPath = ToolLocator.adb(settings.adbPath) else { throw DXError.toolMissing("adb") }
             let adb = ADBService(executable: adbPath)
             let contacts = try adb.contacts(serial: serial)
             let calls = try adb.recentCalls(serial: serial)
             let messages = try adb.recentMessages(serial: serial)
-            return { model in model.contacts = contacts; model.recentCalls = calls; model.recentMessages = messages; model.status = "주소록과 최근 전화·문자를 불러왔습니다." }
+            return { model in model.contacts = contacts; model.recentCalls = calls; model.recentMessages = messages; if !silent { model.status = "주소록과 최근 전화·문자를 불러왔습니다." } }
         }
     }
 
@@ -412,12 +440,23 @@ final class AppModel: ObservableObject {
     func startApp(slot: Int) {
         guard packageNames.indices.contains(slot) else { return }
         let package = packageNames[slot]
-        start { try $0.startApp(serial: $1, package: package, settings: $2, slot: slot + 1) }
+        launchApp(package: package, slot: slot + 1)
     }
 
     func startApp(package: String) {
-        start { try $0.startApp(serial: $1, package: package, settings: $2, slot: 0) }
+        launchApp(package: package, slot: 0)
     }
+
+    private func launchApp(package: String, slot: Int) {
+        if appLaunchMode == .phoneScreen {
+            let placement = savedPlacement(kind: "phone")
+            start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startAppOnPhone(serial: $1, package: package, settings: $2, placement: placement) }
+        } else {
+            start { try $0.startApp(serial: $1, package: package, settings: $2, slot: slot) }
+        }
+    }
+
+    func appLaunchModeChanged() { appSettings.appLaunchMode = appLaunchMode; save() }
 
     func assignFavorite(package: String, slot: Int) {
         guard packageNames.indices.contains(slot) else { return }
@@ -609,6 +648,7 @@ final class AppModel: ObservableObject {
 
     func stop() {
         let serial = selectedSerial
+        captureWindowPlacements()
         sessionAttempt = UUID()
         controller?.stop(serial: serial)
         restoreBrightnessIfNeeded(serial: serial)
@@ -619,6 +659,7 @@ final class AppModel: ObservableObject {
     }
 
     func quit() {
+        captureWindowPlacements()
         miniBars.closeAll()
         if !selectedSerial.isEmpty { controller?.stop(serial: selectedSerial) }
         controller?.stopAll()
@@ -626,9 +667,35 @@ final class AppModel: ObservableObject {
     }
 
     func showMainWindow() {
+        if presenceMode == .menuBarOnly { NSApplication.shared.setActivationPolicy(.accessory) }
         NSApplication.shared.activate(ignoringOtherApps: true)
         NSApplication.shared.windows.first(where: { !($0 is NSPanel) })?.makeKeyAndOrderFront(nil)
         lastActivity = Date()
+    }
+
+    var showsMenuBarIcon: Bool { presenceMode != .dockOnly }
+
+    func configureLaunchPresentation() {
+        guard !didConfigureLaunchPresentation else { return }
+        didConfigureLaunchPresentation = true
+        applyPresenceMode()
+        if !openMainWindowAtLaunch {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                NSApplication.shared.windows.filter { !($0 is NSPanel) }.forEach { $0.orderOut(nil) }
+            }
+        }
+    }
+
+    func presentationSettingsChanged() {
+        appSettings.presenceMode = presenceMode
+        appSettings.openMainWindowAtLaunch = openMainWindowAtLaunch
+        save()
+        applyPresenceMode()
+        status = presenceMode == .menuBarOnly ? "메뉴 막대 중심 모드로 전환했습니다. Dock 아이콘은 숨겨집니다." : presenceMode == .dockOnly ? "Dock 중심 모드로 전환했습니다. 메뉴 막대 아이콘은 숨겨집니다." : "Dock과 메뉴 막대에 모두 표시합니다."
+    }
+
+    private func applyPresenceMode() {
+        NSApplication.shared.setActivationPolicy(presenceMode == .menuBarOnly ? .accessory : .regular)
     }
 
     func toggleKeyboardCorrection() {
@@ -681,7 +748,9 @@ final class AppModel: ObservableObject {
     private func syncMiniBars() {
         guard let controller else { miniBars.closeAll(); return }
         let sessions = controller.sessions()
+        updateWindowPlacements(from: sessions)
         if sessionPhase == .running && !sessions.contains(where: { $0.id.hasPrefix("dex:") || $0.id.hasPrefix("phone:") }) {
+            save()
             restoreBrightnessIfNeeded(serial: selectedSerial)
             sessionPhase = .idle
             hasActiveSession = false
@@ -691,10 +760,8 @@ final class AppModel: ObservableObject {
         keyboardCorrection.setTargets(Set(sessions.map(\.processID)))
         miniBars.sync(sessions: sessions, capture: { [weak self] windowID, title in
             self?.captureScrcpyWindow(windowID: windowID, title: title)
-        }, volumeDown: { [weak self] in
-            self?.volumeDown()
-        }, volumeUp: { [weak self] in
-            self?.volumeUp()
+        }, initialVolume: mediaVolume, setVolume: { [weak self] level in
+            self?.setMediaVolume(level)
         }, power: { [weak self] in
             self?.sendKeyEvent(26, label: "전원")
         }, stop: { [weak self] in
@@ -711,6 +778,9 @@ final class AppModel: ObservableObject {
         appSettings.appNotificationsEnabled = appNotificationsEnabled
         appSettings.turnPhoneScreenOffOnStart = turnPhoneScreenOffOnStart
         appSettings.favoritePackages = packageNames
+        appSettings.presenceMode = presenceMode
+        appSettings.openMainWindowAtLaunch = openMainWindowAtLaunch
+        appSettings.appLaunchMode = appLaunchMode
         if !selectedSerial.isEmpty { appSettings.deviceDisplays[selectedSerial] = settings }
         guard let data = try? JSONEncoder().encode(appSettings) else { return }
         try? data.write(to: Self.settingsURL, options: .atomic)
@@ -740,6 +810,7 @@ final class AppModel: ObservableObject {
             try? adb.keyEvent(serial: serial, code: 224)
             Thread.sleep(forTimeInterval: 0.4)
             let screenState = try adb.phoneScreenState(serial: serial)
+            let currentVolume = (try? adb.mediaVolume(serial: serial)) ?? 8
             if exclusiveMainDisplay { controller.stopMainDisplays(serial: serial) }
             let existingPIDs = Set(controller.sessions().filter { $0.serial == serial }.map { Int($0.processID) })
             try action(controller, serial, display)
@@ -756,6 +827,7 @@ final class AppModel: ObservableObject {
                     return
                 }
                 model.controller = controller
+                model.mediaVolume = currentVolume
                 if trackMainSession {
                     model.brightnessBeforeSession = previousBrightness
                     model.hasActiveSession = true
@@ -868,6 +940,27 @@ final class AppModel: ObservableObject {
         if let data = try? Data(contentsOf: Self.settingsURL), let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
             appSettings = decoded; settings = decoded.display
         }
+    }
+
+    private func savedPlacement(kind: String) -> WindowPlacement? {
+        guard let key = selectedDeviceKey else { return nil }
+        return appSettings.windowPlacements["\(kind):\(key)"]
+    }
+
+    private func updateWindowPlacements(from sessions: [DXSessionController.SessionInfo]) {
+        guard let deviceKey = selectedDeviceKey,
+              let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return }
+        for session in sessions where session.id.hasPrefix("dex:") || session.id.hasPrefix("phone:") {
+            guard let item = windows.first(where: { ($0[kCGWindowOwnerPID as String] as? Int32) == session.processID }),
+                  let dictionary = item[kCGWindowBounds as String] as? NSDictionary,
+                  let bounds = CGRect(dictionaryRepresentation: dictionary), bounds.width > 100, bounds.height > 100 else { continue }
+            let kind = session.id.hasPrefix("dex:") ? "desktop" : "phone"
+            appSettings.windowPlacements["\(kind):\(deviceKey)"] = WindowPlacement(x: Int(bounds.minX), y: Int(bounds.minY), width: Int(bounds.width), height: Int(bounds.height))
+        }
+    }
+
+    private func captureWindowPlacements() {
+        if let controller { updateWindowPlacements(from: controller.sessions()); save() }
     }
 
     private var selectedDeviceKey: String? {

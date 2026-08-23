@@ -49,8 +49,9 @@ public struct PhoneContact: Identifiable, Hashable, Sendable {
     public init(name: String, number: String) { self.name = name; self.number = number }
 }
 public struct PhoneCall: Identifiable, Hashable, Sendable {
-    public let number: String; public let type: Int; public let date: Date; public var id: String { "\(number)|\(date.timeIntervalSince1970)|\(type)" }
-    public init(number: String, type: Int, date: Date) { self.number = number; self.type = type; self.date = date }
+    public let number: String; public let type: Int; public let date: Date; public let duration: Int
+    public var id: String { "\(number)|\(date.timeIntervalSince1970)|\(type)" }
+    public init(number: String, type: Int, date: Date, duration: Int = 0) { self.number = number; self.type = type; self.date = date; self.duration = duration }
 }
 public struct PhoneMessage: Identifiable, Hashable, Sendable {
     public let address: String; public let body: String; public let date: Date; public let type: Int
@@ -77,6 +78,18 @@ public struct DisplaySettings: Codable, Equatable, Sendable {
     }
 }
 
+public enum AppPresenceMode: String, Codable, CaseIterable, Sendable {
+    case dockAndMenuBar, menuBarOnly, dockOnly
+}
+
+public enum AppLaunchMode: String, Codable, CaseIterable, Sendable { case desktopWindow, phoneScreen }
+
+public struct WindowPlacement: Codable, Equatable, Sendable {
+    public let x: Int; public let y: Int; public let width: Int; public let height: Int
+    public init(x: Int, y: Int, width: Int, height: Int) { self.x = x; self.y = y; self.width = width; self.height = height }
+    public var scrcpyArguments: [String] { ["--window-x", String(x), "--window-y", String(y), "--window-width", String(width), "--window-height", String(height)] }
+}
+
 public struct AppSettings: Codable, Sendable {
     public var display = DisplaySettings()
     public var scrcpyPath = ""
@@ -86,6 +99,10 @@ public struct AppSettings: Codable, Sendable {
     public var favoritePackages = ["com.android.settings", "", ""]
     public var deviceAliases: [String: String] = [:]
     public var deviceNativeDisplays: [String: DisplaySettings] = [:]
+    public var presenceMode: AppPresenceMode = .dockAndMenuBar
+    public var openMainWindowAtLaunch = true
+    public var appLaunchMode: AppLaunchMode = .desktopWindow
+    public var windowPlacements: [String: WindowPlacement] = [:]
     public var autoHideMinutes = 10
     public var lastWirelessEndpoint = ""
     public var automaticReconnect = true
@@ -95,7 +112,7 @@ public struct AppSettings: Codable, Sendable {
     public var turnPhoneScreenOffOnStart = false
     public init() {}
 
-    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
+    private enum CodingKeys: String, CodingKey { case display, scrcpyPath, adbPath, deviceDisplays, appProfiles, favoritePackages, deviceAliases, deviceNativeDisplays, presenceMode, openMainWindowAtLaunch, appLaunchMode, windowPlacements, autoHideMinutes, lastWirelessEndpoint, automaticReconnect, phoneNotificationsEnabled, messageNotificationsEnabled, appNotificationsEnabled, turnPhoneScreenOffOnStart }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -109,6 +126,10 @@ public struct AppSettings: Codable, Sendable {
         favoritePackages = Array(favoritePackages.prefix(3))
         deviceAliases = try values.decodeIfPresent([String: String].self, forKey: .deviceAliases) ?? [:]
         deviceNativeDisplays = try values.decodeIfPresent([String: DisplaySettings].self, forKey: .deviceNativeDisplays) ?? [:]
+        presenceMode = try values.decodeIfPresent(AppPresenceMode.self, forKey: .presenceMode) ?? .dockAndMenuBar
+        openMainWindowAtLaunch = try values.decodeIfPresent(Bool.self, forKey: .openMainWindowAtLaunch) ?? true
+        appLaunchMode = try values.decodeIfPresent(AppLaunchMode.self, forKey: .appLaunchMode) ?? .desktopWindow
+        windowPlacements = try values.decodeIfPresent([String: WindowPlacement].self, forKey: .windowPlacements) ?? [:]
         autoHideMinutes = try values.decodeIfPresent(Int.self, forKey: .autoHideMinutes) ?? 10
         lastWirelessEndpoint = try values.decodeIfPresent(String.self, forKey: .lastWirelessEndpoint) ?? ""
         automaticReconnect = try values.decodeIfPresent(Bool.self, forKey: .automaticReconnect) ?? true

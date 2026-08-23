@@ -206,15 +206,6 @@ private struct HomeView: View {
                 }
                 Toggle("화면을 열면 Galaxy 밝기를 최저로 낮추기", isOn: $model.turnPhoneScreenOffOnStart)
                     .toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.save() }
-                Text("화면을 완전히 끄면 일부 Galaxy에서 영상 전송도 중단될 수 있어 밝기만 낮춥니다. 종료하면 이전 밝기로 복원합니다.").font(.caption).foregroundStyle(.secondary)
-                HStack {
-                    Button(action: model.volumeDown) { Label("볼륨 낮춤", systemImage: "speaker.minus") }
-                    Button(action: model.volumeUp) { Label("볼륨 높임", systemImage: "speaker.plus") }
-                    Spacer()
-                    Button { model.sendKeyEvent(224, label: "화면 켜기") } label: { Label("화면 켜기", systemImage: "sun.max") }
-                    Button { model.sendKeyEvent(223, label: "화면 끄기") } label: { Label("화면 끄기", systemImage: "moon") }
-                    Button { model.sendKeyEvent(26, label: "전원") } label: { Label("전원", systemImage: "power") }
-                }.padding(.top, 4)
                 if model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
                 Text("데스크톱 모드의 Galaxy 오버레이는 Samsung 데스크톱 화면에 필요한 Android 가상 디스플레이입니다. 데스크톱 모드 실행 중에만 유지되고 종료 즉시 제거됩니다. 일반 미러링에는 표시되지 않습니다.").font(.caption).foregroundStyle(.secondary)
             }
@@ -227,21 +218,6 @@ private struct HomeView: View {
                     }
                 }
             }
-            Card("빠른 작업", icon: "bolt") {
-                HStack {
-                    Button(action: model.chooseAndTransfer) { Label("파일·폴더 보내기", systemImage: "arrow.up.doc") }
-                    Button(action: model.captureRegion) { Label("화면 영역 캡처", systemImage: "viewfinder") }
-                    Button(action: model.loadPackages) { Label("앱 목록 갱신", systemImage: "square.grid.2x2") }
-                }
-            }
-            Card("텍스트 클립보드", icon: "doc.on.clipboard") {
-                HStack(spacing: 22) {
-                    Label("Mac에서 복사 → 화면 창에서 ⌘V", systemImage: "macbook.and.iphone")
-                    Label("휴대폰에서 선택 → 화면 창에서 ⌘C", systemImage: "iphone.and.arrow.forward")
-                }
-                Text("데스크톱 모드, 휴대폰 미러링과 독립 앱 창에서 텍스트가 양방향으로 동기화됩니다.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
         }
     }
 }
@@ -250,6 +226,13 @@ private struct AppsView: View {
     @EnvironmentObject private var model: AppModel
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
+        Card("실행 위치", icon: "rectangle.on.rectangle") {
+            Picker("실행 위치", selection: $model.appLaunchMode) {
+                Text("데스크톱 모드에서 실행").tag(AppLaunchMode.desktopWindow)
+                Text("휴대폰 화면에서 실행").tag(AppLaunchMode.phoneScreen)
+            }.pickerStyle(.segmented).labelsHidden().onChange(of: model.appLaunchMode) { _ in model.appLaunchModeChanged() }
+            Text(model.appLaunchMode == .desktopWindow ? "앱마다 별도 가상 화면 창을 엽니다." : "앱을 Galaxy 기본 화면에서 실행하고 휴대폰 미러링으로 엽니다.").font(.caption).foregroundStyle(.secondary)
+        }
         Card("즐겨찾기", icon: "star") {
             VStack(spacing: 0) {
                 ForEach(0..<3, id: \.self) { slot in
@@ -320,12 +303,13 @@ private struct PhoneView: View {
     @State private var tab = 0
     @State private var callSource = 0
     @State private var selectedNumber = ""
+    @State private var showDialPad = false
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Picker("전화 또는 메시지", selection: $tab) { Label("통화", systemImage: "phone").tag(0); Label("메시지", systemImage: "message").tag(1) }.pickerStyle(.segmented).frame(width: 300)
-                Spacer(); Text("Galaxy 데이터").font(.caption).foregroundStyle(.secondary); Button(action: model.refreshPhoneData) { Label("동기화", systemImage: "arrow.clockwise") }.buttonStyle(.borderedProminent)
-            }.padding(16).background(.bar)
+                Picker("", selection: $tab) { Label("통화", systemImage: "phone.fill").tag(0); Label("메시지", systemImage: "message.fill").tag(1) }.pickerStyle(.segmented).labelsHidden().controlSize(.large).frame(maxWidth: 440)
+                Spacer(); Button(action: model.refreshPhoneData) { Label("새로고침", systemImage: "arrow.clockwise") }
+            }.padding(.bottom, 14)
             Divider()
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
@@ -339,20 +323,20 @@ private struct PhoneView: View {
             }.frame(minHeight: 520)
             Divider()
             Text("Galaxy의 주소록·최근 통화·SMS를 연결 중에만 읽으며 Mac에 별도로 저장하지 않습니다. 통화 음성은 Galaxy 또는 연결된 Bluetooth 기기에서 처리됩니다.").font(.caption).foregroundStyle(.secondary).padding(10)
-        }.background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.08)))
+        }
             .onAppear { if model.contacts.isEmpty { model.refreshPhoneData() } }
     }
 
     private var callList: some View {
         let filtered = model.recentCalls.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || contactName($0.number).localizedCaseInsensitiveContains(model.phoneSearch) }
-        return List(filtered.prefix(100), selection: $selectedNumber) { call in
+        return List(filtered.prefix(100)) { call in
             HStack(spacing: 10) { ContactAvatar(name: contactName(call.number)); VStack(alignment: .leading, spacing: 3) { Text(contactName(call.number)).fontWeight(.medium); HStack(spacing: 4) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down"); Text(call.number) }.font(.caption).foregroundStyle(call.type == 3 ? .red : .secondary) }; Spacer(); Text(call.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }.tag(call.number).contentShape(Rectangle()).onTapGesture { select(call.number) }
         }.listStyle(.inset)
     }
 
     private var contactList: some View {
         let filtered = model.contacts.filter { model.phoneSearch.isEmpty || $0.number.contains(model.phoneSearch) || $0.name.localizedCaseInsensitiveContains(model.phoneSearch) }
-        return List(filtered.prefix(200), selection: $selectedNumber) { contact in
+        return List(filtered.prefix(200)) { contact in
             HStack(spacing: 10) { ContactAvatar(name: contact.name); VStack(alignment: .leading, spacing: 3) { Text(contact.name).fontWeight(.medium); Text(contact.number).font(.caption).foregroundStyle(.secondary) }; Spacer(); Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary) }.tag(contact.number).contentShape(Rectangle()).onTapGesture { select(contact.number) }
         }.listStyle(.inset)
     }
@@ -360,7 +344,7 @@ private struct PhoneView: View {
     private var messageThreadList: some View {
         let latest = Dictionary(grouping: model.recentMessages, by: \.address).compactMap { $0.value.max(by: { $0.date < $1.date }) }.sorted { $0.date > $1.date }
         let filtered = latest.filter { model.phoneSearch.isEmpty || $0.address.contains(model.phoneSearch) || $0.body.localizedCaseInsensitiveContains(model.phoneSearch) || contactName($0.address).localizedCaseInsensitiveContains(model.phoneSearch) }
-        return List(filtered, selection: $selectedNumber) { message in
+        return List(filtered) { message in
             HStack(spacing: 10) { ContactAvatar(name: contactName(message.address)); VStack(alignment: .leading, spacing: 3) { HStack { Text(contactName(message.address)).fontWeight(.medium); Spacer(); Text(message.date, style: .relative).font(.caption2).foregroundStyle(.secondary) }; Text(message.body).lineLimit(2).font(.caption).foregroundStyle(.secondary) } }.tag(message.address).contentShape(Rectangle()).onTapGesture { select(message.address) }
         }.listStyle(.inset)
     }
@@ -370,7 +354,19 @@ private struct PhoneView: View {
     }
 
     private var callDetail: some View {
+        if showDialPad { return AnyView(dialPad) }
+        let calls = model.recentCalls.filter { $0.number == selectedNumber }.sorted { $0.date > $1.date }
+        return AnyView(VStack(spacing: 0) {
+            VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화 걸기", systemImage: "phone.fill") }.buttonStyle(.borderedProminent) } }.padding(24)
+            Divider()
+            HStack { Text("통화 기록").font(.headline); Spacer(); Text("\(calls.count)건").foregroundStyle(.secondary) }.padding(14)
+            List(calls) { call in HStack(spacing: 12) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down").foregroundStyle(call.type == 3 ? .red : .secondary); VStack(alignment: .leading, spacing: 3) { Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화"); Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary) } }.listStyle(.inset)
+        }.frame(maxWidth: .infinity))
+    }
+
+    private var dialPad: some View {
         VStack(spacing: 18) {
+            HStack { Button { showDialPad = false } label: { Label("통화 기록", systemImage: "chevron.left") }; Spacer() }
             ContactAvatar(name: contactName(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary)
             TextField("전화번호", text: $model.phoneNumber).textFieldStyle(.roundedBorder).frame(maxWidth: 300)
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(64)), count: 3), spacing: 10) { ForEach(["1","2","3","4","5","6","7","8","9","*","0","#"], id: \.self) { digit in Button(digit) { model.phoneNumber += digit }.buttonStyle(.bordered).controlSize(.large) } }
@@ -390,9 +386,10 @@ private struct PhoneView: View {
         }.frame(maxWidth: .infinity)
     }
 
-    private func select(_ number: String) { selectedNumber = number; model.selectPhoneNumber(number) }
+    private func select(_ number: String) { selectedNumber = number; showDialPad = false; model.selectPhoneNumber(number) }
     private func contactName(_ number: String) -> String { model.contacts.first(where: { normalized($0.number) == normalized(number) })?.name ?? number }
     private func normalized(_ number: String) -> String { number.filter(\.isNumber).suffix(10).description }
+    private func durationText(_ seconds: Int) -> String { seconds == 0 ? "연결 안 됨" : seconds >= 60 ? "\(seconds / 60)분 \(seconds % 60)초" : "\(seconds)초" }
 }
 
 private struct ContactAvatar: View {
@@ -527,6 +524,17 @@ private struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Toggle("마지막 무선 주소로 자동 재연결", isOn: $model.automaticReconnect)
                     HStack { Text("Flow Bridge 로그인 자동 실행"); Spacer(); Button(model.launchAtLogin ? "끄기" : "켜기", action: model.toggleLaunchAtLogin) }
+                    Divider()
+                    HStack {
+                        Text("앱 표시 위치").frame(width: 130, alignment: .leading)
+                        Picker("앱 표시 위치", selection: $model.presenceMode) {
+                            Text("Dock + 메뉴 막대").tag(AppPresenceMode.dockAndMenuBar)
+                            Text("메뉴 막대만").tag(AppPresenceMode.menuBarOnly)
+                            Text("Dock만").tag(AppPresenceMode.dockOnly)
+                        }.pickerStyle(.segmented).labelsHidden().onChange(of: model.presenceMode) { _ in model.presentationSettingsChanged() }
+                    }
+                    Toggle("앱을 시작할 때 메인 창 열기", isOn: $model.openMainWindowAtLaunch).onChange(of: model.openMainWindowAtLaunch) { _ in model.presentationSettingsChanged() }
+                    Text("메뉴 막대만 선택하면 Dock 아이콘 없이 백그라운드에서 실행되며, 상단 Flow Bridge 아이콘으로 창을 열 수 있습니다.").font(.caption).foregroundStyle(.secondary)
                     HStack { Text("사용하지 않을 때 자동 숨김"); TextField("분", value: $model.autoHideMinutes, format: .number).frame(width: 54); Text("분 · 0이면 사용 안 함").foregroundStyle(.secondary) }
                     Divider()
                     HStack {
