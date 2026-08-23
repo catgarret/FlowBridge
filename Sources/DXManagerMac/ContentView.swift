@@ -342,6 +342,7 @@ private struct PhoneView: View {
     @State private var selectedNumber = ""
     @State private var selectedRowID = ""
     @State private var showDialPad = false
+    @State private var showCallToast = false
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -353,7 +354,7 @@ private struct PhoneView: View {
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
                     TextField("이름, 번호 또는 내용 검색", text: $model.phoneSearch).textFieldStyle(.roundedBorder).padding(16)
-                    if tab == 0 { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented).padding(.horizontal, 16).padding(.bottom, 14) }
+                    if tab == 0 { HStack(spacing: 10) { Picker("통화 목록", selection: $callSource) { Text("최근 통화").tag(0); Text("연락처").tag(1) }.pickerStyle(.segmented); Button { model.phoneNumber = ""; showDialPad = true } label: { Image(systemName: "circle.grid.3x3.fill") }.buttonStyle(.borderedProminent).help("다이얼 열기") }.padding(.horizontal, 16).padding(.bottom, 14) }
                     Divider()
                     if tab == 0 { callSource == 0 ? AnyView(callList) : AnyView(contactList) } else { messageThreadList }
                 }.frame(width: 360)
@@ -361,6 +362,7 @@ private struct PhoneView: View {
                 if selectedNumber.isEmpty { emptyDetail } else if tab == 0 { callDetail } else { messageDetail }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .top) { if showCallToast { Label("Galaxy에서 통화를 확인해 주세요.", systemImage: "iphone.gen3").padding(.horizontal, 16).padding(.vertical, 10).background(.regularMaterial, in: Capsule()).shadow(radius: 8).padding(.top, 8).transition(.move(edge: .top).combined(with: .opacity)) } }
             .onAppear { if model.contacts.isEmpty { model.refreshPhoneData() } }
     }
 
@@ -394,7 +396,7 @@ private struct PhoneView: View {
         if showDialPad { return AnyView(dialPad) }
         let calls = model.recentCalls.filter { $0.number == selectedNumber }.sorted { $0.date > $1.date }
         return AnyView(VStack(spacing: 0) {
-            VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화 걸기", systemImage: "phone.fill") }.buttonStyle(.borderedProminent) } }.padding(24)
+            VStack(spacing: 8) { ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary); HStack { Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button { model.phoneNumber = selectedNumber; showDialPad = true } label: { Label("전화", systemImage: "phone.fill") }.buttonStyle(.borderedProminent) } }.padding(24)
             Divider()
             HStack { Text("통화 기록").font(.headline); Spacer(); Text("\(calls.count)건").foregroundStyle(.secondary) }.padding(14)
             List(calls) { call in HStack(spacing: 12) { Image(systemName: call.type == 1 ? "phone.arrow.down.left" : call.type == 2 ? "phone.arrow.up.right" : "phone.down").foregroundStyle(call.type == 3 ? .red : .secondary); VStack(alignment: .leading, spacing: 3) { Text(call.type == 1 ? "수신 통화" : call.type == 2 ? "발신 통화" : "부재중 통화"); Text(call.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary) }; Spacer(); Text(durationText(call.duration)).font(.caption).foregroundStyle(.secondary) } }.listStyle(.inset)
@@ -402,14 +404,22 @@ private struct PhoneView: View {
     }
 
     private var dialPad: some View {
-        VStack(spacing: 18) {
-            HStack { Button { showDialPad = false } label: { Label("통화 기록", systemImage: "chevron.left") }; Spacer() }
-            ContactAvatar(name: contactName(selectedNumber), photoURL: contactPhoto(selectedNumber), large: true); Text(contactName(selectedNumber)).font(.title2.weight(.semibold)); Text(selectedNumber).foregroundStyle(.secondary)
-            TextField("전화번호", text: $model.phoneNumber).textFieldStyle(.roundedBorder).frame(maxWidth: 300)
-            LazyVGrid(columns: Array(repeating: GridItem(.fixed(64)), count: 3), spacing: 10) { ForEach(["1","2","3","4","5","6","7","8","9","*","0","#"], id: \.self) { digit in Button(digit) { model.phoneNumber += digit }.buttonStyle(.bordered).controlSize(.large) } }
-            HStack { Button(action: model.openDialer) { Label("Galaxy에서 전화", systemImage: "phone.fill") }.buttonStyle(.borderedProminent); Button { tab = 1 } label: { Label("메시지", systemImage: "message") }; Button(role: .destructive) { model.sendKeyEvent(6, label: "통화 종료") } label: { Label("끊기", systemImage: "phone.down.fill") } }
-            Spacer()
-        }.padding(28).frame(maxWidth: .infinity)
+        let keys = [("1", ""), ("2", "ABC"), ("3", "DEF"), ("4", "GHI"), ("5", "JKL"), ("6", "MNO"), ("7", "PQRS"), ("8", "TUV"), ("9", "WXYZ"), ("*", ""), ("0", "+"), ("#", "")]
+        return VStack(spacing: 16) {
+            HStack { Text("다이얼").font(.title2.weight(.semibold)); Spacer(); Button { showDialPad = false } label: { Image(systemName: "xmark.circle.fill").font(.title2).foregroundStyle(.secondary) }.buttonStyle(.plain) }
+            HStack(spacing: 8) {
+                TextField("전화번호", text: $model.phoneNumber).textFieldStyle(.plain).font(.system(size: 28, weight: .medium, design: .rounded)).multilineTextAlignment(.center).frame(width: 280)
+                Button { if !model.phoneNumber.isEmpty { model.phoneNumber.removeLast() } } label: { Image(systemName: "delete.left") }.buttonStyle(.plain).foregroundStyle(.secondary).disabled(model.phoneNumber.isEmpty)
+            }.padding(.vertical, 10).overlay(alignment: .bottom) { Divider() }
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(68)), count: 3), spacing: 12) {
+                ForEach(keys, id: \.0) { digit, letters in
+                    Button { model.phoneNumber += digit } label: { VStack(spacing: 1) { Text(digit).font(.system(size: 25, weight: .medium, design: .rounded)); Text(letters).font(.system(size: 8, weight: .semibold)).tracking(1) }.frame(width: 58, height: 58).background(Color.primary.opacity(0.08), in: Circle()).contentShape(Circle()) }.buttonStyle(.plain)
+                }
+            }
+            Button(action: placeCall) { Image(systemName: "phone.fill").font(.title2).foregroundStyle(.white).frame(width: 62, height: 62).background(Color.green, in: Circle()).shadow(color: .green.opacity(0.25), radius: 8, y: 3) }.buttonStyle(.plain).disabled(model.phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).help("전화")
+            Text("전화").font(.caption).foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+        }.padding(28).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var messageDetail: some View {
@@ -424,6 +434,11 @@ private struct PhoneView: View {
     }
 
     private func select(_ number: String, rowID: String) { selectedNumber = number; selectedRowID = rowID; showDialPad = false; model.selectPhoneNumber(number) }
+    private func placeCall() {
+        model.openDialer()
+        withAnimation { showCallToast = true }
+        Task { try? await Task.sleep(nanoseconds: 3_000_000_000); await MainActor.run { withAnimation { showCallToast = false } } }
+    }
     private func contactName(_ number: String) -> String { model.contacts.first(where: { normalized($0.number) == normalized(number) })?.name ?? number }
     private func contactPhoto(_ number: String) -> URL? { model.contactPhotoURL(for: number) }
     private func normalized(_ number: String) -> String { number.filter(\.isNumber).suffix(10).description }

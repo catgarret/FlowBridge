@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Replaced the compact call controls with a native-style dial pad, direct phone-number entry, and a Galaxy handoff toast while removing redundant call-audio copy and hang-up controls.
+- 좁고 복잡했던 통화 제어를 직접 번호 입력·원형 키패드·Galaxy 확인 토스트가 있는 다이얼로 교체하고 불필요한 통화 음성 안내와 끊기 버튼을 제거했습니다.
 - Rebuilt Calls and Messages as a window-filling split view with independently scrolling lists, redesigned quick-launch assignment and sidebar device controls, and added live Galaxy notification browsing and dismissal.
 - 전화·문자를 창 높이에 맞는 독립 스크롤 분할 화면으로 재구성하고 앱 바로 실행 지정·사이드바 기기 제어를 개선했으며, Galaxy 현재 알림 조회와 삭제를 추가했습니다.
 - Persisted and restored both Galaxy brightness and automatic-brightness mode strictly around active screen sessions, including option-off, app quit, and crash-recovery paths.

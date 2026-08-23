@@ -88,7 +88,7 @@ SwiftUI 기반 macOS 앱입니다. Apple Silicon과 Intel용 ADB·scrcpy 실행 
 - Samsung DeX 가상 화면 실행과 일반 휴대폰 화면 미러링
 - 패키지명 대신 일반 앱 이름을 선택해 독립 창으로 실행
 - Mac에서 Galaxy 주소록·최근 통화·문자를 확인하고 연락처 사진은 빠른 표시를 위해 로컬 캐시
-- Galaxy 전화 화면 열기, 전화 받기·끊기, 문자 초안 전달
+- Mac에서 번호를 입력해 Galaxy 전화 화면 열기와 문자 초안 전달
 - 전화·문자·애플리케이션 새 알림을 macOS 알림 센터로 전달
 - Mac에서 Galaxy로 파일·폴더 전송
 - `⌘C/⌘V` 파일 복사·붙여넣기, 양방향 드래그 앤 드롭과 Galaxy Download 폴더 탐색
@@ -97,9 +97,7 @@ SwiftUI 기반 macOS 앱입니다. Apple Silicon과 Intel용 ADB·scrcpy 실행 
 - macOS 언어 설정을 따르는 한국어·영어 인터페이스
 - Apple Silicon·Intel 유니버설 빌드
 
-통화 음성은 ADB를 통해 Mac으로 전달되지 않으며 Galaxy 또는 Galaxy에 연결된
-Bluetooth 헤드셋에서 처리됩니다. 문자 초안은 Galaxy 메시지 앱에서 최종 확인하며
-자동으로 발송하지 않습니다.
+문자 초안은 Galaxy 메시지 앱에서 최종 확인하며 자동으로 발송하지 않습니다.
 
 ### 간편 연결
 

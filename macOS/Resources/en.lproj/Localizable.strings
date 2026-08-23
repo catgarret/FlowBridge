@@ -57,7 +57,6 @@
 "전화 화면 열기" = "Open Dialer";
 "받기" = "Answer";
 "끊기" = "Hang Up";
-"통화 음성은 Galaxy 또는 Galaxy에 연결된 Bluetooth 헤드셋으로 처리됩니다." = "Call audio stays on the Galaxy or its connected Bluetooth headset.";
 "문자 작성" = "Compose Message";
 "받는 사람 전화번호" = "Recipient phone number";
 "작성한 내용은 Galaxy 메시지 앱으로 전달되며 자동 발송하지 않습니다." = "The draft opens in the Galaxy messaging app and is never sent automatically.";
@@ -213,7 +212,6 @@
 "통화 내역이나 연락처를 선택하세요" = "Select a call or contact";
 "대화를 선택하세요" = "Select a conversation";
 "왼쪽 목록에서 상대를 선택하면 상세 기능이 표시됩니다." = "Select someone from the list to show details.";
-"Galaxy에서 전화" = "Call on Galaxy";
 "앱 표시 위치" = "App Location";
 "Dock + 메뉴 막대" = "Dock + Menu Bar";
 "메뉴 막대만" = "Menu Bar Only";
@@ -248,13 +246,11 @@
 "이름 또는 번호 검색" = "Search by name or number";
 "선택" = "Select";
 "답장" = "Reply";
-"Galaxy의 로컬 주소록·최근 통화·SMS를 ADB 연결 중에만 읽으며 Flow Bridge가 별도 저장하지 않습니다." = "Flow Bridge reads local Galaxy contacts, recent calls, and SMS only while ADB is connected and does not store them separately.";
 "화면 열기" = "Open Screen";
 "실행 시 밝기 최저 조절" = "Lower brightness while running";
 "화면 보호와 온도 제어를 위해 DEX/휴대폰 미러링 실행 시 밝기가 자동으로 최저로 낮아지며 종료 시 원래 밝기로 복원됩니다." = "To protect the display and manage temperature, brightness is lowered automatically during DEX/phone mirroring and restored when the session ends.";
 "영상 창이 표시되는지 확인하고 있습니다." = "Checking that the video window is visible.";
 "해상도" = "Resolution";
-"Galaxy의 주소록·최근 통화·SMS는 연결 중에만 읽습니다. 연락처 사진만 빠른 표시를 위해 Mac에 캐시하며, 통화 음성은 Galaxy 또는 연결된 Bluetooth 기기에서 처리됩니다." = "Galaxy contacts, recent calls, and SMS are read only while connected. Only contact photos are cached on this Mac for faster display; call audio stays on the Galaxy or its connected Bluetooth device.";
 "연결됨" = "Connected";
 "미러링" = "Mirror";
 "기기 별칭 지정 또는 수정" = "Set or edit device name";
