@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Replace the application icon with the project owner's final Flow Bridge vector
+  artwork and regenerate the complete macOS icon set from the canonical SVG.
 - Rename the macOS app to Flow Bridge, add Korean and English localization,
   migrate existing settings, and add complete attribution, license, trademark,
   privacy, build, and distribution documentation for the public repository.
@@ -55,6 +57,8 @@
   입력할 필요가 없는 일반 앱 이름 선택기를 추가했습니다.
 - macOS 앱 이름을 Flow Bridge로 변경하고 한국어·영어 현지화, 기존 설정 마이그레이션,
   공개 저장소용 출처·라이선스·상표·개인정보·빌드·배포 문서를 추가했습니다.
+- 프로젝트 소유자가 제공한 Flow Bridge 최종 벡터 아이콘으로 교체하고 원본 SVG에서
+  전체 macOS 아이콘 세트를 다시 생성했습니다.
 
 ## 2026-08 - v2.0.0
 

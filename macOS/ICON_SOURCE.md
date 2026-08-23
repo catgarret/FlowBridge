@@ -1,10 +1,12 @@
 # Flow Bridge app icon
 
-The Flow Bridge icon is an original project asset drawn as SVG. It depicts a Mac
-display and a phone joined by two connection paths. It does not contain Samsung
-Flow artwork, the Samsung word mark, or the Samsung Flow product name.
+The Flow Bridge icon is a project-owner-provided original asset. The canonical
+source is `macOS/AppIcon.svg`; the packaged `AppIcon.icns` is generated from that
+vector source without altering its design.
 
-The earlier Samsung Flow reference supplied during private prototyping is not
-included in the repository or distribution package. Samsung and Samsung Flow are
-trademarks of Samsung Electronics Co., Ltd.; Flow Bridge is independent and is
-not affiliated with or endorsed by Samsung.
+Provided source SHA-256 before repository formatting:
+
+`a814f522845ea67121843a96f76b176e2cbaeee33af9dc58709534676de7a157`
+
+Copyright © 2026 Lee Dong-Kyu (Dong-gri). Distributed with Flow Bridge under the
+repository MIT License.
