@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Fixed direct app-quit cleanup so Galaxy Extra dim is restored together with brightness and auto-brightness mode.
+- 앱을 직접 종료할 때도 밝기·자동 밝기와 함께 Galaxy 더 어둡게 상태를 복원하도록 종료 정리를 고쳤습니다.
 - Replaced the physical-screen-off experiment with Galaxy Extra dim at maximum strength, keeping the phone display powered so mirroring remains connected while restoring brightness and Extra dim state on session end.
 - 실물 화면을 꺼 미러링이 끊길 수 있던 방식을 제거하고 Galaxy 더 어둡게를 최대로 적용해 화면 전원은 유지하면서 미러링을 계속합니다. 세션 종료 시 밝기와 더 어둡게 설정을 복원합니다.
 - Fixed delayed phone-data loads bypassing the latest-item scroll, added a stable bottom anchor for conversations, and always show year, month, day, and time in call and message details.

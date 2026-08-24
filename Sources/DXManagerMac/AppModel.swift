@@ -922,6 +922,7 @@ final class AppModel: ObservableObject {
         if let state = appSettings.pendingBrightnessRestores[restoreSerial] ?? brightnessBeforeSession,
            let adbPath = ToolLocator.adb(appSettings.adbPath) {
             try? ADBService(executable: adbPath).restoreScreenBrightness(serial: restoreSerial, state: state)
+            try? ADBService(executable: adbPath).restoreExtraDim(serial: restoreSerial, state: state)
             brightnessBeforeSession = nil
             brightnessSessionSerial = ""
             appSettings.pendingBrightnessRestores.removeValue(forKey: restoreSerial)
@@ -1157,7 +1158,7 @@ final class AppModel: ObservableObject {
             do {
                 let adb = ADBService(executable: adbPath)
                 try adb.restoreScreenBrightness(serial: serial, state: state)
-                try? adb.restoreExtraDim(serial: serial, state: state)
+                try adb.restoreExtraDim(serial: serial, state: state)
                 await MainActor.run { self?.appSettings.pendingBrightnessRestores.removeValue(forKey: serial); self?.save() }
             } catch { }
         }
