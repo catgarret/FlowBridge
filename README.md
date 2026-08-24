@@ -31,6 +31,8 @@ runtime installation.
 
 - Discover and remember USB, LAN, mDNS, and reachable Tailscale ADB connections
 - Start a Samsung DeX virtual display or mirror the ordinary phone screen
+- Optionally apply Galaxy Extra dim at maximum strength during mirroring while
+  keeping the phone display powered, then restore the previous display state
 - Launch Android apps in independent windows by friendly app name
 - Open the Galaxy dialer and send SMS through the phone's default messaging app
 - Browse live Galaxy contacts, recent calls, and SMS; only contact photos are cached locally for faster display
@@ -95,6 +97,8 @@ SwiftUI 기반 macOS 앱입니다. Apple Silicon과 Intel용 ADB·scrcpy 실행 
 
 - USB·LAN·mDNS 및 접근 가능한 Tailscale ADB 연결 검색·기억·자동 재연결
 - Samsung DeX 가상 화면 실행과 일반 휴대폰 화면 미러링
+- 미러링 연결은 유지하면서 Galaxy 밝기 최저·더 어둡게(Extra dim)를 적용하고
+  세션 종료 후 기존 화면 설정 복원
 - 패키지명 대신 일반 앱 이름을 선택해 독립 창으로 실행
 - Mac에서 Galaxy 주소록·최근 통화·문자를 확인하고 연락처 사진은 빠른 표시를 위해 로컬 캐시
 - Mac에서 번호를 입력해 Galaxy 전화 화면을 열고 기본 메시지 앱을 통해 SMS 전송

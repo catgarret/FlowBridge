@@ -51,7 +51,11 @@ public struct PhoneScreenState: Equatable, Sendable {
 public struct ScreenBrightnessState: Codable, Equatable, Sendable {
     public let value: Int
     public let mode: Int
-    public init(value: Int, mode: Int) { self.value = value; self.mode = mode }
+    public let extraDimActivated: Int?
+    public let extraDimLevel: Int?
+    public init(value: Int, mode: Int, extraDimActivated: Int? = nil, extraDimLevel: Int? = nil) {
+        self.value = value; self.mode = mode; self.extraDimActivated = extraDimActivated; self.extraDimLevel = extraDimLevel
+    }
 }
 
 public struct PhoneContact: Identifiable, Hashable, Sendable {
@@ -123,6 +127,8 @@ public struct AppSettings: Codable, Sendable {
     public var messageNotificationsEnabled = false
     public var appNotificationsEnabled = false
     public var blockedNotificationPackages: Set<String> = []
+    // Retain the serialized key for settings migration. It now controls Extra dim
+    // while keeping the phone display powered; no physical screen-off command is used.
     public var turnPhoneScreenOffOnStart = false
     public var pendingBrightnessRestores: [String: ScreenBrightnessState] = [:]
     public var managedOverlaySerials: Set<String> = []

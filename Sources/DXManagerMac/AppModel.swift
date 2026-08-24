@@ -65,7 +65,7 @@ final class AppModel: ObservableObject {
     @Published var messageNotificationsEnabled = false
     @Published var appNotificationsEnabled = false
     @Published var blockedNotificationPackages: Set<String> = []
-    @Published var turnPhoneScreenOffOnStart = false
+    @Published var dimPhoneOnStart = false
     @Published var hasActiveSession = false
     @Published var sessionPhase: SessionPhase = .idle
     @Published var phoneNeedsUnlock = false
@@ -111,7 +111,7 @@ final class AppModel: ObservableObject {
         messageNotificationsEnabled = appSettings.messageNotificationsEnabled
         appNotificationsEnabled = appSettings.appNotificationsEnabled
         blockedNotificationPackages = appSettings.blockedNotificationPackages
-        turnPhoneScreenOffOnStart = appSettings.turnPhoneScreenOffOnStart
+        dimPhoneOnStart = appSettings.turnPhoneScreenOffOnStart
         packageNames = appSettings.favoritePackages
         UNUserNotificationCenter.current().delegate = notificationDelegate
         DispatchQueue.main.async { [weak self] in
@@ -302,15 +302,13 @@ final class AppModel: ObservableObject {
         activeScreenMode = "DEX 모드"
         let placement = savedPlacement(kind: "desktop")
         let deviceName = selectedScreenDeviceName
-        let turnScreenOff = turnPhoneScreenOffOnStart
-        start(exclusiveMainDisplay: true, trackMainSession: true, createsOverlay: true) { try $0.startDeX(serial: $1, deviceName: deviceName, settings: $2, placement: placement, turnScreenOff: turnScreenOff) }
+        start(exclusiveMainDisplay: true, trackMainSession: true, createsOverlay: true) { try $0.startDeX(serial: $1, deviceName: deviceName, settings: $2, placement: placement) }
     }
     func startPhoneMirror() {
         activeScreenMode = "휴대폰 미러링"
         let placement = savedPlacement(kind: "phone")
         let deviceName = selectedScreenDeviceName
-        let turnScreenOff = turnPhoneScreenOffOnStart
-        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, deviceName: deviceName, settings: $2, placement: placement, turnScreenOff: turnScreenOff) }
+        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, deviceName: deviceName, settings: $2, placement: placement) }
     }
 
     func volumeDown() { sendKeyEvent(25, label: "볼륨 낮추기") }
@@ -614,8 +612,7 @@ final class AppModel: ObservableObject {
         if appLaunchMode == .phoneScreen {
             let placement = savedPlacement(kind: "phone")
             let deviceName = selectedScreenDeviceName
-            let turnScreenOff = turnPhoneScreenOffOnStart
-            start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startAppOnPhone(serial: $1, deviceName: deviceName, package: package, settings: $2, placement: placement, turnScreenOff: turnScreenOff) }
+            start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startAppOnPhone(serial: $1, deviceName: deviceName, package: package, settings: $2, placement: placement) }
         } else {
             start { try $0.startApp(serial: $1, package: package, settings: $2, slot: slot) }
         }
@@ -1056,7 +1053,7 @@ final class AppModel: ObservableObject {
         appSettings.messageNotificationsEnabled = messageNotificationsEnabled
         appSettings.appNotificationsEnabled = appNotificationsEnabled
         appSettings.blockedNotificationPackages = blockedNotificationPackages
-        appSettings.turnPhoneScreenOffOnStart = turnPhoneScreenOffOnStart
+        appSettings.turnPhoneScreenOffOnStart = dimPhoneOnStart
         appSettings.favoritePackages = packageNames
         appSettings.presenceMode = presenceMode
         appSettings.openMainWindowAtLaunch = openMainWindowAtLaunch
@@ -1069,8 +1066,8 @@ final class AppModel: ObservableObject {
     }
 
     func brightnessSettingChanged() {
-        appSettings.turnPhoneScreenOffOnStart = turnPhoneScreenOffOnStart
-        if !turnPhoneScreenOffOnStart { restoreBrightnessIfNeeded(serial: selectedSerial) }
+        appSettings.turnPhoneScreenOffOnStart = dimPhoneOnStart
+        if !dimPhoneOnStart { restoreBrightnessIfNeeded(serial: selectedSerial) }
         save()
     }
 
@@ -1079,7 +1076,7 @@ final class AppModel: ObservableObject {
         let serial = selectedSerial
         let display = settings
         let activeController = controller
-        let dimPhone = turnPhoneScreenOffOnStart
+        let dimPhone = dimPhoneOnStart
         let attempt = UUID()
         if trackMainSession {
             sessionAttempt = attempt
@@ -1106,12 +1103,16 @@ final class AppModel: ObservableObject {
                 throw DXError.commandFailed("영상 창을 열지 못했습니다. Galaxy 잠금을 해제한 뒤 다시 시도해 주세요.")
             }
             let capturedBrightness = (try? adb.screenBrightness(serial: serial)) ?? 128
-            let previousBrightness = dimPhone && trackMainSession ? ScreenBrightnessState(value: capturedBrightness <= 0 ? 128 : capturedBrightness, mode: (try? adb.screenBrightnessMode(serial: serial)) ?? 0) : nil
-            if dimPhone && trackMainSession { try? adb.setScreenBrightness(serial: serial, value: 0) }
+            let extraDim = (try? adb.extraDimState(serial: serial)) ?? (activated: nil, level: nil)
+            let previousBrightness = dimPhone && trackMainSession ? ScreenBrightnessState(value: capturedBrightness <= 0 ? 128 : capturedBrightness, mode: (try? adb.screenBrightnessMode(serial: serial)) ?? 0, extraDimActivated: extraDim.activated, extraDimLevel: extraDim.level) : nil
+            if dimPhone && trackMainSession {
+                try? adb.setScreenBrightness(serial: serial, value: 0)
+                try? adb.setExtraDim(serial: serial, level: 100)
+            }
             return { model in
                 if trackMainSession && model.sessionAttempt != attempt {
                     controller.stopMainDisplays(serial: serial)
-                    if let previousBrightness { Task.detached { try? adb.restoreScreenBrightness(serial: serial, state: previousBrightness) } }
+                    if let previousBrightness { Task.detached { try? adb.restoreScreenBrightness(serial: serial, state: previousBrightness); try? adb.restoreExtraDim(serial: serial, state: previousBrightness) } }
                     return
                 }
                 model.controller = controller
@@ -1125,7 +1126,7 @@ final class AppModel: ObservableObject {
                     model.phoneNeedsUnlock = screenState.isLocked
                 }
                 if createsOverlay { model.appSettings.managedOverlaySerials.insert(serial); model.save() }
-                model.status = screenState.isLocked ? "화면은 열렸습니다. 보호된 내용은 Galaxy 잠금을 해제해야 표시됩니다." : (dimPhone ? "화면을 열고 Galaxy 실물 화면을 껐습니다." : "화면이 준비되었습니다.")
+                model.status = screenState.isLocked ? "화면은 열렸습니다. 보호된 내용은 Galaxy 잠금을 해제해야 표시됩니다." : (dimPhone ? "화면을 열고 Galaxy 화면을 최대로 어둡게 했습니다." : "화면이 준비되었습니다.")
             }
         }
     }
@@ -1150,13 +1151,13 @@ final class AppModel: ObservableObject {
         guard !serial.isEmpty,
               let adbPath = ToolLocator.adb(appSettings.adbPath) else { return }
         guard let savedState = appSettings.pendingBrightnessRestores[serial] ?? (brightnessSessionSerial == serial ? brightnessBeforeSession : nil) else { return }
-        let state = ScreenBrightnessState(value: savedState.value <= 0 ? 128 : savedState.value, mode: savedState.mode)
+        let state = ScreenBrightnessState(value: savedState.value <= 0 ? 128 : savedState.value, mode: savedState.mode, extraDimActivated: savedState.extraDimActivated, extraDimLevel: savedState.extraDimLevel)
         if brightnessSessionSerial == serial { brightnessBeforeSession = nil; brightnessSessionSerial = "" }
         Task.detached { [weak self] in
             do {
                 let adb = ADBService(executable: adbPath)
                 try adb.restoreScreenBrightness(serial: serial, state: state)
-                try? adb.keyEvent(serial: serial, code: 224)
+                try? adb.restoreExtraDim(serial: serial, state: state)
                 await MainActor.run { self?.appSettings.pendingBrightnessRestores.removeValue(forKey: serial); self?.save() }
             } catch { }
         }

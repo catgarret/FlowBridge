@@ -269,13 +269,13 @@ private struct HomeView: View {
 private struct ScreenLaunchControls: View {
     @EnvironmentObject private var model: AppModel
     @State private var showBrightnessHelp = false
-    private let brightnessHelp = "DEX/휴대폰 미러링 영상은 Mac에 유지하면서 Galaxy 실물 화면만 완전히 끕니다. 세션 종료 또는 옵션 해제 시 화면을 깨우고 기존 밝기와 자동 밝기를 복원합니다."
+    private let brightnessHelp = "DEX/휴대폰 미러링 영상은 Mac에 유지하면서 Galaxy의 더 어둡게 효과를 최대로 적용합니다. 세션 종료 또는 옵션 해제 시 기존 밝기와 더 어둡게 설정을 복원합니다."
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
-                Text("실행 중 Galaxy 화면 끄기")
+                Text("실행 중 Galaxy 더 어둡게")
                 Button { showBrightnessHelp.toggle() } label: { Image(systemName: "questionmark.circle").foregroundStyle(.secondary) }.buttonStyle(.plain).help(brightnessHelp).popover(isPresented: $showBrightnessHelp, arrowEdge: .bottom) { Text(brightnessHelp).frame(width: 280, alignment: .leading).padding(14) }
-                Spacer(); Toggle("", isOn: $model.turnPhoneScreenOffOnStart).labelsHidden().toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.brightnessSettingChanged() }
+                Spacer(); Toggle("", isOn: $model.dimPhoneOnStart).labelsHidden().toggleStyle(.switch).onChange(of: model.dimPhoneOnStart) { _ in model.brightnessSettingChanged() }
             }
             if model.sessionPhase == .running && model.phoneNeedsUnlock { Label("Galaxy가 잠겨 있습니다. 잠금을 해제하면 보호되지 않은 화면이 표시됩니다.", systemImage: "lock.fill").foregroundStyle(.orange) }
         }

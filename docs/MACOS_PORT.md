@@ -53,6 +53,9 @@ only as a baseline and Flow Bridge does not persist notification content.
 The phone page can open the Galaxy dialer with a number and hand off a recipient
 and draft to the Galaxy messaging app. The final call or message remains a visible
 user action on the phone; ADB does not transport cellular call audio to macOS.
+When the screen-dimming option is enabled, Flow Bridge keeps the physical panel
+powered so the mirror stream stays connected, applies the lowest brightness and
+Galaxy Extra dim, and restores the previous state when the session ends.
 
 The distributed build is ad-hoc signed. Developer ID signing and Apple
 notarization require the repository owner's private Apple signing identity.
@@ -68,3 +71,6 @@ notarization require the repository owner's private Apple signing identity.
 연결 주소 기억 및 자동 재연결, DeX 없이 일반 휴대폰 화면 미러링, 전화·문자·
 애플리케이션별 macOS 알림 전달을 지원합니다. 알림은 ADB가 연결된 동안 새로 발생한
 항목만 전달하며 Flow Bridge가 알림 내용을 별도 저장하지 않습니다.
+화면 어둡게 옵션은 실제 디스플레이 전원을 끄지 않고 밝기 최저와 Galaxy
+더 어둡게(Extra dim)를 적용해 미러링 연결을 유지하며, 세션 종료 시 기존 상태를
+복원합니다.

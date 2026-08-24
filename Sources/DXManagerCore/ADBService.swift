@@ -116,6 +116,23 @@ public struct ADBService: Sendable {
         _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness", String(max(0, min(255, value)))])
     }
 
+    public func extraDimState(serial: String) throws -> (activated: Int?, level: Int?) {
+        let activated = Int(try shell(serial: serial, ["settings", "get", "secure", "reduce_bright_colors_activated"]).trimmingCharacters(in: .whitespacesAndNewlines))
+        let level = Int(try shell(serial: serial, ["settings", "get", "secure", "reduce_bright_colors_level"]).trimmingCharacters(in: .whitespacesAndNewlines))
+        return (activated, level)
+    }
+
+    public func setExtraDim(serial: String, level: Int = 100) throws {
+        _ = try shell(serial: serial, ["settings", "put", "secure", "reduce_bright_colors_level", String(max(1, min(100, level)))])
+        _ = try shell(serial: serial, ["settings", "put", "secure", "reduce_bright_colors_activated", "1"])
+    }
+
+    public func restoreExtraDim(serial: String, state: ScreenBrightnessState) throws {
+        guard let activated = state.extraDimActivated else { return }
+        if let level = state.extraDimLevel { _ = try shell(serial: serial, ["settings", "put", "secure", "reduce_bright_colors_level", String(level)]) }
+        _ = try shell(serial: serial, ["settings", "put", "secure", "reduce_bright_colors_activated", String(activated)])
+    }
+
     public func restoreScreenBrightness(serial: String, state: ScreenBrightnessState) throws {
         _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness", String(max(0, min(255, state.value)))])
         _ = try shell(serial: serial, ["settings", "put", "system", "screen_brightness_mode", String(state.mode)])
