@@ -4,6 +4,8 @@
 
 ## Unreleased - experimental macOS port
 
+- Replaced minimum-brightness-only behavior with scrcpy physical-screen-off mode while keeping the Mac video stream active, with brightness and wake-state restoration on session end.
+- 밝기 최저 조절만 하던 동작을 Mac 영상은 유지하면서 Galaxy 실물 화면을 끄는 scrcpy 방식으로 교체하고, 세션 종료 시 화면 깨우기와 밝기 복원을 수행합니다.
 - Fixed delayed phone-data loads bypassing the latest-item scroll, added a stable bottom anchor for conversations, and always show year, month, day, and time in call and message details.
 - 비동기 전화·문자 데이터 로드 뒤 최신 항목 이동이 누락되던 문제를 고치고 대화 하단 기준점을 추가했으며, 통화·문자 상세에 연·월·일·시각을 항상 표시합니다.
 - Added an explicit SMS sending state with a progress indicator and duplicate-send lock, and made saved contact headers in message conversations open their contact details.

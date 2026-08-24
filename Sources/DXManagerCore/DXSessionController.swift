@@ -23,7 +23,7 @@ public final class DXSessionController: @unchecked Sendable {
         self.scrcpy = scrcpy
     }
 
-    public func startDeX(serial: String, deviceName: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
+    public func startDeX(serial: String, deviceName: String, settings: DisplaySettings, placement: WindowPlacement? = nil, turnScreenOff: Bool = false) throws {
         guard settings.isValid else { throw DXError.invalidSettings }
         // A previous unclean shutdown can leave Android's single global overlay
         // setting behind. Clear it first so the before/after ID comparison stays
@@ -44,7 +44,7 @@ public final class DXSessionController: @unchecked Sendable {
             throw DXError.displayNotFound
         }
         let title = "[DEX 모드] \(Self.cleanDeviceName(deviceName))"
-        try launch(key: "dex:\(serial)", serial: serial, title: title, arguments: baseArguments(serial, settings) + (placement?.scrcpyArguments ?? []) + ["--display-id", String(displayID), "--window-title", title])
+        try launch(key: "dex:\(serial)", serial: serial, title: title, arguments: baseArguments(serial, settings) + Self.screenPowerArguments(turnScreenOff: turnScreenOff) + (placement?.scrcpyArguments ?? []) + ["--display-id", String(displayID), "--window-title", title])
     }
 
     public func startApp(serial: String, package: String, settings: DisplaySettings, slot: Int = 1) throws {
@@ -57,16 +57,20 @@ public final class DXSessionController: @unchecked Sendable {
         try launch(key: "app:\(serial):\(slot)", serial: serial, title: title, arguments: baseArguments(serial, settings) + ["--new-display=\(settings.width)x\(settings.height)/\(settings.dpi)", "--start-app=\(cleanPackage)", "--window-title", title])
     }
 
-    public func startPhoneMirror(serial: String, deviceName: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
+    public func startPhoneMirror(serial: String, deviceName: String, settings: DisplaySettings, placement: WindowPlacement? = nil, turnScreenOff: Bool = false) throws {
         guard settings.isValid else { throw DXError.invalidSettings }
         let title = "[휴대폰 미러링] \(Self.cleanDeviceName(deviceName))"
         try launch(key: "phone:\(serial)", serial: serial, title: title,
-                   arguments: baseArguments(serial, settings) + (placement?.scrcpyArguments ?? []) + ["--window-title", title])
+                   arguments: baseArguments(serial, settings) + Self.screenPowerArguments(turnScreenOff: turnScreenOff) + (placement?.scrcpyArguments ?? []) + ["--window-title", title])
     }
 
-    public func startAppOnPhone(serial: String, deviceName: String, package: String, settings: DisplaySettings, placement: WindowPlacement? = nil) throws {
+    public func startAppOnPhone(serial: String, deviceName: String, package: String, settings: DisplaySettings, placement: WindowPlacement? = nil, turnScreenOff: Bool = false) throws {
         try adb.launchApp(serial: serial, package: package)
-        try startPhoneMirror(serial: serial, deviceName: deviceName, settings: settings, placement: placement)
+        try startPhoneMirror(serial: serial, deviceName: deviceName, settings: settings, placement: placement, turnScreenOff: turnScreenOff)
+    }
+
+    public static func screenPowerArguments(turnScreenOff: Bool) -> [String] {
+        turnScreenOff ? ["--turn-screen-off"] : []
     }
 
     private static func cleanDeviceName(_ value: String) -> String {

@@ -302,13 +302,15 @@ final class AppModel: ObservableObject {
         activeScreenMode = "DEX 모드"
         let placement = savedPlacement(kind: "desktop")
         let deviceName = selectedScreenDeviceName
-        start(exclusiveMainDisplay: true, trackMainSession: true, createsOverlay: true) { try $0.startDeX(serial: $1, deviceName: deviceName, settings: $2, placement: placement) }
+        let turnScreenOff = turnPhoneScreenOffOnStart
+        start(exclusiveMainDisplay: true, trackMainSession: true, createsOverlay: true) { try $0.startDeX(serial: $1, deviceName: deviceName, settings: $2, placement: placement, turnScreenOff: turnScreenOff) }
     }
     func startPhoneMirror() {
         activeScreenMode = "휴대폰 미러링"
         let placement = savedPlacement(kind: "phone")
         let deviceName = selectedScreenDeviceName
-        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, deviceName: deviceName, settings: $2, placement: placement) }
+        let turnScreenOff = turnPhoneScreenOffOnStart
+        start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startPhoneMirror(serial: $1, deviceName: deviceName, settings: $2, placement: placement, turnScreenOff: turnScreenOff) }
     }
 
     func volumeDown() { sendKeyEvent(25, label: "볼륨 낮추기") }
@@ -612,7 +614,8 @@ final class AppModel: ObservableObject {
         if appLaunchMode == .phoneScreen {
             let placement = savedPlacement(kind: "phone")
             let deviceName = selectedScreenDeviceName
-            start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startAppOnPhone(serial: $1, deviceName: deviceName, package: package, settings: $2, placement: placement) }
+            let turnScreenOff = turnPhoneScreenOffOnStart
+            start(exclusiveMainDisplay: true, trackMainSession: true) { try $0.startAppOnPhone(serial: $1, deviceName: deviceName, package: package, settings: $2, placement: placement, turnScreenOff: turnScreenOff) }
         } else {
             start { try $0.startApp(serial: $1, package: package, settings: $2, slot: slot) }
         }
@@ -1122,7 +1125,7 @@ final class AppModel: ObservableObject {
                     model.phoneNeedsUnlock = screenState.isLocked
                 }
                 if createsOverlay { model.appSettings.managedOverlaySerials.insert(serial); model.save() }
-                model.status = screenState.isLocked ? "화면은 열렸습니다. 보호된 내용은 Galaxy 잠금을 해제해야 표시됩니다." : (dimPhone ? "화면을 열고 Galaxy 밝기를 최저로 낮췄습니다." : "화면이 준비되었습니다.")
+                model.status = screenState.isLocked ? "화면은 열렸습니다. 보호된 내용은 Galaxy 잠금을 해제해야 표시됩니다." : (dimPhone ? "화면을 열고 Galaxy 실물 화면을 껐습니다." : "화면이 준비되었습니다.")
             }
         }
     }
@@ -1151,7 +1154,9 @@ final class AppModel: ObservableObject {
         if brightnessSessionSerial == serial { brightnessBeforeSession = nil; brightnessSessionSerial = "" }
         Task.detached { [weak self] in
             do {
-                try ADBService(executable: adbPath).restoreScreenBrightness(serial: serial, state: state)
+                let adb = ADBService(executable: adbPath)
+                try adb.restoreScreenBrightness(serial: serial, state: state)
+                try? adb.keyEvent(serial: serial, code: 224)
                 await MainActor.run { self?.appSettings.pendingBrightnessRestores.removeValue(forKey: serial); self?.save() }
             } catch { }
         }

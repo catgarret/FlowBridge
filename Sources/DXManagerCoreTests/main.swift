@@ -94,6 +94,8 @@ check(migrated.presenceMode == .dockAndMenuBar && migrated.openMainWindowAtLaunc
 check(migrated.appLaunchMode == .desktopWindow && migrated.windowPlacements.isEmpty, "legacy launch mode and placement migration")
 check(migrated.controlBarPosition == .bottom, "legacy control bar position migration")
 check(migrated.pendingBrightnessRestores.isEmpty, "legacy brightness restore migration")
+check(DXSessionController.screenPowerArguments(turnScreenOff: true) == ["--turn-screen-off"], "physical screen-off scrcpy argument")
+check(DXSessionController.screenPowerArguments(turnScreenOff: false).isEmpty, "screen-on scrcpy arguments")
 check(migrated.managedOverlaySerials.isEmpty && !migrated.didCleanLegacyOverlay, "legacy overlay cleanup migration")
 
 let screenState = ADBService.parsePhoneScreenState(power: "mWakefulness=Awake", policy: "isKeyguardShowing=true screenState=SCREEN_STATE_ON")

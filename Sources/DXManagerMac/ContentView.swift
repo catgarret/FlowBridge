@@ -269,11 +269,11 @@ private struct HomeView: View {
 private struct ScreenLaunchControls: View {
     @EnvironmentObject private var model: AppModel
     @State private var showBrightnessHelp = false
-    private let brightnessHelp = "화면 보호와 온도 제어를 위해 DEX/휴대폰 미러링 실행 시 밝기가 자동으로 최저로 낮아지며 종료 시 원래 밝기로 복원됩니다."
+    private let brightnessHelp = "DEX/휴대폰 미러링 영상은 Mac에 유지하면서 Galaxy 실물 화면만 완전히 끕니다. 세션 종료 또는 옵션 해제 시 화면을 깨우고 기존 밝기와 자동 밝기를 복원합니다."
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
-                Text("실행 시 밝기 최저 조절")
+                Text("실행 중 Galaxy 화면 끄기")
                 Button { showBrightnessHelp.toggle() } label: { Image(systemName: "questionmark.circle").foregroundStyle(.secondary) }.buttonStyle(.plain).help(brightnessHelp).popover(isPresented: $showBrightnessHelp, arrowEdge: .bottom) { Text(brightnessHelp).frame(width: 280, alignment: .leading).padding(14) }
                 Spacer(); Toggle("", isOn: $model.turnPhoneScreenOffOnStart).labelsHidden().toggleStyle(.switch).onChange(of: model.turnPhoneScreenOffOnStart) { _ in model.brightnessSettingChanged() }
             }
